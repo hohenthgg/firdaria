@@ -147,22 +147,7 @@ function nextRelevantWindow(from){
 }
 
 /* ---------- orientação literal (linguagem direta) ---------- */
-const PL_EFFECT={
-  sun:'vitalidade, visibilidade e decisões de identidade',
-  moon:'humor, rotina doméstica e assuntos do público',
-  mercury:'comunicação, documentos, deslocamentos e negociações',
-  venus:'acordos, afetos, estética e dinheiro por relações',
-  mars:'energia, pressa, atrito e capacidade de execução',
-  jupiter:'expansão, oportunidades, apoios e excessos',
-  saturn:'estrutura, prazos, restrições e responsabilidades'};
-const FAVOR={
-  harm:{sun:['assumir frente de trabalho','apresentar-se a decisor'],moon:['tratar de casa e família','lançar para público amplo'],mercury:['assinar após revisão','negociar, escrever, publicar'],venus:['fechar acordo','tratar de preço e estética'],mars:['executar tarefa difícil','treinar, competir'],jupiter:['pedir apoio ou crédito','iniciar estudo ou publicação'],saturn:['formalizar compromisso','planejar longo prazo']},
-  conj:{sun:['iniciar em nome próprio'],moon:['iniciar hábito ou mudança doméstica'],mercury:['iniciar texto, curso ou proposta'],venus:['iniciar parceria ou compra'],mars:['iniciar projeto que exige força'],jupiter:['iniciar expansão com fiador'],saturn:['assumir obrigação duradoura']},
-  tens:{sun:['resolver pendência que exige coragem'],moon:['tratar problema doméstico adiado'],mercury:['revisar textos e contratos com rigor'],venus:['renegociar valores'],mars:['resolver problema técnico que exige força'],jupiter:['cortar excesso ou custo'],saturn:['reestruturar prazo ou dívida']}};
-const CAUTION={
-  harm:['não confundir facilidade com garantia: revisar mesmo assim'],
-  conj:['início marca o tom do ciclo: não começar no improviso'],
-  tens:{sun:['choques com autoridade; decisões por orgulho'],moon:['reatividade emocional; decidir no pico do humor'],mercury:['discussões, contratos não revisados, erros de digitação e prazo'],venus:['ceder preço cedo demais; gastos por agrado'],mars:['acidentes por pressa, palavras cortantes, rompimentos precipitados'],jupiter:['promessas maiores do que a entrega; gasto por otimismo'],saturn:['bloqueios, atrasos, dureza excessiva consigo e com os outros']}};
+/* PL_EFFECT, FAVOR e CAUTION são definidos em tables.js (dados). */
 function orient(hit,d){
   const w=hitWindow(hit,d);
   const houses=ruledHouses(hit.nk);
@@ -184,15 +169,7 @@ function convergence(d){
 }
 
 /* ---------- eletiva ---------- */
-const ELECT_SIG={ // significador natural da atividade + casas relevantes
-  'assinar contrato':{sig:'mercury',houses:[3,7]},'lançar produto':{sig:'sun',houses:[10,2]},
-  'publicar vídeo':{sig:'mercury',houses:[3,11]},'abrir empresa':{sig:'sun',houses:[10,1]},
-  'enviar proposta':{sig:'mercury',houses:[3,9]},'realizar reunião':{sig:'mercury',houses:[3,7]},
-  'viajar':{sig:'mercury',houses:[3,9]},'iniciar curso':{sig:'jupiter',houses:[9,3]},
-  'fazer compra':{sig:'venus',houses:[2]},'iniciar tratamento':{sig:'sun',houses:[6,1]},
-  'realizar evento':{sig:'sun',houses:[5,10]},'realizar live':{sig:'mercury',houses:[3,11]},
-  'pedir aumento':{sig:'sun',houses:[10,2]},'iniciar relacionamento':{sig:'venus',houses:[7,5]},
-  'marcar casamento':{sig:'venus',houses:[7]}};
+/* ELECT_SIG (significador natural da atividade + casas) é definido em tables.js. */
 const MOON_DIG={3:'exaltada (Touro)',0:'peregrina',[-99]:''};
 function moonCondition(d){
   const L=tlon('Moon',d), s=Math.floor(L/30);

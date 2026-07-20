@@ -71,10 +71,10 @@ p.lede{font-family:var(--serif);font-size:1.12rem;color:var(--ivory);line-height
 .mono{font-family:var(--mono);font-size:.78rem;color:var(--dim)}
 .card{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:16px 18px;margin:10px 0}
 .card.flat{background:transparent}
-.grid2{display:grid;grid-template-columns:1fr;gap:12px}
-@media(min-width:960px){.grid2{grid-template-columns:1fr 1fr}}
-.grid3{display:grid;grid-template-columns:1fr;gap:10px}
-@media(min-width:960px){.grid3{grid-template-columns:repeat(3,1fr)}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+body.is-mobile .grid2{grid-template-columns:1fr}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+body.is-mobile .grid3{grid-template-columns:1fr}
 table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
 th{font-family:var(--mono);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);text-align:left;padding:7px 9px;border-bottom:1px solid var(--line2);font-weight:400}
 td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--dim)}
@@ -125,8 +125,8 @@ label.f{display:block;font-family:var(--mono);font-size:.58rem;letter-spacing:.1
 #cord{width:100%;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg2)}
 .zoombar{display:flex;gap:4px}
 .zoombar .btn.on{color:var(--gold);border-color:var(--gold2)}
-.mandala-wrap{display:grid;grid-template-columns:1fr;gap:16px;margin-top:14px}
-@media(min-width:1020px){.mandala-wrap{grid-template-columns:460px 1fr}}
+.mandala-wrap{display:grid;grid-template-columns:460px 1fr;gap:16px;margin-top:14px}
+body.is-mobile .mandala-wrap{grid-template-columns:1fr}
 #mandala{width:100%;max-width:460px;aspect-ratio:1;display:block;margin:0 auto}
 /* razão anual */
 details.era{border:1px solid var(--line);border-radius:6px;background:var(--panel);margin:10px 0;overflow:hidden}
@@ -137,8 +137,8 @@ details.era .dotc{width:10px;height:10px;border-radius:50%;flex:0 0 10px}
 details.era .yrs{font-family:var(--mono);font-size:.6rem;color:var(--dim2);margin-left:auto}
 details.era[open]>summary{border-bottom:1px solid var(--line)}
 .era-intro{padding:10px 16px 2px;color:var(--dim);font-size:.84rem}
-.yrgrid{display:grid;grid-template-columns:1fr;gap:8px;padding:10px 12px 14px}
-@media(min-width:980px){.yrgrid{grid-template-columns:1fr 1fr}}
+.yrgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px 14px}
+body.is-mobile .yrgrid{grid-template-columns:1fr}
 .yr{border:1px solid var(--line);border-radius:4px;background:var(--bg2);padding:11px 13px;font-size:.8rem;cursor:pointer}
 .yr:hover{border-color:var(--line2)}
 .yr.now{border-color:var(--gold)}
@@ -211,30 +211,45 @@ details.era[open]>summary{border-bottom:1px solid var(--line)}
   .lbody{display:block!important}
   .yr .full{display:block!important}
 }
-/* mobile */
-@media(max-width:900px){
-  body{font-size:14px}
-  .app{flex-direction:column}
-  .side{width:100%;height:auto;position:sticky;top:0;z-index:40;padding:8px 8px 4px;backdrop-filter:blur(10px);background:rgba(13,18,25,.94)}
-  .brand{padding:2px 6px 6px}.brand h1{font-size:1.05rem}
-  nav{display:flex;overflow-x:auto;padding:4px 0;gap:2px;scrollbar-width:none}
-  nav::-webkit-scrollbar{display:none}
-  nav button{width:auto;flex:0 0 auto;border-left:none;border-bottom:2px solid transparent;padding:8px 11px;font-size:.76rem;min-height:38px}
-  nav button.on{border-bottom-color:var(--gold);background:none}
-  .side .foot{display:flex;border:none;padding:2px 4px}
-  main{padding:18px 13px 70px}
-  h2{font-size:1.45rem}h2 span{display:block;font-size:.88rem}
-  table{display:block;overflow-x:auto}
-  #g3d{height:400px}
-  .tl-date{font-size:1rem}
-  .qmap{aspect-ratio:1.25}
-}
+/* seletor de layout (Auto / PC / Mobile) na barra lateral */
+.viewswitch{display:flex;margin:0 0 8px}
+.viewswitch .btn{margin:0;border-radius:0;padding:6px 10px;flex:1 1 0;text-align:center}
+.viewswitch .btn:first-child{border-radius:3px 0 0 3px}
+.viewswitch .btn:last-child{border-radius:0 3px 3px 0}
+.viewswitch .btn:not(:first-child){border-left:none}
+.viewswitch .btn.on{color:var(--gold);border-color:var(--gold2);background:linear-gradient(180deg,rgba(201,168,106,.12),transparent)}
+/* mobile — aplicado por classe (body.is-mobile), controlada pelo seletor de layout;
+   por padrão (Auto) o JS liga a classe abaixo de 900px de largura */
+body.is-mobile{font-size:14px}
+body.is-mobile .app{flex-direction:column}
+body.is-mobile .side{width:100%;height:auto;position:sticky;top:0;z-index:40;padding:8px 8px 4px;backdrop-filter:blur(10px);background:rgba(13,18,25,.94)}
+body.is-mobile .brand{padding:2px 6px 6px}
+body.is-mobile .brand h1{font-size:1.05rem}
+body.is-mobile nav{display:flex;overflow-x:auto;padding:4px 0;gap:2px;scrollbar-width:none}
+body.is-mobile nav::-webkit-scrollbar{display:none}
+body.is-mobile nav button{width:auto;flex:0 0 auto;border-left:none;border-bottom:2px solid transparent;padding:8px 11px;font-size:.76rem;min-height:38px}
+body.is-mobile nav button.on{border-bottom-color:var(--gold);background:none}
+body.is-mobile .side .foot{padding:2px 4px}
+body.is-mobile .side .viewswitch{max-width:280px}
+body.is-mobile main{padding:18px 13px 70px}
+body.is-mobile h2{font-size:1.45rem}
+body.is-mobile h2 span{display:block;font-size:.88rem}
+body.is-mobile table{display:block;overflow-x:auto}
+body.is-mobile #g3d{height:400px}
+body.is-mobile .tl-date{font-size:1rem}
+body.is-mobile .qmap{aspect-ratio:1.25}
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
 </style>
 </head>
 <body>
+<script>
+/* aplica o layout salvo antes da renderização (evita "piscar" ao carregar) */
+(function(){try{var m=localStorage.getItem('ag_view')||'auto';
+  var mob=m==='mobile'||(m==='auto'&&window.matchMedia('(max-width:900px)').matches);
+  if(mob)document.body.classList.add('is-mobile');}catch(e){}})();
+</script>
 <div class="app">
   <aside class="side noprint">
     <div class="brand">
@@ -254,6 +269,11 @@ details.era[open]>summary{border-bottom:1px solid var(--line)}
       <button data-p="fontes">Fontes e método</button>
     </nav>
     <div class="foot">
+      <div class="viewswitch" id="view-switch" title="Layout: escolha entre PC e mobile, ou Auto (pelo tamanho da tela)">
+        <button class="btn" data-v="auto">Auto</button>
+        <button class="btn" data-v="pc">PC</button>
+        <button class="btn" data-v="mobile">Mobile</button>
+      </div>
       <button class="btn" onclick="window.print()">Exportar PDF</button>
     </div>
   </aside>
@@ -362,7 +382,7 @@ details.era[open]>summary{border-bottom:1px solid var(--line)}
     </section>
 
     <section class="panel" id="p-rs">
-      <div class="kicker">retornos solares · 1994–2026</div>
+      <div class="kicker" id="rs-kicker">retornos solares</div>
       <h2>Revolução Solar <span>o que vence em cada ano</span></h2>
       <div class="toolrow">
         <select id="rs-year"></select>

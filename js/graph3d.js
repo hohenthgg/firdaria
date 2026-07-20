@@ -47,7 +47,8 @@ function g3dModel(){
   STARS.forEach(([nm,att])=>{IDX['st_'+nm]=add('st_'+nm,'★ '+nm,'estrela',{att});});
   // arestas
   const E=[];
-  const link=(a,b,t,info)=>E.push({a:IDX[a],b:IDX[b],t,info});
+  // só liga nós existentes: mapas sem certos pontos (ex.: nodos) não devem gerar aresta órfã
+  const link=(a,b,t,info)=>{if(IDX[a]!==undefined&&IDX[b]!==undefined)E.push({a:IDX[a],b:IDX[b],t,info});};
   Object.entries(NATAL.pts).forEach(([k,p])=>{if(k==='spirit'||k==='fort')link(k,'casa'+p.h,'ocupa',PT_NAME[k]||p.nm);else link(k,'casa'+p.h,'ocupa','');});
   Object.entries(NATAL.rulers).forEach(([hh,k])=>link(k,'casa'+hh,'rege','regência natal'));
   // aspectos natais principais
@@ -279,4 +280,5 @@ function g3dFallback(msg){
      +'<text x="'+x+'" y="'+(y-9)+'" text-anchor="middle" font-size="10" fill="#9aa3ad">'+n.label+'</text>';});
   s+='</svg>';
   document.getElementById('g3d-fallback').innerHTML='<div class="card"><div class="kicker">fallback 2D · '+esc(msg)+'</div>'+s+'</div>';
+  legend();
 }
