@@ -5,7 +5,6 @@ document.getElementById('nav').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b)return;
   document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x===b));
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+b.dataset.p));
-  if(b.dataset.p==='grafo'&&NATAL) g3dInit();
   if(b.dataset.p==='tempo') syncTempo();
   if(b.dataset.p==='trans') renderTrans();
   if(b.dataset.p==='rs') renderRS();
@@ -104,6 +103,34 @@ function renderRSList(){
   el.querySelectorAll('[data-del]').forEach(a=>a.onclick=e=>{e.preventDefault();
     delete STATE.rs[a.dataset.del];delete RS_DATA[a.dataset.del];saveState();renderRSList();renderRS();});
 }
+function bindImport(){
+  const st=document.getElementById('imp-status');
+  document.getElementById('imp-run').onclick=()=>{
+    const url=document.getElementById('imp-url').value.trim();
+    if(!url){st.textContent='cole o link do Aspectarian.';return;}
+    st.textContent='computando mapa (Placidus, planetas tradicionais)…';
+    importAspectarian(url,p=>{st.textContent='computando Revoluções Solares… '+Math.round(p*100)+'%';})
+      .then(res=>{
+        const parsed=parseChartText(res.natalText);
+        if(!parsed.ok){st.textContent='falha ao montar o mapa: '+parsed.problems.join('; ');return;}
+        // preenche os campos e reusa o fluxo padrão de carga
+        document.getElementById('in-name').value=res.name;
+        document.getElementById('in-birth').value=res.birthISO;
+        document.getElementById('in-natal').value=res.natalText;
+        document.getElementById('in-sect').value='auto';
+        STATE.natal={text:res.natalText,birth:res.birthISO+':00Z',sect:'auto',name:res.name,place:res.place};
+        RS_DATA={};RSMETA={angular:{},echo:{}};
+        buildChart(parsed,STATE.natal.birth,'auto',res.name);
+        STATE.rs={};
+        Object.entries(res.rsTexts).forEach(([y,txt])=>{
+          try{addRS(parseChartText(txt),+y);STATE.rs[y]=txt;}catch(e){console.error('RS',y,e);}
+        });
+        saveState();renderRSList();renderAll();
+        st.textContent='importado: '+res.name+' · nascimento '+STATE.natal.birth.slice(0,16).replace('T',' ')+' UTC · Placidus · '+Object.keys(res.rsTexts).length+' revoluções ('+(new Date(BIRTH).getUTCFullYear()+1)+'–'+new Date().getUTCFullYear()+') · seita '+NATAL.sect+'.';
+      })
+      .catch(e=>{st.textContent='erro: '+e.message;});
+  };
+}
 function bindDados(){
   document.getElementById('in-load').onclick=()=>{
     const txt=document.getElementById('in-natal').value;
@@ -144,6 +171,7 @@ function bindDados(){
 }
 function boot(){
   try{bindView();}catch(e){console.error(e);}
+  try{bindImport();}catch(e){console.error(e);}
   try{bindDados();}catch(e){console.error(e);}
   try{renderFontes();}catch(e){console.error(e);}
   try{renderEletivaInit();}catch(e){console.error(e);}
