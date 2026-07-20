@@ -405,13 +405,20 @@ function renderRetro(dateStr,evtTxt){
 function renderRS(){
   if(!NATAL||!Object.keys(RS_DATA).length){$('rs-body').innerHTML=emptyState();return;}
   const sel=$('rs-year');
-  if(!sel.options.length){
-    Object.keys(RS_DATA).sort().forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent='RS '+y+' · '+(+y-1994)+' anos';sel.appendChild(o);});
-    sel.value=Object.keys(RS_DATA).includes(String(rsYearOf(new Date())))?String(rsYearOf(new Date())):(Object.keys(RS_DATA).sort().slice(-1)[0]||'');
+  const by=new Date(BIRTH).getUTCFullYear();
+  const years=Object.keys(RS_DATA).sort();
+  const want=years.join(',');
+  if(sel.dataset.built!==want){ // reconstrói ao trocar o conjunto de anos (novo mapa/RS) — idade pela data real de nascimento
+    const prev=sel.value;
+    sel.innerHTML='';
+    years.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent='RS '+y+' · '+(+y-by)+' anos';sel.appendChild(o);});
+    sel.value=years.includes(prev)?prev:(years.includes(String(rsYearOf(new Date())))?String(rsYearOf(new Date())):(years.slice(-1)[0]||''));
+    sel.dataset.built=want;
     sel.onchange=renderRS;
     $('rs-cmp').onclick=()=>{renderRS(true);};
   }
-  const y=+sel.value, rs=RS_DATA[y], a=y-new Date(BIRTH).getUTCFullYear(), p=profAt(a), f=firdAt(a+0.05);
+  const kick=$('rs-kicker'); if(kick)kick.textContent='retornos solares · '+by+'–'+(new Date().getUTCFullYear()+1);
+  const y=+sel.value, rs=RS_DATA[y], a=y-by, p=profAt(a), f=firdAt(a+0.05);
   const block=(yy,rr,aa)=>{
     const pp=profAt(aa),ff=firdAt(aa+0.05);
     return '<div class="card"><div class="kicker">Revolução Solar '+yy+' · '+aa+' anos · '+ff.major+'/'+ff.sub+' · profecção casa '+pp.houseN+' ('+pp.sign+') · Senhor '+PT_NAME[pp.lordKey]+'</div>'
