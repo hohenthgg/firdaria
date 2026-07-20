@@ -12,15 +12,25 @@ const adiff=(a,b)=>{let d=Math.abs(n360(a)-n360(b))%360;return d>180?360-d:d;};
 const zfmt=L=>{const s=Math.floor(n360(L)/30),d=n360(L)%30;return SG[s]+' '+Math.floor(d)+'°'+String(Math.round((d%1)*60)).padStart(2,'0')+'′';};
 const signOf=L=>Math.floor(n360(L)/30);
 function termLord(L){const s=signOf(L),d=n360(L)%30;for(const [lim,p] of TERMS[s])if(d<lim)return p;return TERMS[s][4][1];}
-function houseByRule(L,cusps){ // casa quadrante + regra dos 5°
-  let h=1;
+/* ---------- regra dos 5°: posição liminar graduada ----------
+   Um planeta a menos de 5° da cúspide seguinte NÃO troca simplesmente de casa:
+   participa fortemente da casa seguinte (main) e conserva a anterior como fundo (back).
+   O peso da casa seguinte cresce com a proximidade da cúspide:
+   0–1° ≈ 0.95–0.88 (quase integral) · 1–3° ≈ 0.88–0.74 (muito forte) ·
+   3–5° ≈ 0.74–0.60 (compartilhada, predominância moderada). Interpolação linear contínua. */
+function liminalOf(L,cusps){
   for(let i2=0;i2<12;i2++){const a=cusps[i2],b=cusps[(i2+1)%12];
     if(a===null||b===null)continue;
     const span=n360(b-a),off=n360(L-a);
-    if(off<span){h=i2+1;
-      if(span-off<5) h=(i2+1)%12+1; // a menos de 5° da próxima cúspide
-      break;}}
-  return h;
+    if(off<span){
+      const dist=span-off;
+      if(dist<5) return {main:(i2+1)%12+1, back:i2+1, w:0.95-(dist/5)*0.35, dist};
+      return {main:i2+1, back:null, w:1, dist:null};
+    }}
+  return {main:1,back:null,w:1,dist:null};
+}
+function houseByRule(L,cusps){ // casa funcional (quadrante + regra dos 5°)
+  return liminalOf(L,cusps).main;
 }
 function dignityOf(k,L,retro,sunLon){
   const s=signOf(L), tags=[];
@@ -58,14 +68,19 @@ function buildChart(parsed, birthISO, sectMode, name){
   const spiritL=n360(sect==='diurno'?asc+sunL-moonL:asc+moonL-sunL);
   // pontos com dignidades
   const pts={}, order=['sun','moon','mercury','venus','mars','jupiter','saturn','nn','sn','fort'];
+  const angBonus=h=>[1,4,7,10].includes(h)?2:[2,5,8,11].includes(h)?1:0;
   order.forEach(k=>{
     const src=parsed.pts[k]; if(!src&&k!=='fort')return;
     const lon=src?src.lon:fortL;
     const retro=src?src.retro:false;
-    const h=houseByRule(lon,cusps);
+    const lim=liminalOf(lon,cusps);
+    const h=lim.main;
     let dig='—';
-    if(PT_NAME[k]){const d=dignityOf(k,lon,retro,sunL);dig=d.tags.join(' · ');STR[k]=Math.max(1,Math.min(8,4+d.pts+( [1,4,7,10].includes(h)?2:[2,5,8,11].includes(h)?1:0 )));}
-    pts[k]={g:PT_GLYPH[k],nm:PT_FULL[k],lon,h,dig,retro,star:''};
+    if(PT_NAME[k]){const d=dignityOf(k,lon,retro,sunL);dig=d.tags.join(' · ');
+      // força acidental ponderada pela posição liminar: casa principal pesa w, a de fundo pesa 1-w
+      const acc=lim.back?Math.round(lim.w*angBonus(lim.main)+(1-lim.w)*angBonus(lim.back)):angBonus(h);
+      STR[k]=Math.max(1,Math.min(8,4+d.pts+acc));}
+    pts[k]={g:PT_GLYPH[k],nm:PT_FULL[k],lon,h,hBack:lim.back,limW:lim.w,limDist:lim.dist,dig,retro,star:''};
   });
   pts.spirit={g:PT_GLYPH.spirit,nm:'Espírito',lon:spiritL,h:houseByRule(spiritL,cusps),dig:'regido por '+PT_NAME[SIGN_RULER[signOf(spiritL)]],star:''};
   // estrelas → anexar aos pontos / ângulos
@@ -222,7 +237,12 @@ function temperTestimonies(){
   add(ELEMQ[sq(NATAL.asc)],3,'Asc em '+SIGNS[signOf(NATAL.asc)]);
   const ru=NATAL.meta.ascRuler;
   add(ELEMQ[sq(NATAL.pts[ru].lon)],3,'Regente do Asc ('+PT_NAME[ru]+') em '+SIGNS[signOf(NATAL.pts[ru].lon)]);
-  Object.keys(PT_NAME).forEach(k=>{const p=NATAL.pts[k];if(p&&p.h===1)add(ELEMQ[sq(p.lon)],3,PT_NAME[k]+' na casa I');});
+  Object.keys(PT_NAME).forEach(k=>{const p=NATAL.pts[k];if(!p)return;
+    // regra dos 5°: peso proporcional à participação na casa I (principal w, fundo 1-w)
+    let w1=0;
+    if(p.h===1)w1=p.limW||1;
+    else if(p.hBack===1)w1=1-(p.limW||1);
+    if(w1>0.05)add(ELEMQ[sq(p.lon)],Math.max(1,Math.round(3*w1)),PT_NAME[k]+' na casa I'+(w1<1?' (liminar, peso '+Math.round(w1*100)+'%)':''));});
   add(ELEMQ[sq(NATAL.pts.moon.lon)],3,'Lua em '+SIGNS[signOf(NATAL.pts.moon.lon)]);
   const elong=n360(NATAL.pts.moon.lon-NATAL.pts.sun.lon);
   const ph=elong<90?['quente','úmido']:elong<180?['quente','seco']:elong<270?['frio','seco']:['frio','úmido'];

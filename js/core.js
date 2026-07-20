@@ -7,7 +7,13 @@ const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','
 const fdate=d=>d.getUTCDate()+' '+MESES[d.getUTCMonth()]+' '+d.getUTCFullYear();
 const fdatetime=d=>fdate(d)+' '+String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+' UTC';
 const ageAt=d=>(d.getTime()-BIRTH)/DAY/365.2425;
-const rsYearOf=d=>{const y=d.getUTCFullYear();return (d.getUTCMonth()>7||(d.getUTCMonth()===7&&d.getUTCDate()>=17))?y:y-1;};
+const rsYearOf=d=>{ // ano da última Revolução Solar antes de d (pelo aniversário real, não fixo)
+  const y=d.getUTCFullYear();
+  if(!BIRTH)return y;
+  const b=new Date(BIRTH);
+  const passed=(d.getUTCMonth()>b.getUTCMonth())||(d.getUTCMonth()===b.getUTCMonth()&&d.getUTCDate()>=b.getUTCDate());
+  return passed?y:y-1;
+};
 
 /* ---------- firdária / profecção ---------- */
 function firdAt(age){
@@ -30,12 +36,8 @@ function profAt(age){
 }
 function ruledHouses(k){return Object.entries(NATAL.rulers).filter(([h,r])=>r===k).map(([h])=>+h);}
 function listRuled(k){const hs=ruledHouses(k);return hs.map(x=>x+'ª ('+HOUSE_SHORT[x]+')').join(' e a ');}
-function houseOfLon(L){ // casa natal (quadrante) de uma longitude
-  const c=NATAL.cusps;
-  for(let i=0;i<12;i++){const a=c[i],b=c[(i+1)%12];
-    const span=n360(b-a), off=n360(L-a);
-    if(off<span) return i+1;}
-  return 1;
+function houseOfLon(L){ // casa natal funcional de uma longitude (mesma regra dos 5° do natal)
+  return houseByRule(L,NATAL.cusps);
 }
 
 /* ---------- efemérides ---------- */
@@ -49,7 +51,7 @@ function speedOf(nm,d){const a=tlon(nm,new Date(d.getTime()-DAY/2)),b=tlon(nm,ne
 /* pontos natais tocáveis: planetas + Asc + MC */
 function natalPoints(){
   if(!NATAL)return[];
-  const pts=Object.entries(NATAL.pts).filter(([k])=>k!=='spirit').map(([k,p])=>({k,g:p.g,nm:p.nm,lon:p.lon,h:p.h}));
+  const pts=Object.entries(NATAL.pts).filter(([k])=>k!=='spirit').map(([k,p])=>({k,g:p.g,nm:p.nm,lon:p.lon,h:p.h,hBack:p.hBack,limW:p.limW}));
   pts.push({k:'asc',g:'Asc',nm:'Ascendente',lon:NATAL.asc,h:1});
   pts.push({k:'mc',g:'MC',nm:'Meio do Céu',lon:NATAL.mc,h:10});
   return pts;
@@ -154,6 +156,7 @@ function orient(hit,d){
   const housesTxt=houses.length?houses.map(h=>h+'ª ('+HOUSE_SHORT[h]+')').join(' e '):null;
   const tech=PT_NAME[hit.tKey]+' a '+zfmt(hit.lon)+' em '+({conj:'conjunção',harm:hit.ang===60?'sextil':'trígono',tens:hit.ang===90?'quadratura':'oposição'})[hit.cls]+' com '+hit.np.nm+' natal ('+zfmt(hit.np.lon)+', casa '+hit.np.h+'), orbe '+hit.orb.toFixed(1)+'°.';
   let lit=PT_NAME[hit.tKey]+' '+({harm:'facilita',conj:'ativa',tens:'tensiona'})[hit.cls]+' '+PL_EFFECT[hit.tKey].split(',')[0]+' sobre '+hit.np.nm+' natal — '+NATAL.houseTheme[hit.np.h]+'.';
+  if(hit.np.hBack) lit+=' Ponto liminar (regra dos 5°): o efeito visível aparece na casa '+hit.np.h+', mas parte do processo corre na casa '+hit.np.hBack+' ('+NATAL.houseTheme[hit.np.hBack]+').';
   if(housesTxt) lit+=' Como '+hit.np.nm+' rege a '+housesTxt+', esses assuntos também são afetados.';
   if(NATAL.loop.includes(hit.nk)) lit+=' O ponto pertence ao anel de recepções ☾→♄→♃→♂: efeito encadeado nas quatro casas do anel.';
   const fav=(FAVOR[hit.cls][hit.tKey]||FAVOR[hit.cls]['sun']||[]).slice();
@@ -229,7 +232,8 @@ function searchWindows(act,startDate,endDate,h0,h1,stepH){
 function synthYear(age,p,f){
   const H=p.houseN,hs=HOUSE_SIG[H],lord=NATAL.pts[p.lordKey];
   const sub=f.subKey&&NATAL.pts[f.subKey]?f.subKey:null;
-  let t='Ativa a <b>casa '+H+'</b> — '+hs.q+': <b>'+hs.s+'</b>. Senhor do Ano <b>'+PT_NAME[p.lordKey]+'</b> ('+lord.dig+', casa '+lord.h+' natal), regente da '+listRuled(p.lordKey)+': estes assuntos são arrastados para dentro do ano.';
+  const limNote=lord.hBack?(' — posição liminar: fundo na casa '+lord.hBack+', manifestação na '+lord.h+' (regra dos 5°, peso '+Math.round((lord.limW||1)*100)+'%)'):'';
+  let t='Ativa a <b>casa '+H+'</b> — '+hs.q+': <b>'+hs.s+'</b>. Senhor do Ano <b>'+PT_NAME[p.lordKey]+'</b> ('+lord.dig+', casa '+lord.h+' natal'+limNote+'), regente da '+listRuled(p.lordKey)+': estes assuntos são arrastados para dentro do ano.';
   if(sub&&sub!==p.lordKey){t+=' Na sub-firdária de <b>'+PT_NAME[sub]+'</b>'+(ruledHouses(sub).length?(' — que rege a '+listRuled(sub)+' —'):'')+' esses temas entram no jogo da casa '+H+'.';}
   const mal=[6,8,12].includes(H);
   t+=mal?' <b>Casa maléfica</b>: espere resistência, perda ou medo nos temas acima; o proveito vem por método e pelas recepções que fiam o senhor.'

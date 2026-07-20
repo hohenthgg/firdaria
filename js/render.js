@@ -35,6 +35,12 @@ document.addEventListener('click',async e=>{
     box.innerHTML=renderSources(await sourcesFor(key));
   }
 });
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-loadsrc]'); if(!b)return;
+  const k=b.dataset.loadsrc, box=b.closest('.isrc');
+  box.innerHTML='<span class="mono">consultando corpus…</span>';
+  box.innerHTML=renderSources(await sourcesFor('pl:'+k));
+});
 async function sourcesFor(key){
   await RAG.load();
   const k=key.split(':')[1]||key;
@@ -115,18 +121,24 @@ function renderNatal(){
     +(M.finals.length?(' Dispositor(es) final(is): '+M.finals.map(f=>PT_NAME[f]).join(', ')+'.'):'')
     +(M.loops.length?(' Anel fechado de dispositores: '+M.loops[0].map(k=>PT_GLYPH[k]).join('→')+'→'+PT_GLYPH[M.loops[0][0]]+'.'):'')+'</p>';
   html+='<h3>Posições, dignidades, termos e estrelas</h3><table><tr><th>Ponto</th><th>Posição</th><th>Estado</th><th>Estrela (conjunções ≤ 1°)</th></tr>'+rows+stars+'</table>';
-  html+='<h3>Síntese literal por planeta — cinco camadas</h3>';
+  html+='<h3>Síntese por planeta — seis partes auditáveis</h3>';
   Object.keys(PT_NAME).forEach(k=>{
     const p=NATAL.pts[k]; if(!p)return;
-    const ru=listRuled(k)||'—';
-    html+='<div class="card">'
-      +'<div class="kicker">'+p.g+' '+p.nm+' · '+zfmt(p.lon)+' · casa '+p.h+'</div>'
-      +layerBlock('pl:'+k,{
-        frase:'<b>'+p.nm+'</b>: '+ (OLAVO_PL[k]||'').split(':')[1].split('—')[0].trim()+'.',
-        resumo:OLAVO_PL[k]+' No natal: '+p.dig+'. Rege a '+ru+'.',
-        manif:'Manifestações concretas prováveis: '+manifestFor(k)+'.',
-        fund:'Fundamento: posição '+zfmt(p.lon)+', casa '+p.h+' ('+HOUSE_SIG[p.h].q+'). Dignidades: '+p.dig+'. Aspectos: '+(NATAL_ASP[k]||[]).join(' · ')+'. '+(p.star&&p.star!=='—'?('Estrela: '+p.star):'')+' Regras: significação da casa (Lilly/Bonatti), regência interna, recepções (Abu Mashar), corpus Planetas nas Casas (peso máximo).',
-      })
+    const it=interpPlanet(k); if(!it)return;
+    const limTag=p.hBack?('<span class="tag gold">liminar: casa '+p.hBack+' → '+p.h+' · '+Math.round((p.limW||1)*100)+'%</span>'):'';
+    html+='<div class="card pcard">'
+      +'<div class="p-head"><span class="p-glyph">'+p.g+'</span><div><div class="p-name">'+p.nm+'</div><div class="p-pos mono">'+zfmt(p.lon)+' · casa '+p.h+(p.hBack?(' <span style="color:var(--dim2)">(fundo: '+p.hBack+')</span>'):'')+' · força '+(STR[k]||4)+'/8</div></div>'+limTag+'</div>'
+      +'<p class="p-frase">'+interpFrase(k)+'</p>'
+      +'<div class="isec"><span class="ik">1 · fator técnico</span><p>'+it.tec+'</p></div>'
+      +'<div class="isec"><span class="ik">2 · função</span><p>'+it.fun+'</p></div>'
+      +'<div class="isec"><span class="ik">3 · efeito estrutural</span><p>'+it.efe+'</p></div>'
+      +'<div class="isec"><span class="ik">4 · manifestações possíveis</span><ul class="ilist">'+it.manif.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>'
+      +'<div class="isec"><span class="ik">5 · expressão construtiva / problemática</span>'
+        +'<div class="grid2"><div class="iexp alta"><span class="mono">em expressão construtiva</span><ul class="ilist">'+it.alta.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>'
+        +'<div class="iexp baixa"><span class="mono">em expressão problemática · sob aflição</span><ul class="ilist">'+it.baixa.map(m=>'<li>'+m+'</li>').join('')+'</ul></div></div></div>'
+      +'<details class="isec ifund"><summary class="ik" style="cursor:pointer">6 · fundamento visível — o que produziu este texto</summary><p class="mono" style="font-size:.68rem;line-height:1.7">'+it.fund+'</p>'
+        +'<div class="isrc" data-srcfor="'+k+'"><button class="btn" data-loadsrc="'+k+'">consultar fontes do corpus</button></div>'
+      +'</details>'
       +'</div>';
   });
   html+='<div class="card"><div class="kicker">Lote do Espírito — o daimon</div><p style="font-size:.86rem">'+CONTEUDO.daimon+'</p></div>';
@@ -177,7 +189,11 @@ function drawCord(){
     {y:74,h:14,label:'senhor'},{y:92,h:12,label:'revoluções'},{y:108,h:26,label:'trânsitos lentos'},
     {y:138,h:26,label:'ativações'},{y:168,h:18,label:'eventos'}];
   let s='';
-  bands.forEach(b=>{s+='<text x="4" y="'+(b.y+b.h/2+3)+'" font-size="8" font-family="IBM Plex Mono" fill="#66707c">'+b.label.toUpperCase()+'</text>';});
+  // trilhas de fundo alternadas + rótulos em versalete espaçado
+  bands.forEach((b,bi)=>{
+    s+='<rect x="88" y="'+(b.y-1)+'" width="'+(W-96)+'" height="'+(b.h+2)+'" fill="'+(bi%2?'rgba(233,227,211,.015)':'rgba(233,227,211,.032)')+'" rx="2"/>';
+    s+='<text x="4" y="'+(b.y+b.h/2+3)+'" font-size="7.5" font-family="IBM Plex Mono" letter-spacing="2" fill="#6f6758">'+b.label.toUpperCase()+'</text>';
+  });
   const L=90; // margem esquerda
   const XX=t=>L+((t-t0)/(t1-t0))*(W-L-8);
   // 1-2: firdária maior e sub
@@ -185,8 +201,8 @@ function drawCord(){
   FIRD.forEach(([k,nm,len])=>{
     const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;age0+=len;
     if(b<t0||a>t1)return;
-    s+='<rect x="'+XX(Math.max(a,t0))+'" y="8" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="22" fill="'+(FIRD_COLORS[nm]||'#555')+'" opacity=".82"/>';
-    if(XX(Math.min(b,t1))-XX(Math.max(a,t0))>34) s+='<text x="'+(XX(Math.max(a,t0))+4)+'" y="23" font-size="9" fill="#0a0e14" font-family="Inter">'+nm+'</text>';
+    s+='<rect x="'+XX(Math.max(a,t0))+'" y="8" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="22" rx="2" fill="'+(FIRD_COLORS[nm]||'#555')+'" opacity=".82"/>';
+    if(XX(Math.min(b,t1))-XX(Math.max(a,t0))>34) s+='<text x="'+(XX(Math.max(a,t0))+4)+'" y="23" font-size="9" fill="#0b0a08" font-family="Inter">'+nm+'</text>';
   });
   // subfirdária: amostrar limites (avanço garantido: em bordas exatas de sub-período
   // firdAt() pode devolver o sub que TERMINA em `a`, o que travava o laço e estourava a string)
@@ -195,7 +211,7 @@ function drawCord(){
     if(!st){a+=0.02;continue;}
     const enAge=(en-BIRTH)/DAY/365.2425;
     if(!(en<t0||st>t1))
-      s+='<rect x="'+XX(Math.max(st,t0))+'" y="34" width="'+Math.max(1,XX(Math.min(en,t1))-XX(Math.max(st,t0)))+'" height="16" fill="'+(FIRD_COLORS[f.sub]||'#555')+'" opacity=".55" stroke="#0a0e14" stroke-width=".5"/>';
+      s+='<rect x="'+XX(Math.max(st,t0))+'" y="34" width="'+Math.max(1,XX(Math.min(en,t1))-XX(Math.max(st,t0)))+'" height="16" rx="2" fill="'+(FIRD_COLORS[f.sub]||'#555')+'" opacity=".55" stroke="#0b0a08" stroke-width=".5"/>';
     a=enAge>a+1e-4?enAge:a+0.02; // nunca retrocede
   }
   // 3-4-5: profecção / senhor / RS
@@ -204,25 +220,25 @@ function drawCord(){
     if(b<t0||a>t1)continue;
     const p=profAt(yr);
     const mal=[6,8,12].includes(p.houseN);
-    s+='<rect x="'+XX(Math.max(a,t0))+'" y="54" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="16" fill="'+(mal?'#b0564a':'#33415a')+'" opacity="'+(mal?'.5':'.4')+'" stroke="#0a0e14" stroke-width=".5"/>';
-    if(XX(b)-XX(a)>26)s+='<text x="'+(XX(Math.max(a,t0))+3)+'" y="65" font-size="8" font-family="IBM Plex Mono" fill="#9aa3ad">'+p.houseN+'</text>';
-    s+='<rect x="'+XX(Math.max(a,t0))+'" y="74" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="14" fill="'+(FIRD_COLORS[PT_NAME[p.lordKey]]||'#555')+'" opacity=".6" stroke="#0a0e14" stroke-width=".5"/>';
+    s+='<rect x="'+XX(Math.max(a,t0))+'" y="54" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="16" rx="2" fill="'+(mal?'#b0564a':'#3d3526')+'" opacity="'+(mal?'.5':'.4')+'" stroke="#0b0a08" stroke-width=".5"/>';
+    if(XX(b)-XX(a)>26)s+='<text x="'+(XX(Math.max(a,t0))+3)+'" y="65" font-size="8" font-family="IBM Plex Mono" fill="#a59c89">'+p.houseN+'</text>';
+    s+='<rect x="'+XX(Math.max(a,t0))+'" y="74" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="14" rx="2" fill="'+(FIRD_COLORS[PT_NAME[p.lordKey]]||'#555')+'" opacity=".6" stroke="#0b0a08" stroke-width=".5"/>';
     const y1=new Date(BIRTH).getUTCFullYear()+yr;
-    if(RS_DATA[y1]) s+='<circle cx="'+XX(a)+'" cy="98" r="3.4" fill="'+(ACTIVE_PROM&&PROMESSAS.find(p2=>p2.id===ACTIVE_PROM).anos.includes(y1)?'#5f9e7f':'#6b93b8')+'"/>';
+    if(RS_DATA[y1]) s+='<circle cx="'+XX(a)+'" cy="98" r="3.4" fill="'+(ACTIVE_PROM&&PROMESSAS.find(p2=>p2.id===ACTIVE_PROM).anos.includes(y1)?'#6f9e83':'#8496ab')+'"/>';
     if(ACTIVE_PROM&&PROMESSAS.find(p2=>p2.id===ACTIVE_PROM).anos.includes(y1))
-      s+='<rect x="'+XX(Math.max(a,t0))+'" y="4" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="182" fill="none" stroke="#5f9e7f" stroke-width="1" opacity=".7"/>';
+      s+='<rect x="'+XX(Math.max(a,t0))+'" y="4" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="182" fill="none" stroke="#6f9e83" stroke-width="1" opacity=".7"/>';
   }
   // 6: trânsitos lentos (Júp/Sat por signo) — amostragem adaptada
   if(ZOOM!=='dia'){
     const stepD=ZOOM==='vida'?120:ZOOM==='decada'?30:ZOOM==='ano'?7:1;
-    [['Jupiter','#c9a86a',110],['Saturn','#9aa3ad',122]].forEach(([bn,col,yy])=>{
+    [['Jupiter','#c9a86a',110],['Saturn','#a59c89',122]].forEach(([bn,col,yy])=>{
       let prevSign=null,segStart=t0;
       for(let t=t0;t<=t1;t+=stepD*DAY){
         const sg=Math.floor(tlon(bn,new Date(t))/30);
         if(prevSign===null){prevSign=sg;segStart=t;}
         else if(sg!==prevSign||t+stepD*DAY>t1){
-          s+='<rect x="'+XX(segStart)+'" y="'+yy+'" width="'+Math.max(1,XX(t)-XX(segStart))+'" height="10" fill="'+col+'" opacity=".35" stroke="#0a0e14" stroke-width=".5"/>';
-          if(XX(t)-XX(segStart)>24)s+='<text x="'+(XX(segStart)+2)+'" y="'+(yy+8)+'" font-size="7.5" font-family="IBM Plex Mono" fill="#e8e4d8" opacity=".7">'+SG[prevSign]+'</text>';
+          s+='<rect x="'+XX(segStart)+'" y="'+yy+'" width="'+Math.max(1,XX(t)-XX(segStart))+'" height="10" rx="2" fill="'+col+'" opacity=".35" stroke="#0b0a08" stroke-width=".5"/>';
+          if(XX(t)-XX(segStart)>24)s+='<text x="'+(XX(segStart)+2)+'" y="'+(yy+8)+'" font-size="7.5" font-family="IBM Plex Mono" fill="#e9e3d3" opacity=".7">'+SG[prevSign]+'</text>';
           prevSign=sg;segStart=t;
         }
       }
@@ -234,7 +250,7 @@ function drawCord(){
     for(let t=t0;t<=t1;t+=step*DAY){
       const top=scoredHits(new Date(t),5);
       if(top.length){const h=top[0];
-        s+='<circle cx="'+XX(t)+'" cy="150" r="'+Math.min(6,2+h.rel.score/3)+'" fill="'+(h.cls==='tens'?'#b0564a':h.cls==='harm'?'#5f9e7f':'#c9a86a')+'" opacity=".8"><title>'+fdate(new Date(t))+': '+h.tg+' '+h.gl+' '+h.np.g+' ('+h.rel.tier+')</title></circle>';}
+        s+='<circle cx="'+XX(t)+'" cy="150" r="'+Math.min(6,2+h.rel.score/3)+'" fill="'+(h.cls==='tens'?'#b0564a':h.cls==='harm'?'#6f9e83':'#c9a86a')+'" opacity=".8"><title>'+fdate(new Date(t))+': '+h.tg+' '+h.gl+' '+h.np.g+' ('+h.rel.tier+')</title></circle>';}
     }
   }
   // 8: eventos pessoais
@@ -242,20 +258,23 @@ function drawCord(){
     const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
     s+='<circle cx="'+XX(t)+'" cy="177" r="4" fill="#8878a8"><title>'+esc(ev.txt)+' ('+ev.d+')</title></circle>';
   });
-  // cursor + pino A
-  s+='<line x1="'+XX(CURSOR.getTime())+'" y1="2" x2="'+XX(CURSOR.getTime())+'" y2="190" stroke="#e8e4d8" stroke-width="1.4"/>';
-  if(PINNED) s+='<line x1="'+XX(PINNED.getTime())+'" y1="2" x2="'+XX(PINNED.getTime())+'" y2="190" stroke="#c9a86a" stroke-width="1.2" stroke-dasharray="4 3"/>';
+  // cursor (agulha dourada com losango) + pino A
+  const cx=XX(CURSOR.getTime());
+  s+='<line x1="'+cx+'" y1="6" x2="'+cx+'" y2="190" stroke="#c9a86a" stroke-width="1.1"/>'
+    +'<path d="M '+cx+' 0 l 4 6 l -4 6 l -4 -6 z" fill="#c9a86a"/>'
+    +'<line x1="'+cx+'" y1="6" x2="'+cx+'" y2="190" stroke="rgba(233,227,211,.25)" stroke-width="3.5"/>';
+  if(PINNED) s+='<line x1="'+XX(PINNED.getTime())+'" y1="2" x2="'+XX(PINNED.getTime())+'" y2="190" stroke="#e9e3d3" stroke-width="1" stroke-dasharray="3 4"/>';
   // régua
   const years=(t1-t0)/DAY/365.25;
   const tick=years>30?10:years>8?2:years>1.5?0.5:years>0.1?1/12:1/365;
   for(let yy=Math.ceil((t0-BIRTH)/DAY/365.2425/tick)*tick;;yy+=tick){
     const t=BIRTH+yy*365.2425*DAY;if(t>t1)break;
-    s+='<line x1="'+XX(t)+'" y1="192" x2="'+XX(t)+'" y2="198" stroke="#33415a"/>';
+    s+='<line x1="'+XX(t)+'" y1="192" x2="'+XX(t)+'" y2="198" stroke="#3d3526"/>';
     const d=new Date(t);
     const lbl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
-    s+='<text x="'+XX(t)+'" y="210" font-size="8" text-anchor="middle" font-family="IBM Plex Mono" fill="#66707c">'+lbl+'</text>';
+    s+='<text x="'+XX(t)+'" y="210" font-size="8" text-anchor="middle" font-family="IBM Plex Mono" fill="#6f6758">'+lbl+'</text>';
   }
-  s+='<text x="'+(W-6)+'" y="232" font-size="8" text-anchor="end" font-family="IBM Plex Mono" fill="#66707c">arraste para mover o cursor · zoom: '+ZOOM+'</text>';
+  s+='<text x="'+(W-6)+'" y="232" font-size="8" text-anchor="end" font-family="IBM Plex Mono" fill="#6f6758">arraste para mover o cursor · zoom: '+ZOOM+'</text>';
   svg.innerHTML=s;
 }
 function cordDrag(){
@@ -277,11 +296,11 @@ function mandala(d){
   const age=ageAt(d);
   const rot=(Math.floor(Math.max(0,age))%12)*30;
   const P=(lon,r)=>{const a=(180-(n360(lon)-NATAL.asc)-rot)*Math.PI/180;return [C+r*Math.cos(a),C-r*Math.sin(a)];};
-  let s='<circle cx="'+C+'" cy="'+C+'" r="'+R1+'" fill="none" stroke="#33415a"/>'
-    +'<circle cx="'+C+'" cy="'+C+'" r="'+R2+'" fill="none" stroke="#232e3f"/>'
-    +'<circle cx="'+C+'" cy="'+C+'" r="'+R3+'" fill="none" stroke="#232e3f"/>';
+  let s='<circle cx="'+C+'" cy="'+C+'" r="'+R1+'" fill="none" stroke="#3d3526"/>'
+    +'<circle cx="'+C+'" cy="'+C+'" r="'+R2+'" fill="none" stroke="#292319"/>'
+    +'<circle cx="'+C+'" cy="'+C+'" r="'+R3+'" fill="none" stroke="#292319"/>';
   for(let i=0;i<12;i++){const [x1,y1]=P(i*30,R3),[x2,y2]=P(i*30,R1);
-    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#232e3f"/>';
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#292319"/>';
     const [tx,ty]=P(i*30+15,(R1+R2)/2);
     s+='<text x="'+tx+'" y="'+(ty+3)+'" text-anchor="middle" font-size="8.5" font-family="IBM Plex Mono" letter-spacing="1" fill="#a88b52">'+SG[i]+'</text>';}
   Object.entries(NATAL.pts).forEach(([k,p])=>{if(k==='spirit')return;const [x,y]=P(p.lon,(R2+R3)/2-5);
@@ -290,11 +309,11 @@ function mandala(d){
   TB.forEach(([bn,key])=>{TPOS[key]=tlon(bn,d);});
   hits.slice(0,10).forEach(h=>{if(h.nk==='asc'||h.nk==='mc')return;
     const [x1,y1]=P(TPOS[h.tKey],R4),[x2,y2]=P(h.np.lon,(R2+R3)/2-12);
-    const col=h.cls==='harm'?'#5f9e7f':h.cls==='tens'?'#b0564a':'#c9a86a';
+    const col=h.cls==='harm'?'#6f9e83':h.cls==='tens'?'#b0564a':'#c9a86a';
     s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width=".9" opacity="'+(0.75-h.orb*0.07)+'"/>';});
   Object.entries(TPOS).forEach(([key,Lg])=>{const [x,y]=P(Lg,R4);const g=TB.find(t=>t[1]===key)[2];
-    s+='<circle cx="'+x+'" cy="'+y+'" r="1.8" fill="#e8e4d8"/><text x="'+x+'" y="'+(y-6)+'" text-anchor="middle" font-size="11" fill="#e8e4d8">'+g+'</text>';});
-  s+='<text x="6" y="'+(C+3)+'" font-size="8" font-family="IBM Plex Mono" fill="#66707c">ASC·PROF</text>';
+    s+='<circle cx="'+x+'" cy="'+y+'" r="1.8" fill="#e9e3d3"/><text x="'+x+'" y="'+(y-6)+'" text-anchor="middle" font-size="11" fill="#e9e3d3">'+g+'</text>';});
+  s+='<text x="6" y="'+(C+3)+'" font-size="8" font-family="IBM Plex Mono" fill="#6f6758">ASC·PROF</text>';
   svg.innerHTML=s;
 }
 function syncTempo(){
@@ -411,7 +430,7 @@ function renderRS(){
   if(sel.dataset.built!==want){ // reconstrói ao trocar o conjunto de anos (novo mapa/RS) — idade pela data real de nascimento
     const prev=sel.value;
     sel.innerHTML='';
-    years.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent='RS '+y+' · '+(+y-by)+' anos';sel.appendChild(o);});
+    years.forEach(y=>{const o=document.createElement('option');const a=+y-by;o.value=y;o.textContent='RS '+y+' · '+a+(a===1?' ano':' anos');sel.appendChild(o);});
     sel.value=years.includes(prev)?prev:(years.includes(String(rsYearOf(new Date())))?String(rsYearOf(new Date())):(years.slice(-1)[0]||''));
     sel.dataset.built=want;
     sel.onchange=renderRS;

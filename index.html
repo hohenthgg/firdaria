@@ -5,28 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AstroGraph — motor interpretativo tradicional</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cinzel:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="js/vendor/astronomy.browser.min.js"></script>
 <style>
-/* ============ ATLAS ASTRONÔMICO — tokens ============ */
+/* ============ MUSEU — tokens (clássico, escuro, editorial) ============ */
 :root{
-  --bg:#0a0e14;            /* azul-negro */
-  --bg2:#0d1219;
-  --panel:#101722;         /* grafite azulado */
-  --panel2:#131b28;
-  --line:#232e3f;
-  --line2:#33415a;
-  --ivory:#e8e4d8;         /* marfim */
-  --ivory2:#f2efe6;
-  --dim:#9aa3ad;
-  --dim2:#66707c;
+  --bg:#0b0a08;            /* preto profundo aquecido */
+  --bg2:#0e0c09;
+  --panel:#131009;         /* placa escura */
+  --panel2:#171310;
+  --line:#292319;          /* fio de moldura */
+  --line2:#3d3526;
+  --ivory:#e9e3d3;         /* osso / mármore */
+  --ivory2:#f4efe2;
+  --dim:#a59c89;
+  --dim2:#6f6758;
   --gold:#c9a86a;          /* dourado fosco */
-  --gold2:#a88b52;
-  --green:#5f9e7f;         /* verde discreto */
-  --red:#b0564a;           /* vermelho queimado */
-  --blue:#6b93b8;          /* azul frio */
+  --gold2:#a8894e;
+  --green:#6f9e83;         /* verde pátina */
+  --red:#b0564a;           /* terracota queimada */
+  --blue:#8496ab;          /* azul de gravura */
   --violet:#8878a8;        /* violeta de apoio */
   --serif:'Cormorant Garamond',Georgia,serif;
+  --disp:'Cinzel','Cormorant Garamond',Georgia,serif;
   --sans:Inter,system-ui,sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
   color-scheme:dark;
@@ -34,51 +35,84 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ivory);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+/* luz de vitrine + veios discretos */
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse 70% 45% at 78% -8%, rgba(107,147,184,.07), transparent 60%),
-             radial-gradient(ellipse 60% 40% at 8% 108%, rgba(201,168,106,.05), transparent 60%)}
+  background:radial-gradient(ellipse 75% 50% at 70% -10%, rgba(201,168,106,.06), transparent 60%),
+             radial-gradient(ellipse 55% 45% at 5% 110%, rgba(201,168,106,.045), transparent 60%),
+             linear-gradient(160deg, transparent 55%, rgba(233,227,211,.012) 70%, transparent 85%)}
+/* grão de papel/pedra sobre tudo */
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 a{color:var(--blue)}
 .app{display:flex;min-height:100vh;position:relative;z-index:1}
 /* ---- sidebar ---- */
-.side{width:224px;flex:0 0 224px;border-right:1px solid var(--line);background:var(--bg2);
-  padding:22px 12px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
-.brand{padding:0 8px 16px;border-bottom:1px solid var(--line)}
-.brand h1{font-family:var(--serif);font-size:1.3rem;font-weight:600;letter-spacing:.02em}
+.side{width:232px;flex:0 0 232px;border-right:1px solid var(--line);background:var(--bg2);
+  padding:26px 12px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.brand{padding:0 8px 18px;border-bottom:1px solid var(--line)}
+.brand h1{font-family:var(--disp);font-size:1.22rem;font-weight:500;letter-spacing:.14em}
 .brand h1 em{color:var(--gold);font-style:normal}
-.brand .sub{font-family:var(--mono);font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim2);margin-top:5px}
-nav{padding:12px 0;flex:1;overflow-y:auto}
+.brand .sub{font-family:var(--mono);font-size:.54rem;letter-spacing:.22em;text-transform:uppercase;color:var(--dim2);margin-top:6px}
+nav{padding:14px 0;flex:1;overflow-y:auto}
 nav button{display:block;width:100%;text-align:left;background:none;border:none;border-left:2px solid transparent;
-  color:var(--dim);font-family:var(--sans);font-size:.84rem;font-weight:500;padding:9px 14px;cursor:pointer;letter-spacing:.01em}
+  color:var(--dim);font-family:var(--serif);font-size:1rem;font-weight:500;padding:9px 14px;cursor:pointer;letter-spacing:.045em}
 nav button:hover{color:var(--ivory)}
-nav button.on{color:var(--gold);border-left-color:var(--gold);background:linear-gradient(90deg,rgba(201,168,106,.07),transparent)}
+nav button.on{color:var(--gold);border-left-color:var(--gold);background:linear-gradient(90deg,rgba(201,168,106,.08),transparent)}
 .side .foot{padding:12px 8px 0;border-top:1px solid var(--line)}
-.btn{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;background:var(--panel);
-  border:1px solid var(--line);color:var(--dim);padding:8px 12px;cursor:pointer;margin:3px 4px 3px 0;border-radius:3px}
+.btn{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:var(--panel);
+  border:1px solid var(--line2);color:var(--dim);padding:8px 12px;cursor:pointer;margin:3px 4px 3px 0;border-radius:2px}
 .btn:hover{color:var(--gold);border-color:var(--gold2)}
-.btn.primary{color:var(--bg);background:var(--gold);border-color:var(--gold);font-weight:500}
+.btn.primary{color:var(--bg);background:linear-gradient(180deg,#d6b87c,var(--gold));border-color:var(--gold2);font-weight:500}
 .btn.primary:hover{background:var(--ivory2)}
 /* ---- main ---- */
 main{flex:1;min-width:0;padding:38px 46px 90px;max-width:1180px}
 .panel{display:none}.panel.on{display:block;animation:fade .3s ease}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-h2{font-family:var(--serif);font-size:1.9rem;font-weight:500;line-height:1.15;margin-bottom:4px;color:var(--ivory2)}
-h2 span{color:var(--dim2);font-size:1rem;font-style:italic;font-weight:400}
-h3{font-family:var(--serif);font-size:1.22rem;font-weight:600;color:var(--gold);margin:26px 0 10px}
-h4{font-size:.9rem;font-weight:600;color:var(--ivory2);margin:14px 0 6px}
-.kicker{font-family:var(--mono);font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
+h2{font-family:var(--disp);font-size:2.3rem;font-weight:400;line-height:1.12;margin:2px 0 6px;color:var(--ivory2);letter-spacing:.045em}
+h2 span{color:var(--dim2);font-size:.95rem;font-style:italic;font-weight:400;font-family:var(--serif);letter-spacing:.02em;text-transform:none}
+h2::after{content:"";display:block;width:64px;height:1px;background:linear-gradient(90deg,var(--gold2),transparent);margin-top:10px}
+h3{font-family:var(--serif);font-size:1.3rem;font-weight:600;color:var(--gold);margin:30px 0 10px;letter-spacing:.02em}
+h4{font-family:var(--serif);font-size:1.05rem;font-weight:600;color:var(--ivory2);margin:14px 0 6px;letter-spacing:.03em}
+.kicker{font-family:var(--mono);font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold2);margin-bottom:8px}
 p{margin-bottom:10px;color:var(--dim)}
-p.lede{font-family:var(--serif);font-size:1.12rem;color:var(--ivory);line-height:1.55}
+p.lede{font-family:var(--serif);font-size:1.16rem;color:var(--ivory);line-height:1.6}
 .mono{font-family:var(--mono);font-size:.78rem;color:var(--dim)}
-.card{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:16px 18px;margin:10px 0}
+/* placa de museu: moldura dupla com fio interno */
+.card{border:1px solid var(--line);background:linear-gradient(175deg,var(--panel2),var(--panel) 45%);border-radius:3px;
+  padding:18px 20px;margin:12px 0;box-shadow:inset 0 0 0 1px rgba(233,227,211,.025), 0 1px 0 rgba(0,0,0,.5);position:relative}
 .card.flat{background:transparent}
+/* ---- cards natais: placa museológica, composição assimétrica ---- */
+.pcard{padding:0;overflow:hidden}
+.pcard .p-head{display:flex;align-items:center;gap:16px;padding:16px 20px 14px;border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg,rgba(201,168,106,.05),transparent 55%)}
+.pcard .p-glyph{font-family:var(--serif);font-size:2.5rem;line-height:1;color:var(--gold);width:58px;height:58px;flex:0 0 58px;
+  display:flex;align-items:center;justify-content:center;border:1px solid var(--line2);border-radius:50%;
+  box-shadow:inset 0 0 0 3px var(--panel), inset 0 0 0 4px var(--line)}
+.pcard .p-name{font-family:var(--disp);font-size:1.35rem;letter-spacing:.1em;color:var(--ivory2)}
+.pcard .p-pos{font-size:.66rem;color:var(--dim2);margin-top:2px}
+.pcard .p-head .tag{margin-left:auto}
+.pcard .p-frase{font-family:var(--serif);font-size:1.08rem;font-style:italic;color:var(--ivory);padding:14px 20px 4px;margin:0}
+.isec{padding:10px 20px;border-top:1px dotted var(--line)}
+.isec:first-of-type{border-top:none}
+.isec p{font-size:.85rem;margin:4px 0 2px;line-height:1.65}
+.ik{display:block;font-family:var(--mono);font-size:.56rem;letter-spacing:.26em;text-transform:uppercase;color:var(--gold2)}
+.ilist{list-style:none;margin:6px 0 2px;padding:0}
+.ilist li{font-size:.84rem;color:var(--dim);padding:3px 0 3px 18px;position:relative;line-height:1.55}
+.ilist li::before{content:"—";position:absolute;left:0;color:var(--gold2)}
+.ilist li i{color:var(--gold);font-style:normal;font-family:var(--serif)}
+.iexp{border:1px solid var(--line);border-radius:3px;padding:10px 12px;background:var(--bg2)}
+.iexp>.mono{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase}
+.iexp.alta>.mono{color:var(--green)} .iexp.baixa>.mono{color:var(--red)}
+.iexp.alta{border-left:2px solid var(--green)} .iexp.baixa{border-left:2px solid var(--red)}
+.ifund{background:var(--bg2)}
+.isrc{margin-top:8px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 body.is-mobile .grid2{grid-template-columns:1fr}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 body.is-mobile .grid3{grid-template-columns:1fr}
 table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
-th{font-family:var(--mono);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);text-align:left;padding:7px 9px;border-bottom:1px solid var(--line2);font-weight:400}
-td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--dim)}
-td.g{color:var(--gold);white-space:nowrap;font-family:var(--serif);font-size:.95rem}
+th{font-family:var(--mono);font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);text-align:left;padding:8px 9px;border-bottom:1px solid var(--line2);font-weight:400}
+td{padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--dim)}
+td.g{color:var(--gold);white-space:nowrap;font-family:var(--serif);font-size:1rem}
 td.m{font-family:var(--mono);font-size:.7rem;color:var(--dim2);white-space:nowrap}
 td b{color:var(--ivory)}
 .tag{display:inline-block;font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;
@@ -158,15 +192,6 @@ body.is-mobile .yrgrid{grid-template-columns:1fr}
 .rep-sec:last-child{border-bottom:none}
 .rep-sec b{color:var(--ivory)} .rep-sec i{color:var(--gold)}
 .rep-k{display:block;font-family:var(--mono);font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold2);margin-bottom:3px}
-/* grafo 3D */
-#g3d-wrap{position:relative;border:1px solid var(--line);border-radius:6px;background:var(--bg2);overflow:hidden}
-#g3d{width:100%;height:520px;display:block}
-#g3d-panel{position:absolute;top:0;right:0;bottom:0;width:min(340px,86%);background:rgba(13,18,25,.96);border-left:1px solid var(--line2);
-  padding:16px;overflow-y:auto;transform:translateX(105%);transition:.25s;font-size:.8rem}
-#g3d-panel.on{transform:none}
-#g3d-hud{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:5px;max-width:70%}
-#g3d-legend{position:absolute;left:10px;bottom:10px;font-family:var(--mono);font-size:.56rem;color:var(--dim2);line-height:1.7}
-#g3d-legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:5px}
 /* temperamento */
 .qmap{position:relative;border:1px solid var(--line);border-radius:6px;background:var(--bg2);aspect-ratio:1.6;max-width:620px}
 .qmap .ax{position:absolute;background:var(--line)} .qmap .axh{left:0;right:0;top:50%;height:1px} .qmap .axv{top:0;bottom:0;left:50%;width:1px}
@@ -203,7 +228,7 @@ body.is-mobile .yrgrid{grid-template-columns:1fr}
   :root{--bg:#fff;--bg2:#fff;--panel:#fff;--panel2:#fff;--line:#bbb;--line2:#999;--ivory:#111;--ivory2:#000;--dim:#333;--dim2:#555;--gold:#7a5c1e;--gold2:#7a5c1e;--green:#2f5c3f;--red:#7c2f28;--blue:#2f4a66}
   body{background:#fff}
   body::before{display:none}
-  .side,.noprint,#g3d-wrap{display:none!important}
+  .side,.noprint{display:none!important}
   main{padding:8mm;max-width:none}
   .panel{display:block!important;page-break-before:always}
   .panel:first-of-type{page-break-before:avoid}
@@ -235,7 +260,6 @@ body.is-mobile main{padding:18px 13px 70px}
 body.is-mobile h2{font-size:1.45rem}
 body.is-mobile h2 span{display:block;font-size:.88rem}
 body.is-mobile table{display:block;overflow-x:auto}
-body.is-mobile #g3d{height:400px}
 body.is-mobile .tl-date{font-size:1rem}
 body.is-mobile .qmap{aspect-ratio:1.25}
 @media(prefers-reduced-motion:reduce){
@@ -260,7 +284,6 @@ body.is-mobile .qmap{aspect-ratio:1.25}
       <button data-p="dados" class="on">Dados</button>
       <button data-p="agora">Agora</button>
       <button data-p="natal">Mapa natal</button>
-      <button data-p="grafo">Grafo natal</button>
       <button data-p="tempo">Tempo</button>
       <button data-p="rs">Revolução Solar</button>
       <button data-p="trans">Trânsitos</button>
@@ -282,6 +305,15 @@ body.is-mobile .qmap{aspect-ratio:1.25}
     <section class="panel on" id="p-dados">
       <div class="kicker">entrada · natal e revoluções</div>
       <h2>Dados <span>cole o mapa; o sistema gera a interpretação</span></h2>
+      <div class="card" id="imp-card">
+        <h4>Importar do Aspectarian</h4>
+        <p class="note" style="border:none;margin:0 0 8px;padding:0">Cole o link do mapa no Aspectarian (com <span class="mono">date, lat, long, t</span>). O sistema computa o mapa em <b>Placidus</b>, só com os <b>planetas tradicionais</b>, e gera automaticamente <b>todas as Revoluções Solares desde o nascimento</b>.</p>
+        <div class="toolrow" style="flex-wrap:nowrap">
+          <input type="text" id="imp-url" placeholder="https://www.aspectarian.com/chart?date=…&lat=…&long=…&t=…" style="flex:1;min-width:0">
+          <button class="btn primary" id="imp-run">importar</button>
+        </div>
+        <div class="mono" id="imp-status"></div>
+      </div>
       <div class="grid2">
         <div class="card">
           <h4>Mapa natal</h4>
@@ -320,35 +352,6 @@ body.is-mobile .qmap{aspect-ratio:1.25}
       <h3>Promessas do mapa</h3>
       <p>Cada promessa lista fatores, condição de realização e os anos de maior ativação. Clique para expandir; os anos correspondentes ficam marcados no razão da aba Tempo.</p>
       <div id="prom-body"></div>
-    </section>
-
-    <section class="panel" id="p-grafo">
-      <div class="kicker">estrutura em três dimensões</div>
-      <h2>Grafo natal <span>relações reais do mapa — regência, aspecto, recepção, termo, estrela</span></h2>
-      <div class="toolrow">
-        <select id="g3d-mode">
-          <option value="estrutura">Modo: estrutura natal</option>
-          <option value="regencias">Casas e regências</option>
-          <option value="aspectos">Aspectos</option>
-          <option value="recepcoes">Recepções e disposição</option>
-          <option value="carreira">Carreira</option>
-          <option value="relacionamentos">Relacionamentos</option>
-          <option value="dinheiro">Dinheiro</option>
-          <option value="temperamento">Temperamento</option>
-          <option value="ativacao">Ativação atual</option>
-        </select>
-        <input type="text" id="g3d-search" placeholder="buscar nó (ex.: Vênus, casa 10, Algol)" style="min-width:200px">
-        <button class="btn" id="g3d-reset">câmera</button>
-        <button class="btn" id="g3d-pause">pausar</button>
-      </div>
-      <div id="g3d-wrap">
-        <canvas id="g3d"></canvas>
-        <div id="g3d-hud"></div>
-        <div id="g3d-legend"></div>
-        <div id="g3d-panel"></div>
-      </div>
-      <div id="g3d-fallback"></div>
-      <p class="note">O grafo carrega apenas ao abrir esta aba e pausa quando a aba fica oculta. Arraste para girar, use a roda para zoom, clique num nó para abrir o painel. Com <span class="mono">prefers-reduced-motion</span> ativo, a rotação automática é desligada.</p>
     </section>
 
     <section class="panel" id="p-tempo">
@@ -454,10 +457,11 @@ body.is-mobile .qmap{aspect-ratio:1.25}
 <script src="js/tables.js"></script>
 <script src="js/parse.js"></script>
 <script src="js/chart.js"></script>
+<script src="js/astro.js"></script>
+<script src="js/interp.js"></script>
 <script src="js/rag.js"></script>
 <script src="js/core.js"></script>
 <script src="js/render.js"></script>
-<script src="js/graph3d.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

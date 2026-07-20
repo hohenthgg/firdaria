@@ -46,7 +46,7 @@ const OLAVO_CASA={1:'a autoimagem imediata: o que a pessoa vê de si sem interme
 /* firdária: ordens e durações */
 const FIRD_DIURNAL=[['sun','Sol',10],['venus','Vênus',8],['mercury','Mercúrio',13],['moon','Lua',9],['saturn','Saturno',11],['jupiter','Júpiter',12],['mars','Marte',7],['nn','Nodo N.',3],['sn','Nodo S.',2]];
 const FIRD_NOCTURNAL=[['moon','Lua',9],['saturn','Saturno',11],['jupiter','Júpiter',12],['mars','Marte',7],['sun','Sol',10],['venus','Vênus',8],['mercury','Mercúrio',13],['nn','Nodo N.',3],['sn','Nodo S.',2]];
-const FIRD_COLORS={'Lua':'#cfd6dd','Saturno':'#8a8a8a','Júpiter':'#c9a86a','Marte':'#b0564a','Sol':'#e8d9a8','Vênus':'#5f9e7f','Mercúrio':'#6b93b8','Nodo N.':'#8878a8','Nodo S.':'#66707c'};
+const FIRD_COLORS={'Lua':'#d8d2c4','Saturno':'#8a8578','Júpiter':'#c9a86a','Marte':'#b0564a','Sol':'#e8d9a8','Vênus':'#6f9e83','Mercúrio':'#8496ab','Nodo N.':'#8878a8','Nodo S.':'#6f6758'};
 /* estrelas fixas — cláusulas concisas (dom · vigilância) */
 const STAR_MEANINGS={
  'Algol':'a Górgona: intensidade que decapita ou é lapidada em obra — não fitar crua',
