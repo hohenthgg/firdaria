@@ -57,6 +57,26 @@ document.getElementById('trans-pick').addEventListener('change',renderTrans);
   document.getElementById(id).addEventListener('input',renderPers);
   document.getElementById(id).addEventListener('change',renderPers);
 });
+/* ---- layout: Auto / PC / Mobile (opcional, salvo no navegador) ---- */
+const VIEW_MQ=window.matchMedia('(max-width:900px)');
+function currentView(){return localStorage.getItem('ag_view')||'auto';}
+function applyView(){
+  const m=currentView();
+  const mob = m==='mobile' || (m==='auto' && VIEW_MQ.matches);
+  document.body.classList.toggle('is-mobile',mob);
+  document.querySelectorAll('#view-switch [data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===m));
+  try{drawCord();}catch(e){}
+}
+function setView(m){localStorage.setItem('ag_view',m);applyView();}
+function bindView(){
+  const sw=document.getElementById('view-switch');
+  if(sw)sw.addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(b)setView(b.dataset.v);});
+  // em modo Auto, acompanha a mudança de tamanho de tela
+  const onMQ=()=>{if(currentView()==='auto')applyView();};
+  if(VIEW_MQ.addEventListener)VIEW_MQ.addEventListener('change',onMQ);
+  else if(VIEW_MQ.addListener)VIEW_MQ.addListener(onMQ);
+  applyView();
+}
 /* boot */
 function renderAll(){
   const steps=[renderAgora,renderNatal,renderTemp,renderPers,renderRS,
@@ -123,6 +143,7 @@ function bindDados(){
   };
 }
 function boot(){
+  try{bindView();}catch(e){console.error(e);}
   try{bindDados();}catch(e){console.error(e);}
   try{renderFontes();}catch(e){console.error(e);}
   try{renderEletivaInit();}catch(e){console.error(e);}
