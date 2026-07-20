@@ -188,13 +188,15 @@ function drawCord(){
     s+='<rect x="'+XX(Math.max(a,t0))+'" y="8" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="22" fill="'+(FIRD_COLORS[nm]||'#555')+'" opacity=".82"/>';
     if(XX(Math.min(b,t1))-XX(Math.max(a,t0))>34) s+='<text x="'+(XX(Math.max(a,t0))+4)+'" y="23" font-size="9" fill="#0a0e14" font-family="Inter">'+nm+'</text>';
   });
-  // subfirdária: amostrar limites
-  for(let a=0;a<75;a+=0.02){
+  // subfirdária: amostrar limites (avanço garantido: em bordas exatas de sub-período
+  // firdAt() pode devolver o sub que TERMINA em `a`, o que travava o laço e estourava a string)
+  for(let a=0;a<75;){
     const f=firdAt(a); const st=f.subStart,en=f.subEnd;
-    if(!st)continue;
-    if(en<t0||st>t1){a=(en-BIRTH)/DAY/365.2425-0.02;continue;}
-    s+='<rect x="'+XX(Math.max(st,t0))+'" y="34" width="'+Math.max(1,XX(Math.min(en,t1))-XX(Math.max(st,t0)))+'" height="16" fill="'+(FIRD_COLORS[f.sub]||'#555')+'" opacity=".55" stroke="#0a0e14" stroke-width=".5"/>';
-    a=(en-BIRTH)/DAY/365.2425-0.02;
+    if(!st){a+=0.02;continue;}
+    const enAge=(en-BIRTH)/DAY/365.2425;
+    if(!(en<t0||st>t1))
+      s+='<rect x="'+XX(Math.max(st,t0))+'" y="34" width="'+Math.max(1,XX(Math.min(en,t1))-XX(Math.max(st,t0)))+'" height="16" fill="'+(FIRD_COLORS[f.sub]||'#555')+'" opacity=".55" stroke="#0a0e14" stroke-width=".5"/>';
+    a=enAge>a+1e-4?enAge:a+0.02; // nunca retrocede
   }
   // 3-4-5: profecção / senhor / RS
   for(let yr=0;yr<75;yr++){
