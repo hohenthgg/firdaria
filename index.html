@@ -59,8 +59,8 @@ nav button:hover{color:var(--ivory)}
 nav button.on{color:var(--gold);border-left-color:var(--gold);background:linear-gradient(90deg,rgba(201,168,106,.08),transparent)}
 .side .foot{padding:12px 8px 0;border-top:1px solid var(--line)}
 .btn{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:var(--panel);
-  border:1px solid var(--line2);color:var(--dim);padding:8px 12px;cursor:pointer;margin:3px 4px 3px 0;border-radius:2px}
-.btn:hover{color:var(--gold);border-color:var(--gold2)}
+  border:1px solid var(--line2);color:var(--dim);padding:8px 15px;cursor:pointer;margin:3px 4px 3px 0;border-radius:999px;transition:.18s}
+.btn:hover{color:var(--gold);border-color:var(--gold2);transform:translateY(-1px)}
 .btn.primary{color:var(--bg);background:linear-gradient(180deg,#d6b87c,var(--gold));border-color:var(--gold2);font-weight:500}
 .btn.primary:hover{background:var(--ivory2)}
 /* ---- main ---- */
@@ -69,28 +69,31 @@ main{flex:1;min-width:0;padding:38px 46px 90px;max-width:1180px}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 h2{font-family:var(--disp);font-size:2.3rem;font-weight:400;line-height:1.12;margin:2px 0 6px;color:var(--ivory2);letter-spacing:.045em}
 h2 span{color:var(--dim2);font-size:.95rem;font-style:italic;font-weight:400;font-family:var(--serif);letter-spacing:.02em;text-transform:none}
-h2::after{content:"";display:block;width:64px;height:1px;background:linear-gradient(90deg,var(--gold2),transparent);margin-top:10px}
+/* meandro grego sob o título */
+h2::after{content:"";display:block;width:96px;height:8px;margin-top:10px;opacity:.75;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8' viewBox='0 0 16 8'%3E%3Cpath d='M0 7 L0 1 L6 1 L6 5 L4 5 L4 3 L2 3 L2 7 Z M8 7 L8 1 L14 1 L14 5 L12 5 L12 3 L10 3 L10 7 Z' fill='%23a8894e'/%3E%3C/svg%3E");
+  background-repeat:repeat-x;background-size:16px 8px}
 h3{font-family:var(--serif);font-size:1.3rem;font-weight:600;color:var(--gold);margin:30px 0 10px;letter-spacing:.02em}
 h4{font-family:var(--serif);font-size:1.05rem;font-weight:600;color:var(--ivory2);margin:14px 0 6px;letter-spacing:.03em}
 .kicker{font-family:var(--mono);font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold2);margin-bottom:8px}
 p{margin-bottom:10px;color:var(--dim)}
 p.lede{font-family:var(--serif);font-size:1.16rem;color:var(--ivory);line-height:1.6}
 .mono{font-family:var(--mono);font-size:.78rem;color:var(--dim)}
-/* placa de museu: moldura dupla com fio interno */
-.card{border:1px solid var(--line);background:linear-gradient(175deg,var(--panel2),var(--panel) 45%);border-radius:3px;
-  padding:18px 20px;margin:12px 0;box-shadow:inset 0 0 0 1px rgba(233,227,211,.025), 0 1px 0 rgba(0,0,0,.5);position:relative}
+/* placa moderna: moldura suave, cantos generosos */
+.card{border:1px solid var(--line);background:linear-gradient(175deg,var(--panel2),var(--panel) 45%);border-radius:22px;
+  padding:18px 22px;margin:14px 0;box-shadow:inset 0 0 0 1px rgba(233,227,211,.03), 0 8px 24px -18px rgba(0,0,0,.9);position:relative}
 .card.flat{background:transparent}
-/* ---- cards natais: placa museológica, composição assimétrica ---- */
-.pcard{padding:0;overflow:hidden}
-.pcard .p-head{display:flex;align-items:center;gap:16px;padding:16px 20px 14px;border-bottom:1px solid var(--line);
-  background:linear-gradient(90deg,rgba(201,168,106,.05),transparent 55%)}
-.pcard .p-glyph{font-family:var(--serif);font-size:2.5rem;line-height:1;color:var(--gold);width:58px;height:58px;flex:0 0 58px;
-  display:flex;align-items:center;justify-content:center;border:1px solid var(--line2);border-radius:50%;
-  box-shadow:inset 0 0 0 3px var(--panel), inset 0 0 0 4px var(--line)}
+/* ---- cards natais: arco grego, medalhão-moeda, composição fluida ---- */
+.pcard{padding:0;overflow:hidden;border-radius:48px 48px 26px 26px}
+.pcard .p-head{display:flex;align-items:center;gap:16px;padding:22px 24px 16px;border-bottom:1px solid var(--line);
+  background:radial-gradient(ellipse 90% 130% at 50% -30%,rgba(201,168,106,.09),transparent 60%)}
+.pcard .p-glyph{font-family:var(--serif);font-size:2.5rem;line-height:1;color:var(--gold);width:64px;height:64px;flex:0 0 64px;
+  display:flex;align-items:center;justify-content:center;border:1px dotted var(--gold2);border-radius:50%;
+  box-shadow:inset 0 0 0 4px var(--panel), inset 0 0 0 5px var(--line2), 0 0 0 3px var(--panel), 0 0 0 4px var(--line)}
 .pcard .p-name{font-family:var(--disp);font-size:1.35rem;letter-spacing:.1em;color:var(--ivory2)}
 .pcard .p-pos{font-size:.66rem;color:var(--dim2);margin-top:2px}
 .pcard .p-head .tag{margin-left:auto}
-.pcard .p-frase{font-family:var(--serif);font-size:1.08rem;font-style:italic;color:var(--ivory);padding:14px 20px 4px;margin:0}
+.pcard .p-frase{font-family:var(--serif);font-size:1.08rem;font-style:italic;color:var(--ivory);padding:14px 24px 4px;margin:0}
 .isec{padding:10px 20px;border-top:1px dotted var(--line)}
 .isec:first-of-type{border-top:none}
 .isec p{font-size:.85rem;margin:4px 0 2px;line-height:1.65}
@@ -99,15 +102,15 @@ p.lede{font-family:var(--serif);font-size:1.16rem;color:var(--ivory);line-height
 .ilist li{font-size:.84rem;color:var(--dim);padding:3px 0 3px 18px;position:relative;line-height:1.55}
 .ilist li::before{content:"—";position:absolute;left:0;color:var(--gold2)}
 .ilist li i{color:var(--gold);font-style:normal;font-family:var(--serif)}
-.iexp{border:1px solid var(--line);border-radius:3px;padding:10px 12px;background:var(--bg2)}
+.iexp{border:1px solid var(--line);border-radius:16px;padding:10px 12px;background:var(--bg2)}
 .iexp>.mono{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase}
 .iexp.alta>.mono{color:var(--green)} .iexp.baixa>.mono{color:var(--red)}
 .iexp.alta{border-left:2px solid var(--green)} .iexp.baixa{border-left:2px solid var(--red)}
 .ifund{background:var(--bg2)}
 .isrc{margin-top:8px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:14px}
 body.is-mobile .grid2{grid-template-columns:1fr}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:12px}
 body.is-mobile .grid3{grid-template-columns:1fr}
 table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
 th{font-family:var(--mono);font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);text-align:left;padding:8px 9px;border-bottom:1px solid var(--line2);font-weight:400}
@@ -116,20 +119,20 @@ td.g{color:var(--gold);white-space:nowrap;font-family:var(--serif);font-size:1re
 td.m{font-family:var(--mono);font-size:.7rem;color:var(--dim2);white-space:nowrap}
 td b{color:var(--ivory)}
 .tag{display:inline-block;font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;
-  border:1px solid var(--line2);border-radius:3px;color:var(--dim);padding:3px 8px;margin:2px 4px 2px 0;background:var(--panel)}
+  border:1px solid var(--line2);border-radius:999px;color:var(--dim);padding:3px 11px;margin:2px 4px 2px 0;background:var(--panel)}
 .tag.gold{color:var(--gold);border-color:var(--gold2)}
 .tag.green{color:var(--green);border-color:var(--green)}
 .tag.red{color:var(--red);border-color:var(--red)}
 .tag.blue{color:var(--blue);border-color:var(--blue)}
 .note{font-size:.75rem;color:var(--dim2);border-top:1px dotted var(--line);padding-top:9px;margin-top:14px}
 /* relevância */
-.rel{font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.rel{font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;padding:2px 10px;border-radius:999px;white-space:nowrap}
 .rel.r0{color:var(--dim2);border:1px solid var(--line)}
 .rel.r1{color:var(--blue);border:1px solid var(--blue)}
 .rel.r2{color:var(--gold);border:1px solid var(--gold2)}
 .rel.r3{color:var(--bg);background:var(--gold)}
 /* ativações */
-.hit{border:1px solid var(--line);border-left:3px solid var(--green);background:var(--panel);border-radius:4px;padding:12px 14px;margin:8px 0}
+.hit{border:1px solid var(--line);border-left:3px solid var(--green);background:var(--panel);border-radius:18px;padding:12px 14px;margin:8px 0}
 .hit.tens{border-left-color:var(--red)} .hit.conj{border-left-color:var(--gold)}
 .hit .h-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
 .hit .h-title{font-weight:600;color:var(--ivory)}
@@ -139,12 +142,12 @@ td b{color:var(--ivory)}
 /* camadas de síntese */
 .layers{margin-top:8px}
 .layers .lbtns{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
-.lbtn{font-family:var(--mono);font-size:.58rem;letter-spacing:.05em;background:none;border:1px solid var(--line);color:var(--dim2);padding:4px 9px;cursor:pointer;border-radius:3px}
+.lbtn{font-family:var(--mono);font-size:.58rem;letter-spacing:.05em;background:none;border:1px solid var(--line);color:var(--dim2);padding:4px 12px;cursor:pointer;border-radius:999px}
 .lbtn.on{color:var(--gold);border-color:var(--gold2)}
 .lbody{font-size:.84rem;color:var(--dim);border-left:2px solid var(--line2);padding:8px 12px;margin-top:6px;display:none}
 .lbody.on{display:block}
 .lbody b{color:var(--ivory)} .lbody i{color:var(--gold)}
-.src{border:1px dashed var(--line2);border-radius:4px;padding:8px 10px;margin:6px 0;font-size:.76rem}
+.src{border:1px dashed var(--line2);border-radius:14px;padding:8px 10px;margin:6px 0;font-size:.76rem}
 .src .s-head{font-family:var(--mono);font-size:.6rem;color:var(--blue);margin-bottom:3px}
 /* corda do tempo */
 .tl-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 6px}
@@ -152,28 +155,58 @@ td b{color:var(--ivory)}
 .tl-date b{color:var(--gold)}
 input[type=range]{width:100%;accent-color:var(--gold)}
 input[type=date],input[type=number],input[type=time],select,input[type=text]{
-  background:var(--panel);border:1px solid var(--line2);color:var(--ivory);border-radius:4px;
-  font-family:var(--mono);font-size:.75rem;padding:7px 9px}
+  background:var(--panel);border:1px solid var(--line2);color:var(--ivory);border-radius:14px;
+  font-family:var(--mono);font-size:.75rem;padding:8px 13px}
+input[type=datetime-local]{background:var(--panel);border:1px solid var(--line2);color:var(--ivory);border-radius:14px;font-family:var(--mono);font-size:.75rem;padding:8px 13px}
+textarea{border-radius:16px!important}
 select{font-family:var(--sans)}
 label.f{display:block;font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);margin:8px 0 4px}
-#cord{width:100%;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg2)}
+#cord{width:100%;display:block;border:1px solid var(--line);border-radius:20px;background:var(--bg2)}
 .zoombar{display:flex;gap:4px}
 .zoombar .btn.on{color:var(--gold);border-color:var(--gold2)}
 .mandala-wrap{display:grid;grid-template-columns:460px 1fr;gap:16px;margin-top:14px}
 body.is-mobile .mandala-wrap{grid-template-columns:1fr}
 #mandala{width:100%;max-width:460px;aspect-ratio:1;display:block;margin:0 auto}
-/* razão anual */
-details.era{border:1px solid var(--line);border-radius:6px;background:var(--panel);margin:10px 0;overflow:hidden}
-details.era>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:12px 16px;font-weight:600;font-size:.88rem;color:var(--ivory)}
-details.era>summary::-webkit-details-marker{display:none}
-details.era>summary:hover{background:var(--panel2)}
-details.era .dotc{width:10px;height:10px;border-radius:50%;flex:0 0 10px}
-details.era .yrs{font-family:var(--mono);font-size:.6rem;color:var(--dim2);margin-left:auto}
-details.era[open]>summary{border-bottom:1px solid var(--line)}
+/* ===== razão anual: linha do tempo vertical, espinha central, nós alternados ===== */
+.tline{position:relative;margin:26px 0;padding:8px 0}
+.tline::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;
+  background:linear-gradient(180deg,transparent,var(--gold2) 6%,var(--gold2) 94%,transparent)}
+.tnode{position:relative;display:grid;grid-template-columns:1fr 96px 1fr;align-items:start;margin:0 0 34px}
+.tmed{grid-column:2;justify-self:center;position:relative;z-index:2;width:72px;height:72px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background:var(--panel);
+  font-family:var(--serif);font-size:2rem;color:var(--era-c,var(--gold));
+  border:1px dotted var(--gold2);
+  box-shadow:inset 0 0 0 5px var(--panel), inset 0 0 0 6px var(--line2), 0 0 0 4px var(--bg), 0 0 0 5px var(--line2), 0 10px 26px -14px rgba(0,0,0,.9)}
+.tnode.now .tmed{border-color:var(--gold);box-shadow:inset 0 0 0 5px var(--panel), inset 0 0 0 6px var(--gold2), 0 0 0 4px var(--bg), 0 0 0 5px var(--gold), 0 0 26px -4px rgba(201,168,106,.45)}
+.tcard{position:relative;border:1px solid var(--line);background:linear-gradient(175deg,var(--panel2),var(--panel) 45%);
+  border-radius:26px;padding:16px 20px;box-shadow:0 10px 26px -18px rgba(0,0,0,.95)}
+.tnode:nth-child(odd) .tcard{grid-column:1;grid-row:1;border-radius:26px 44px 26px 26px}
+.tnode:nth-child(even) .tcard{grid-column:3;grid-row:1;border-radius:44px 26px 26px 26px}
+/* conector fino do card ao medalhão, com ponto */
+.tcard::before{content:"";position:absolute;top:34px;width:34px;height:1px;background:var(--gold2);opacity:.7}
+.tcard::after{content:"";position:absolute;top:31px;width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px var(--bg)}
+.tnode:nth-child(odd) .tcard::before{right:-34px}
+.tnode:nth-child(odd) .tcard::after{right:-38px}
+.tnode:nth-child(even) .tcard::before{left:-34px}
+.tnode:nth-child(even) .tcard::after{left:-38px}
+.t-title{font-family:var(--disp);font-size:1.18rem;letter-spacing:.07em;color:var(--ivory2)}
+.t-years{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;color:var(--gold);
+  border:1px solid var(--gold2);border-radius:999px;padding:2px 12px;margin:6px 0 8px}
+.t-intro{font-size:.82rem;color:var(--dim);line-height:1.6;margin:0 0 6px}
+.tcard details>summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold2);padding:6px 0 2px}
+.tcard details>summary::-webkit-details-marker{display:none}
+.tcard details>summary:hover{color:var(--gold)}
+.tcard .yrgrid{grid-template-columns:1fr;padding:8px 0 4px}
+/* mobile / colunas estreitas: espinha à esquerda */
+body.is-mobile .tline::before{left:28px}
+body.is-mobile .tnode{grid-template-columns:56px 1fr;margin-bottom:24px}
+body.is-mobile .tmed{grid-column:1;width:48px;height:48px;font-size:1.4rem;justify-self:start;margin-left:4px}
+body.is-mobile .tnode .tcard,body.is-mobile .tnode:nth-child(even) .tcard{grid-column:2;grid-row:1;border-radius:22px}
+body.is-mobile .tcard::before,body.is-mobile .tcard::after{display:none}
 .era-intro{padding:10px 16px 2px;color:var(--dim);font-size:.84rem}
 .yrgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px 14px}
 body.is-mobile .yrgrid{grid-template-columns:1fr}
-.yr{border:1px solid var(--line);border-radius:4px;background:var(--bg2);padding:11px 13px;font-size:.8rem;cursor:pointer}
+.yr{border:1px solid var(--line);border-radius:16px;background:var(--bg2);padding:11px 13px;font-size:.8rem;cursor:pointer}
 .yr:hover{border-color:var(--line2)}
 .yr.now{border-color:var(--gold)}
 .yr.hasrs{border-left:3px solid var(--blue)}
@@ -193,7 +226,7 @@ body.is-mobile .yrgrid{grid-template-columns:1fr}
 .rep-sec b{color:var(--ivory)} .rep-sec i{color:var(--gold)}
 .rep-k{display:block;font-family:var(--mono);font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold2);margin-bottom:3px}
 /* temperamento */
-.qmap{position:relative;border:1px solid var(--line);border-radius:6px;background:var(--bg2);aspect-ratio:1.6;max-width:620px}
+.qmap{position:relative;border:1px solid var(--line);border-radius:20px;background:var(--bg2);aspect-ratio:1.6;max-width:620px}
 .qmap .ax{position:absolute;background:var(--line)} .qmap .axh{left:0;right:0;top:50%;height:1px} .qmap .axv{top:0;bottom:0;left:50%;width:1px}
 .qmap .lb{position:absolute;font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim2)}
 .qmap .q1{top:8px;right:12px;color:var(--gold)}.qmap .q2{top:8px;left:12px}.qmap .q3{bottom:8px;right:12px}.qmap .q4{bottom:8px;left:12px}
@@ -238,9 +271,9 @@ body.is-mobile .yrgrid{grid-template-columns:1fr}
 }
 /* seletor de layout (Auto / PC / Mobile) na barra lateral */
 .viewswitch{display:flex;margin:0 0 8px}
-.viewswitch .btn{margin:0;border-radius:0;padding:6px 10px;flex:1 1 0;text-align:center}
-.viewswitch .btn:first-child{border-radius:3px 0 0 3px}
-.viewswitch .btn:last-child{border-radius:0 3px 3px 0}
+.viewswitch .btn{margin:0;border-radius:0;padding:6px 10px;flex:1 1 0;text-align:center;transform:none!important}
+.viewswitch .btn:first-child{border-radius:999px 0 0 999px}
+.viewswitch .btn:last-child{border-radius:0 999px 999px 0}
 .viewswitch .btn:not(:first-child){border-left:none}
 .viewswitch .btn.on{color:var(--gold);border-color:var(--gold2);background:linear-gradient(180deg,rgba(201,168,106,.12),transparent)}
 /* mobile — aplicado por classe (body.is-mobile), controlada pelo seletor de layout;
@@ -327,10 +360,7 @@ body.is-mobile .qmap{aspect-ratio:1.25}
         </div>
         <div class="card">
           <h4>Revoluções solares</h4>
-          <label class="f">ano da revolução</label><input type="number" id="rs-in-year" min="1900" max="2100" style="width:120px">
-          <label class="f">dados da RS (mesmo formato)</label>
-          <textarea id="rs-in-text" rows="8" style="width:100%;background:var(--panel);border:1px solid var(--line2);color:var(--ivory);border-radius:4px;font-family:var(--mono);font-size:.72rem;padding:8px"></textarea>
-          <div class="toolrow"><button class="btn primary" id="rs-in-add">adicionar revolução</button></div>
+          <p class="note" style="border:none;margin:0 0 6px;padding:0">Geradas automaticamente na importação pelo link — uma para cada ano desde o nascimento, no instante exato do retorno do Sol.</p>
           <div id="rs-in-list" class="mono"></div>
           <h4 style="margin-top:16px">Backup</h4>
           <div class="toolrow"><button class="btn" id="bk-export">exportar JSON</button><label class="btn" style="cursor:pointer">importar JSON<input type="file" id="bk-import" accept=".json" style="display:none"></label></div>

@@ -389,10 +389,18 @@ function renderLedger(){
         +'<div class="row">'+synthYear(a,p,f)+'</div>'
         +'<div class="full" data-open="0"></div></div>';
     }
-    html+='<details class="era"'+(isNow?' open':'')+'><summary><span class="dotc" style="background:'+(FIRD_COLORS[nm]||'#888')+'"></span>Era de '+nm+' <span style="color:var(--dim2);font-weight:400">· '+len+' anos</span><span class="yrs">'+(new Date(BIRTH).getUTCFullYear()+Math.round(a0))+'–'+(new Date(BIRTH).getUTCFullYear()+Math.round(a1))+'</span></summary>'
-      +'<div class="era-intro">'+(ERA_TXT[nm]||'')+'</div><div class="yrgrid">'+cards+'</div></details>';
+    const y0=new Date(BIRTH).getUTCFullYear()+Math.round(a0), y1e=new Date(BIRTH).getUTCFullYear()+Math.round(a1);
+    html+='<div class="tnode'+(isNow?' now':'')+'">'
+      +'<div class="tmed" style="--era-c:'+(FIRD_COLORS[nm]||'var(--gold)')+'">'+(PT_GLYPH[k]||nm[0])+'</div>'
+      +'<div class="tcard">'
+        +'<div class="t-title">Era de '+nm+'</div>'
+        +'<span class="t-years">'+y0+' – '+y1e+' · '+len+' anos</span>'
+        +(isNow?'<span class="tag gold" style="margin-left:6px">vigente</span>':'')
+        +'<p class="t-intro">'+(ERA_TXT[nm]||'')+'</p>'
+        +'<details><summary>ver os '+len+' anos ▾</summary><div class="yrgrid">'+cards+'</div></details>'
+      +'</div></div>';
   });
-  const led=$('fird-ledger'); led.innerHTML=html;
+  const led=$('fird-ledger'); led.innerHTML='<div class="tline">'+html+'</div>';
   led.onclick=e=>{
     const yr=e.target.closest('.yr'); if(!yr)return;
     const full=yr.querySelector('.full'); const open=full.dataset.open==='1';
