@@ -151,15 +151,6 @@ function bindDados(){
     if(!confirm('Apagar mapa e revoluções salvos neste navegador?'))return;
     localStorage.removeItem('agx_natal');localStorage.removeItem('agx_rs');location.reload();
   };
-  document.getElementById('rs-in-add').onclick=()=>{
-    const y=+document.getElementById('rs-in-year').value, txt=document.getElementById('rs-in-text').value;
-    if(!y||!txt.trim()||!NATAL){document.getElementById('rs-in-list').textContent='carregue o natal primeiro e informe ano + dados.';return;}
-    const parsed=parseChartText(txt);
-    addRS(parsed,y);
-    STATE.rs[y]=txt;saveState();renderRSList();
-    document.getElementById('rs-in-text').value='';
-    renderAll();
-  };
   document.getElementById('bk-export').onclick=()=>{
     const blob=new Blob([JSON.stringify(STATE,null,1)],{type:'application/json'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='astrograph-dados.json';a.click();
