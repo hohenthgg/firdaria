@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AstroGraph — motor interpretativo tradicional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
+<style>
+/* ============ ATLAS ASTRONÔMICO — tokens ============ */
+:root{
+  --bg:#0a0e14;            /* azul-negro */
+  --bg2:#0d1219;
+  --panel:#101722;         /* grafite azulado */
+  --panel2:#131b28;
+  --line:#232e3f;
+  --line2:#33415a;
+  --ivory:#e8e4d8;         /* marfim */
+  --ivory2:#f2efe6;
+  --dim:#9aa3ad;
+  --dim2:#66707c;
+  --gold:#c9a86a;          /* dourado fosco */
+  --gold2:#a88b52;
+  --green:#5f9e7f;         /* verde discreto */
+  --red:#b0564a;           /* vermelho queimado */
+  --blue:#6b93b8;          /* azul frio */
+  --violet:#8878a8;        /* violeta de apoio */
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:Inter,system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ivory);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 70% 45% at 78% -8%, rgba(107,147,184,.07), transparent 60%),
+             radial-gradient(ellipse 60% 40% at 8% 108%, rgba(201,168,106,.05), transparent 60%)}
+a{color:var(--blue)}
+.app{display:flex;min-height:100vh;position:relative;z-index:1}
+/* ---- sidebar ---- */
+.side{width:224px;flex:0 0 224px;border-right:1px solid var(--line);background:var(--bg2);
+  padding:22px 12px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.brand{padding:0 8px 16px;border-bottom:1px solid var(--line)}
+.brand h1{font-family:var(--serif);font-size:1.3rem;font-weight:600;letter-spacing:.02em}
+.brand h1 em{color:var(--gold);font-style:normal}
+.brand .sub{font-family:var(--mono);font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim2);margin-top:5px}
+nav{padding:12px 0;flex:1;overflow-y:auto}
+nav button{display:block;width:100%;text-align:left;background:none;border:none;border-left:2px solid transparent;
+  color:var(--dim);font-family:var(--sans);font-size:.84rem;font-weight:500;padding:9px 14px;cursor:pointer;letter-spacing:.01em}
+nav button:hover{color:var(--ivory)}
+nav button.on{color:var(--gold);border-left-color:var(--gold);background:linear-gradient(90deg,rgba(201,168,106,.07),transparent)}
+.side .foot{padding:12px 8px 0;border-top:1px solid var(--line)}
+.btn{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;background:var(--panel);
+  border:1px solid var(--line);color:var(--dim);padding:8px 12px;cursor:pointer;margin:3px 4px 3px 0;border-radius:3px}
+.btn:hover{color:var(--gold);border-color:var(--gold2)}
+.btn.primary{color:var(--bg);background:var(--gold);border-color:var(--gold);font-weight:500}
+.btn.primary:hover{background:var(--ivory2)}
+/* ---- main ---- */
+main{flex:1;min-width:0;padding:38px 46px 90px;max-width:1180px}
+.panel{display:none}.panel.on{display:block;animation:fade .3s ease}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+h2{font-family:var(--serif);font-size:1.9rem;font-weight:500;line-height:1.15;margin-bottom:4px;color:var(--ivory2)}
+h2 span{color:var(--dim2);font-size:1rem;font-style:italic;font-weight:400}
+h3{font-family:var(--serif);font-size:1.22rem;font-weight:600;color:var(--gold);margin:26px 0 10px}
+h4{font-size:.9rem;font-weight:600;color:var(--ivory2);margin:14px 0 6px}
+.kicker{font-family:var(--mono);font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
+p{margin-bottom:10px;color:var(--dim)}
+p.lede{font-family:var(--serif);font-size:1.12rem;color:var(--ivory);line-height:1.55}
+.mono{font-family:var(--mono);font-size:.78rem;color:var(--dim)}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:16px 18px;margin:10px 0}
+.card.flat{background:transparent}
+.grid2{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:960px){.grid2{grid-template-columns:1fr 1fr}}
+.grid3{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:960px){.grid3{grid-template-columns:repeat(3,1fr)}}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
+th{font-family:var(--mono);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);text-align:left;padding:7px 9px;border-bottom:1px solid var(--line2);font-weight:400}
+td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--dim)}
+td.g{color:var(--gold);white-space:nowrap;font-family:var(--serif);font-size:.95rem}
+td.m{font-family:var(--mono);font-size:.7rem;color:var(--dim2);white-space:nowrap}
+td b{color:var(--ivory)}
+.tag{display:inline-block;font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;
+  border:1px solid var(--line2);border-radius:3px;color:var(--dim);padding:3px 8px;margin:2px 4px 2px 0;background:var(--panel)}
+.tag.gold{color:var(--gold);border-color:var(--gold2)}
+.tag.green{color:var(--green);border-color:var(--green)}
+.tag.red{color:var(--red);border-color:var(--red)}
+.tag.blue{color:var(--blue);border-color:var(--blue)}
+.note{font-size:.75rem;color:var(--dim2);border-top:1px dotted var(--line);padding-top:9px;margin-top:14px}
+/* relevância */
+.rel{font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.rel.r0{color:var(--dim2);border:1px solid var(--line)}
+.rel.r1{color:var(--blue);border:1px solid var(--blue)}
+.rel.r2{color:var(--gold);border:1px solid var(--gold2)}
+.rel.r3{color:var(--bg);background:var(--gold)}
+/* ativações */
+.hit{border:1px solid var(--line);border-left:3px solid var(--green);background:var(--panel);border-radius:4px;padding:12px 14px;margin:8px 0}
+.hit.tens{border-left-color:var(--red)} .hit.conj{border-left-color:var(--gold)}
+.hit .h-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.hit .h-title{font-weight:600;color:var(--ivory)}
+.hit .h-title .g{font-family:var(--serif);color:var(--gold);margin-right:6px}
+.hit .h-body{font-size:.84rem;color:var(--dim);margin-top:6px}
+.hit .h-meta{font-family:var(--mono);font-size:.62rem;color:var(--dim2);margin-top:6px}
+/* camadas de síntese */
+.layers{margin-top:8px}
+.layers .lbtns{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
+.lbtn{font-family:var(--mono);font-size:.58rem;letter-spacing:.05em;background:none;border:1px solid var(--line);color:var(--dim2);padding:4px 9px;cursor:pointer;border-radius:3px}
+.lbtn.on{color:var(--gold);border-color:var(--gold2)}
+.lbody{font-size:.84rem;color:var(--dim);border-left:2px solid var(--line2);padding:8px 12px;margin-top:6px;display:none}
+.lbody.on{display:block}
+.lbody b{color:var(--ivory)} .lbody i{color:var(--gold)}
+.src{border:1px dashed var(--line2);border-radius:4px;padding:8px 10px;margin:6px 0;font-size:.76rem}
+.src .s-head{font-family:var(--mono);font-size:.6rem;color:var(--blue);margin-bottom:3px}
+/* corda do tempo */
+.tl-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 6px}
+.tl-date{font-family:var(--serif);font-size:1.25rem;color:var(--ivory2)}
+.tl-date b{color:var(--gold)}
+input[type=range]{width:100%;accent-color:var(--gold)}
+input[type=date],input[type=number],input[type=time],select,input[type=text]{
+  background:var(--panel);border:1px solid var(--line2);color:var(--ivory);border-radius:4px;
+  font-family:var(--mono);font-size:.75rem;padding:7px 9px}
+select{font-family:var(--sans)}
+label.f{display:block;font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);margin:8px 0 4px}
+#cord{width:100%;display:block;border:1px solid var(--line);border-radius:6px;background:var(--bg2)}
+.zoombar{display:flex;gap:4px}
+.zoombar .btn.on{color:var(--gold);border-color:var(--gold2)}
+.mandala-wrap{display:grid;grid-template-columns:1fr;gap:16px;margin-top:14px}
+@media(min-width:1020px){.mandala-wrap{grid-template-columns:460px 1fr}}
+#mandala{width:100%;max-width:460px;aspect-ratio:1;display:block;margin:0 auto}
+/* razão anual */
+details.era{border:1px solid var(--line);border-radius:6px;background:var(--panel);margin:10px 0;overflow:hidden}
+details.era>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:12px 16px;font-weight:600;font-size:.88rem;color:var(--ivory)}
+details.era>summary::-webkit-details-marker{display:none}
+details.era>summary:hover{background:var(--panel2)}
+details.era .dotc{width:10px;height:10px;border-radius:50%;flex:0 0 10px}
+details.era .yrs{font-family:var(--mono);font-size:.6rem;color:var(--dim2);margin-left:auto}
+details.era[open]>summary{border-bottom:1px solid var(--line)}
+.era-intro{padding:10px 16px 2px;color:var(--dim);font-size:.84rem}
+.yrgrid{display:grid;grid-template-columns:1fr;gap:8px;padding:10px 12px 14px}
+@media(min-width:980px){.yrgrid{grid-template-columns:1fr 1fr}}
+.yr{border:1px solid var(--line);border-radius:4px;background:var(--bg2);padding:11px 13px;font-size:.8rem;cursor:pointer}
+.yr:hover{border-color:var(--line2)}
+.yr.now{border-color:var(--gold)}
+.yr.hasrs{border-left:3px solid var(--blue)}
+.yr.promo{outline:1px solid var(--green)}
+.yr .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px}
+.yr .age{font-family:var(--serif);font-size:1.05rem;color:var(--gold)}
+.yr .span{font-family:var(--mono);font-size:.56rem;color:var(--dim2)}
+.yr .chev{display:inline-block;transition:.2s;color:var(--dim2);margin-left:4px}
+.yr.open .chev{transform:rotate(180deg);color:var(--gold)}
+.yr .row{color:var(--dim);margin:2px 0}
+.yr .row b{color:var(--ivory)}
+.yr .full{display:none}
+.yr .full[data-open="1"]{display:block}
+.rep{margin-top:8px;border-top:1px solid var(--line);padding-top:2px}
+.rep-sec{padding:8px 0;border-bottom:1px dotted var(--line);font-size:.8rem;color:var(--dim);line-height:1.55}
+.rep-sec:last-child{border-bottom:none}
+.rep-sec b{color:var(--ivory)} .rep-sec i{color:var(--gold)}
+.rep-k{display:block;font-family:var(--mono);font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold2);margin-bottom:3px}
+/* grafo 3D */
+#g3d-wrap{position:relative;border:1px solid var(--line);border-radius:6px;background:var(--bg2);overflow:hidden}
+#g3d{width:100%;height:520px;display:block}
+#g3d-panel{position:absolute;top:0;right:0;bottom:0;width:min(340px,86%);background:rgba(13,18,25,.96);border-left:1px solid var(--line2);
+  padding:16px;overflow-y:auto;transform:translateX(105%);transition:.25s;font-size:.8rem}
+#g3d-panel.on{transform:none}
+#g3d-hud{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:5px;max-width:70%}
+#g3d-legend{position:absolute;left:10px;bottom:10px;font-family:var(--mono);font-size:.56rem;color:var(--dim2);line-height:1.7}
+#g3d-legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:5px}
+/* temperamento */
+.qmap{position:relative;border:1px solid var(--line);border-radius:6px;background:var(--bg2);aspect-ratio:1.6;max-width:620px}
+.qmap .ax{position:absolute;background:var(--line)} .qmap .axh{left:0;right:0;top:50%;height:1px} .qmap .axv{top:0;bottom:0;left:50%;width:1px}
+.qmap .lb{position:absolute;font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim2)}
+.qmap .q1{top:8px;right:12px;color:var(--gold)}.qmap .q2{top:8px;left:12px}.qmap .q3{bottom:8px;right:12px}.qmap .q4{bottom:8px;left:12px}
+.qmap .marker{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(201,168,106,.18)}
+/* eixos */
+.axrow{border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:11px 14px;margin-bottom:8px}
+.axrow .head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.axrow .nm{font-size:.9rem;font-weight:600;color:var(--ivory)}
+.axrow .meta{font-family:var(--mono);font-size:.56rem;color:var(--dim2)}
+.axbar{position:relative;height:7px;background:var(--bg2);border:1px solid var(--line);border-radius:4px;margin:8px 0 4px}
+.axbar .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--dim2)}
+.axbar .dot{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%)}
+.axbar .dot.weak{background:var(--dim2)} .axbar .dot.tense{box-shadow:0 0 0 3px rgba(176,86,74,.35)}
+.axrow .poles{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.56rem;color:var(--dim2)}
+.axrow .facts{font-size:.75rem;color:var(--dim);margin-top:6px}
+.axrow .lit{font-size:.78rem;color:var(--dim);margin-top:6px;border-left:2px solid var(--line2);padding-left:9px}
+.domtitle{margin:22px 0 10px;font-family:var(--mono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--blue);border-bottom:1px solid var(--line);padding-bottom:6px}
+.toolrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+/* promessas */
+.prom{border:1px solid var(--line);border-left:3px solid var(--gold2);border-radius:4px;background:var(--panel);padding:12px 14px;margin:8px 0;cursor:pointer}
+.prom:hover{border-color:var(--line2)}
+.prom.on{outline:1px solid var(--green)}
+.prom .p-t{font-family:var(--serif);font-size:1.02rem;color:var(--ivory2);font-weight:600}
+.prom .p-b{font-size:.8rem;color:var(--dim);margin-top:4px;display:none}
+.prom.on .p-b{display:block}
+/* eventos lista */
+.evrow{display:flex;gap:10px;align-items:baseline;padding:6px 4px;border-bottom:1px dotted var(--line);font-size:.8rem}
+.evrow .d{font-family:var(--mono);font-size:.66rem;color:var(--dim2);flex:0 0 82px}
+.evrow.harm .t{color:var(--green)} .evrow.tens .t{color:var(--red)} .evrow.info .t{color:var(--blue)} .evrow.warn .t{color:var(--gold)}
+/* print */
+@media print{
+  :root{--bg:#fff;--bg2:#fff;--panel:#fff;--panel2:#fff;--line:#bbb;--line2:#999;--ivory:#111;--ivory2:#000;--dim:#333;--dim2:#555;--gold:#7a5c1e;--gold2:#7a5c1e;--green:#2f5c3f;--red:#7c2f28;--blue:#2f4a66}
+  body{background:#fff}
+  body::before{display:none}
+  .side,.noprint,#g3d-wrap{display:none!important}
+  main{padding:8mm;max-width:none}
+  .panel{display:block!important;page-break-before:always}
+  .panel:first-of-type{page-break-before:avoid}
+  input,select,.btn,.lbtn,.zoombar{display:none!important}
+  .lbody{display:block!important}
+  .yr .full{display:block!important}
+}
+/* mobile */
+@media(max-width:900px){
+  body{font-size:14px}
+  .app{flex-direction:column}
+  .side{width:100%;height:auto;position:sticky;top:0;z-index:40;padding:8px 8px 4px;backdrop-filter:blur(10px);background:rgba(13,18,25,.94)}
+  .brand{padding:2px 6px 6px}.brand h1{font-size:1.05rem}
+  nav{display:flex;overflow-x:auto;padding:4px 0;gap:2px;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav button{width:auto;flex:0 0 auto;border-left:none;border-bottom:2px solid transparent;padding:8px 11px;font-size:.76rem;min-height:38px}
+  nav button.on{border-bottom-color:var(--gold);background:none}
+  .side .foot{display:flex;border:none;padding:2px 4px}
+  main{padding:18px 13px 70px}
+  h2{font-size:1.45rem}h2 span{display:block;font-size:.88rem}
+  table{display:block;overflow-x:auto}
+  #g3d{height:400px}
+  .tl-date{font-size:1rem}
+  .qmap{aspect-ratio:1.25}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side noprint">
+    <div class="brand">
+      <h1>Astro<em>Graph</em></h1>
+      <div class="sub" id="brand-sub">motor interpretativo tradicional</div>
+    </div>
+    <nav id="nav">
+      <button data-p="dados" class="on">Dados</button>
+      <button data-p="agora">Agora</button>
+      <button data-p="natal">Mapa natal</button>
+      <button data-p="grafo">Grafo natal</button>
+      <button data-p="tempo">Tempo</button>
+      <button data-p="rs">Revolução Solar</button>
+      <button data-p="trans">Trânsitos</button>
+      <button data-p="eletiva">Eletiva</button>
+      <button data-p="perfil">Perfil</button>
+      <button data-p="fontes">Fontes e método</button>
+    </nav>
+    <div class="foot">
+      <button class="btn" onclick="window.print()">Exportar PDF</button>
+    </div>
+  </aside>
+
+  <main>
+    <section class="panel on" id="p-dados">
+      <div class="kicker">entrada · natal e revoluções</div>
+      <h2>Dados <span>cole o mapa; o sistema gera a interpretação</span></h2>
+      <div class="grid2">
+        <div class="card">
+          <h4>Mapa natal</h4>
+          <label class="f">nome / rótulo</label><input type="text" id="in-name" placeholder="ex.: Mapa A" style="width:100%">
+          <label class="f">nascimento (UTC)</label><input type="datetime-local" id="in-birth" style="width:100%">
+          <label class="f">seita</label><select id="in-sect" style="width:100%"><option value="auto">auto (pela casa do Sol)</option><option value="diurno">diurno</option><option value="noturno">noturno</option></select>
+          <label class="f">dados do mapa (formato padrão: planetas com glifo/signo/grau/casa, cúspides H1–H12, aspectos e estrelas em inglês)</label>
+          <textarea id="in-natal" rows="10" style="width:100%;background:var(--panel);border:1px solid var(--line2);color:var(--ivory);border-radius:4px;font-family:var(--mono);font-size:.72rem;padding:8px"></textarea>
+          <div class="toolrow"><button class="btn primary" id="in-load">carregar mapa</button><button class="btn" id="in-clear">limpar tudo</button></div>
+          <div class="mono" id="in-status"></div>
+        </div>
+        <div class="card">
+          <h4>Revoluções solares</h4>
+          <label class="f">ano da revolução</label><input type="number" id="rs-in-year" min="1900" max="2100" style="width:120px">
+          <label class="f">dados da RS (mesmo formato)</label>
+          <textarea id="rs-in-text" rows="8" style="width:100%;background:var(--panel);border:1px solid var(--line2);color:var(--ivory);border-radius:4px;font-family:var(--mono);font-size:.72rem;padding:8px"></textarea>
+          <div class="toolrow"><button class="btn primary" id="rs-in-add">adicionar revolução</button></div>
+          <div id="rs-in-list" class="mono"></div>
+          <h4 style="margin-top:16px">Backup</h4>
+          <div class="toolrow"><button class="btn" id="bk-export">exportar JSON</button><label class="btn" style="cursor:pointer">importar JSON<input type="file" id="bk-import" accept=".json" style="display:none"></label></div>
+          <p class="note">Tudo fica salvo apenas no seu navegador (localStorage). Nenhum dado sai da máquina.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-agora">
+      <div class="kicker">estado vigente</div>
+      <h2>Agora <span id="agora-sub"></span></h2>
+      <div id="agora-body"></div>
+    </section>
+
+    <section class="panel" id="p-natal">
+      <div class="kicker">radix · promessas</div>
+      <h2>Mapa natal <span>posições, estrutura e promessas</span></h2>
+      <div id="natal-body"></div>
+      <h3>Promessas do mapa</h3>
+      <p>Cada promessa lista fatores, condição de realização e os anos de maior ativação. Clique para expandir; os anos correspondentes ficam marcados no razão da aba Tempo.</p>
+      <div id="prom-body"></div>
+    </section>
+
+    <section class="panel" id="p-grafo">
+      <div class="kicker">estrutura em três dimensões</div>
+      <h2>Grafo natal <span>relações reais do mapa — regência, aspecto, recepção, termo, estrela</span></h2>
+      <div class="toolrow">
+        <select id="g3d-mode">
+          <option value="estrutura">Modo: estrutura natal</option>
+          <option value="regencias">Casas e regências</option>
+          <option value="aspectos">Aspectos</option>
+          <option value="recepcoes">Recepções e disposição</option>
+          <option value="carreira">Carreira</option>
+          <option value="relacionamentos">Relacionamentos</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="temperamento">Temperamento</option>
+          <option value="ativacao">Ativação atual</option>
+        </select>
+        <input type="text" id="g3d-search" placeholder="buscar nó (ex.: Vênus, casa 10, Algol)" style="min-width:200px">
+        <button class="btn" id="g3d-reset">câmera</button>
+        <button class="btn" id="g3d-pause">pausar</button>
+      </div>
+      <div id="g3d-wrap">
+        <canvas id="g3d"></canvas>
+        <div id="g3d-hud"></div>
+        <div id="g3d-legend"></div>
+        <div id="g3d-panel"></div>
+      </div>
+      <div id="g3d-fallback"></div>
+      <p class="note">O grafo carrega apenas ao abrir esta aba e pausa quando a aba fica oculta. Arraste para girar, use a roda para zoom, clique num nó para abrir o painel. Com <span class="mono">prefers-reduced-motion</span> ativo, a rotação automática é desligada.</p>
+    </section>
+
+    <section class="panel" id="p-tempo">
+      <div class="kicker">firdária · profecção · revoluções · trânsitos · eventos</div>
+      <h2>Tempo <span>a corda da vida sincronizada</span></h2>
+      <div class="tl-controls">
+        <div class="tl-date">Cursor: <b id="tempo-date">—</b></div>
+        <input type="date" id="tempo-pick">
+        <button class="btn" id="tempo-today">hoje</button>
+        <button class="btn" id="tempo-anim">▶ animar</button>
+        <span class="zoombar" id="tempo-zoom">
+          <button class="btn on" data-z="vida">vida</button><button class="btn" data-z="decada">década</button><button class="btn" data-z="ano">ano</button><button class="btn" data-z="mes">mês</button><button class="btn" data-z="dia">dia</button>
+        </span>
+        <button class="btn" id="tempo-pin">fixar A/B</button>
+      </div>
+      <svg id="cord" height="240"></svg>
+      <div id="tempo-compare"></div>
+      <div class="mandala-wrap">
+        <svg id="mandala" viewBox="0 0 460 460"></svg>
+        <div id="tempo-info"></div>
+      </div>
+      <h3>Razão da vida — ano a ano</h3>
+      <div class="toolrow">
+        <label class="f" style="margin:0">evento pessoal</label>
+        <input type="date" id="ev-date"><input type="text" id="ev-txt" placeholder="descrição do evento" style="min-width:180px">
+        <button class="btn" id="ev-add">registrar</button>
+        <button class="btn" id="retro-open">O que estava ativo?</button>
+      </div>
+      <div id="retro-body"></div>
+      <div id="fird-ledger"></div>
+    </section>
+
+    <section class="panel" id="p-rs">
+      <div class="kicker">retornos solares · 1994–2026</div>
+      <h2>Revolução Solar <span>o que vence em cada ano</span></h2>
+      <div class="toolrow">
+        <select id="rs-year"></select>
+        <button class="btn" id="rs-cmp">comparar com ano seguinte</button>
+      </div>
+      <div id="rs-body"></div>
+    </section>
+
+    <section class="panel" id="p-trans">
+      <div class="kicker">céu corrente sobre o radix</div>
+      <h2>Trânsitos <span id="trans-eph"></span></h2>
+      <div class="toolrow">
+        <span class="zoombar" id="trans-modes">
+          <button class="btn on" data-m="hoje">Hoje</button><button class="btn" data-m="30d">Próximos 30 dias</button><button class="btn" data-m="planeta">Por planeta</button><button class="btn" data-m="area">Por área da vida</button>
+        </span>
+        <input type="date" id="trans-pick">
+      </div>
+      <div id="trans-body"></div>
+      <p class="note">A pontuação de relevância é uma medida interna de repetição entre técnicas (firdária, profecção, revolução, orbe) — não é probabilidade científica de evento. Clique em "fundamento" para auditar cada nota.</p>
+    </section>
+
+    <section class="panel" id="p-eletiva">
+      <div class="kicker">astrologia eletiva</div>
+      <h2>Eletiva <span>buscar a melhor janela para agir</span></h2>
+      <div class="card">
+        <div class="grid3">
+          <div><label class="f">atividade</label><select id="el-act"></select></div>
+          <div><label class="f">cidade (referência)</label><input type="text" id="el-city" placeholder="ex.: São Paulo"></div>
+          <div><label class="f">duração estimada</label><select id="el-dur"><option>até 1h</option><option>algumas horas</option><option>o dia</option></select></div>
+          <div><label class="f">data inicial</label><input type="date" id="el-d0"></div>
+          <div><label class="f">data final</label><input type="date" id="el-d1"></div>
+          <div><label class="f">horário (UTC, início–fim)</label><div style="display:flex;gap:6px"><input type="number" id="el-h0" min="0" max="23" value="9" style="width:70px"><input type="number" id="el-h1" min="0" max="23" value="21" style="width:70px"></div></div>
+          <div><label class="f">prioridade</label><select id="el-pri"><option>segurança (evitar tensão)</option><option>velocidade (aproveitar impulso)</option></select></div>
+          <div><label class="f">evitar</label><select id="el-avoid"><option value="">nada específico</option><option value="retro">significador retrógrado</option><option value="voc">Lua sem curso</option></select></div>
+          <div style="display:flex;align-items:flex-end"><button class="btn primary" id="el-run">buscar janelas</button></div>
+        </div>
+      </div>
+      <div id="el-body"></div>
+      <p class="note">Limitação real: sem hora e coordenadas locais, o Ascendente eletivo não é computado — a avaliação usa condição da Lua, aplicações, significador (retrogradação/combustão), trânsitos ao natal, Senhor do Ano e firdária, em UTC. Informe a cidade apenas como referência do fuso ao interpretar os horários.</p>
+    </section>
+
+    <section class="panel" id="p-perfil">
+      <div class="kicker">compleição · caracterologia</div>
+      <h2>Perfil <span>temperamento e 48 eixos</span></h2>
+      <div id="temp-body"></div>
+      <h3>48 eixos</h3>
+      <div class="toolrow">
+        <input type="text" id="ax-search" placeholder="buscar eixo…" style="min-width:180px">
+        <select id="ax-dom"><option value="">todos os domínios</option></select>
+        <select id="ax-sort"><option value="dom">ordem padrão</option><option value="val">maior desvio</option><option value="conf">maior confiança</option><option value="tens">maior tensão</option></select>
+      </div>
+      <div id="pers-body"></div>
+    </section>
+
+    <section class="panel" id="p-fontes">
+      <div class="kicker">método · corpora · auditoria</div>
+      <h2>Fontes e método <span>como este sistema julga</span></h2>
+      <div id="fontes-body"></div>
+      <h3>Consulta ao corpus (RAG local)</h3>
+      <div class="toolrow">
+        <input type="text" id="rag-q" placeholder="unidade técnica: ex. Júpiter Casa III" style="min-width:240px">
+        <button class="btn" id="rag-run">consultar</button>
+        <span class="mono" id="rag-status"></span>
+      </div>
+      <div id="rag-out"></div>
+    </section>
+  </main>
+</div>
+<script src="js/tables.js"></script>
+<script src="js/parse.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/rag.js"></script>
+<script src="js/core.js"></script>
+<script src="js/render.js"></script>
+<script src="js/graph3d.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
