@@ -120,8 +120,8 @@ function renderNatal(){
     +(M.receptions.length?(' Recepções detectadas: '+M.receptions.join('; ')+'.'):' Sem recepções detectadas entre os aspectos informados.')
     +(M.finals.length?(' Dispositor(es) final(is): '+M.finals.map(f=>PT_NAME[f]).join(', ')+'.'):'')
     +(M.loops.length?(' Anel fechado de dispositores: '+M.loops[0].map(k=>PT_GLYPH[k]).join('→')+'→'+PT_GLYPH[M.loops[0][0]]+'.'):'')+'</p>';
+  html+=archetypeCards();
   html+='<h3>Posições, dignidades, termos e estrelas</h3><table><tr><th>Ponto</th><th>Posição</th><th>Estado</th><th>Estrela (conjunções ≤ 1°)</th></tr>'+rows+stars+'</table>';
-  html+='<div class="card flat" style="border-style:dashed"><p style="margin:0;font-size:.85rem">A leitura planeta a planeta — interpretação, diagrama e ficha curatorial — está na sala <b>Planetas</b>.</p></div>';
   html+='<div class="card"><div class="kicker">Lote do Espírito — o daimon</div><p style="font-size:.86rem">'+CONTEUDO.daimon+'</p></div>';
   html+='<div class="card"><div class="kicker">Sol e Lua — o eixo</div><p style="font-size:.86rem">'+CONTEUDO.solLua+'</p></div>';
   $('natal-body').innerHTML=html;
@@ -195,7 +195,7 @@ function renderPlanetas(){
   if(!NATAL){$('planetas-body').innerHTML=emptyState();selWrap.innerHTML='';return;}
   const keys=Object.keys(PT_NAME).filter(k=>NATAL.pts[k]);
   if(!SEL_PL||!NATAL.pts[SEL_PL])SEL_PL=keys[0];
-  selWrap.innerHTML=keys.map(k=>'<button data-pl="'+k+'"'+(k===SEL_PL?' class="on"':'')+'><span class="g">'+PT_GLYPH[k]+'</span>'+PT_NAME[k]+'</button>').join('');
+  selWrap.innerHTML=keys.map(k=>{const pp=NATAL.pts[k];return '<button data-pl="'+k+'"'+(k===SEL_PL?' class="on"':'')+'><span class="pg">'+PT_GLYPH[k]+'</span><span class="pn">'+PT_NAME[k]+'</span><span class="ps">'+SG[signOf(pp.lon)]+' · casa '+pp.h+'</span></button>';}).join('');
   selWrap.onclick=e=>{const b=e.target.closest('[data-pl]');if(!b)return;SEL_PL=b.dataset.pl;renderPlanetas();};
   const k=SEL_PL,p=NATAL.pts[k],it=interpPlanet(k);
   const sg=signOf(p.lon), ru=ruledHouses(k), rec=(NATAL.meta.receptions||[]).filter(r=>r.includes(PT_GLYPH[k]));
@@ -204,7 +204,7 @@ function renderPlanetas(){
   const lord=Object.keys(STR).sort((a,b)=>STR[b]-STR[a])[0];
   const prom=PROMESSAS.find(pr=>pr.pl===k);
   const meta=(kk,vv)=>'<div class="m-k">'+kk+'</div><div class="m-v">'+vv+'</div>';
-  const html='<div class="exh">'
+  const html='<div class="exh exh-in">'
     +'<div class="exh-l">'
       +'<div class="x-name">'+p.nm+'</div>'
       +'<div class="x-sub">'+SIGNS[sg]+' · casa '+p.h+(p.hBack?(' · fundo na '+p.hBack):'')+(lord===k?' · senhor da genitura':'')+'</div>'
@@ -281,7 +281,8 @@ function drawCord(){
     +'<filter id="soft" x="-30%" y="-60%" width="160%" height="220%"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#000" flood-opacity=".75"/></filter>'
     +'<linearGradient id="blk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#24262e"/><stop offset="42%" stop-color="#15161c"/><stop offset="100%" stop-color="#0a0b0f"/></linearGradient>'
     +'<linearGradient id="blkDim" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#181a20"/><stop offset="100%" stop-color="#0a0b0e"/></linearGradient>'
-    +'<linearGradient id="blkSel" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#33353f"/><stop offset="100%" stop-color="#111219"/></linearGradient>'
+    +'<linearGradient id="blkSel" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2b2d37"/><stop offset="100%" stop-color="#0e1016"/></linearGradient>'
+    +'<filter id="glow" x="-40%" y="-80%" width="180%" height="260%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#9fd6e6" flood-opacity=".55"/></filter>'
     +'</defs>';
   const rowLbl=(y,txt)=>{s+='<text x="10" y="'+y+'" font-size="10.5" font-family="IBM Plex Mono" letter-spacing="2.5" fill="'+DIM2+'">'+txt+'</text>';};
   // balão preto (glass): topo claro, corpo escuro, borda de vidro
@@ -289,7 +290,7 @@ function drawCord(){
     if(w<3)return;
     const rx=Math.min(h/2,30);
     const attr=data?(' data-rs="'+data+'" style="cursor:pointer"'):'';
-    s+='<g'+attr+'><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+rx+'" fill="url(#'+grad+')" filter="url(#soft)" stroke="#fff" stroke-opacity=".14"/>';
+    s+='<g'+attr+'><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+rx+'" fill="url(#'+grad+')" filter="url(#soft)" stroke="#fff" stroke-opacity=".1"/>';
     s+='<rect x="'+(x+1.5)+'" y="'+(y+1.5)+'" width="'+(w-3)+'" height="'+Math.max(2,h*0.42)+'" rx="'+rx+'" fill="#fff" fill-opacity=".05"/>';
     if(w>72&&title){
       s+='<text x="'+(x+20)+'" y="'+(y+h/2-4)+'" font-size="'+Math.min(24,h*0.32)+'" font-family="Cormorant Garamond" fill="'+IVO+'">'+glyph+'</text>';
@@ -310,7 +311,7 @@ function drawCord(){
     if(b<t0||a>t1)return;
     const x=Math.max(XX(Math.max(a,t0)),L), x2=Math.min(XX(Math.min(b,t1)),W-R);
     balloon(x+3,x2-x-6,34,120,now?'blkSel':'blk',(PT_GLYPH[k]||''),nm,yA+'–'+(yA+len)+' · '+len+' anos');
-    if(now)s+='<rect x="'+(x+3)+'" y="34" width="'+(x2-x-6)+'" height="120" rx="30" fill="none" stroke="#fff" stroke-width="2.6"/>';
+    if(now)s+='<rect x="'+(x+3)+'" y="34" width="'+(x2-x-6)+'" height="120" rx="30" fill="none" stroke="#9fd6e6" stroke-opacity=".8" stroke-width="1.6" filter="url(#glow)"/>';
   });
   // ---- SUB-FIRDÁRIA ----
   rowLbl(196,'SUB-FIRDÁRIA');

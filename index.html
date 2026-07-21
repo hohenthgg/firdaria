@@ -26,6 +26,7 @@
   --red:#b06a61;           /* tijolo apagado */
   --blue:#8fa3bb;          /* azul de gravura */
   --violet:#948dab;        /* violeta cinza */
+  --neon:#9fd6e6;          /* brilho neon discreto */
   --serif:'Cormorant Garamond',Georgia,serif;
   --disp:Inter,system-ui,sans-serif;
   --sans:Inter,system-ui,sans-serif;
@@ -42,7 +43,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
              radial-gradient(ellipse 55% 45% at 55% 105%, rgba(255,255,255,.05), transparent 62%),
              radial-gradient(ellipse 30% 24% at 34% 18%, rgba(255,255,255,.035), transparent 65%)}
 /* grão de papel/pedra sobre tudo */
-body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.06;mix-blend-mode:overlay;
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.035;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 a{color:var(--blue)}
 .app{display:flex;min-height:100vh;position:relative;z-index:1}
@@ -78,10 +79,12 @@ p{margin-bottom:10px;color:var(--dim)}
 p.lede{font-family:var(--serif);font-size:1.16rem;color:var(--ivory);line-height:1.6}
 .mono{font-family:var(--mono);font-size:.78rem;color:var(--dim)}
 /* placa com moldura grega (meandro) */
-.card{border:9px solid transparent;
-  border-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M3 21 H21 V3 H9 V13 H13 V9' fill='none' stroke='%23ffffff' stroke-opacity='.38' stroke-width='2'/%3E%3C/svg%3E") 12 round;
-  background:rgba(255,255,255,.028);padding:18px 20px;margin:18px 0;
-  box-shadow:0 16px 40px -28px rgba(0,0,0,.9);position:relative}
+.card{border:1px solid rgba(255,255,255,.08);border-radius:20px;
+  background:rgba(255,255,255,.032);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  padding:22px 26px;margin:20px 0;position:relative;
+  box-shadow:0 24px 60px -34px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.06);
+  transition:transform .5s cubic-bezier(.2,.7,.2,1), box-shadow .5s, border-color .5s}
+.card:hover{border-color:rgba(255,255,255,.14)}
 .card.flat{background:transparent}
 /* ---- cards natais: peça de catálogo, silenciosa ---- */
 .pcard{padding:0;overflow:hidden;border-radius:18px}
@@ -108,16 +111,35 @@ p.lede{font-family:var(--serif);font-size:1.16rem;color:var(--ivory);line-height
 .ifund{background:var(--bg2)}
 .isrc{margin-top:8px}
 /* ===== sala Planetas: exposição em três colunas ===== */
-.plsel{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
-.plsel button{font-family:var(--sans);font-size:.78rem;color:var(--dim);background:rgba(233,236,240,.02);
-  border:1px solid var(--line);border-radius:999px;padding:7px 16px 7px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:.15s}
-.plsel button .g{font-family:var(--serif);font-size:1.05rem;color:var(--dim2)}
-.plsel button:hover{color:var(--ivory);border-color:var(--line2)}
-.plsel button.on{color:var(--ivory2);border-color:var(--gold2);background:rgba(233,236,240,.05)}
-.plsel button.on .g{color:var(--ivory2)}
-.exh{display:grid;grid-template-columns:1.15fr .95fr .75fr;gap:20px;margin-top:16px;align-items:start}
+.plsel{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 6px}
+.plsel button{font-family:var(--sans);color:var(--dim);background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px 18px 12px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;min-width:96px;position:relative;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 14px 34px -26px rgba(0,0,0,.8);
+  transition:transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s, border-color .45s, color .3s}
+.plsel button .pg{font-family:var(--serif);font-size:1.9rem;line-height:1;color:var(--dim)}
+.plsel button .pn{font-size:.82rem;font-weight:600}
+.plsel button .ps{font-family:var(--mono);font-size:.56rem;letter-spacing:.06em;color:var(--dim2)}
+.plsel button:hover{color:var(--ivory);border-color:rgba(255,255,255,.16);transform:translateY(-3px);box-shadow:0 22px 44px -26px rgba(0,0,0,.85)}
+.plsel button:hover .pg{color:var(--ivory)}
+.plsel button.on{color:#fff;border-color:rgba(159,214,230,.5);background:rgba(159,214,230,.06);transform:translateY(-4px);
+  box-shadow:0 26px 50px -24px rgba(0,0,0,.9), 0 0 0 1px rgba(159,214,230,.25), 0 0 26px -6px rgba(159,214,230,.4)}
+.plsel button.on .pg{color:#fff;text-shadow:0 0 14px rgba(159,214,230,.55)}
+.exh{display:grid;grid-template-columns:1.15fr .95fr .78fr;gap:26px;margin-top:20px;align-items:start;
+  border:1px solid rgba(255,255,255,.07);border-radius:24px;padding:26px 28px;
+  background:rgba(255,255,255,.026);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  box-shadow:0 30px 80px -40px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.05)}
+.exh-in{animation:exhFloat .6s cubic-bezier(.2,.7,.2,1)}
+@keyframes exhFloat{from{opacity:0;transform:translateY(10px) scale(.994)}to{opacity:1;transform:none}}
+.exh-in .isec,.exh-in .x-block,.exh-in .x-sintese,.exh-in details{animation:revUp .55s both cubic-bezier(.2,.7,.2,1)}
+.exh-in .x-sintese{animation-delay:.06s}
+.exh-in .isec:nth-of-type(1){animation-delay:.12s}
+.exh-in .isec:nth-of-type(2){animation-delay:.18s}
+.exh-in details{animation-delay:.24s}
+@keyframes revUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .exh-l .x-name{font-family:var(--sans);font-size:2rem;font-weight:600;color:#fff;letter-spacing:-.01em;line-height:1.1}
-.exh-l .x-sub{font-family:var(--mono);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim2);margin:4px 0 14px}
+.exh-l .x-sub{font-family:var(--mono);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--neon);opacity:.75;margin:6px 0 16px}
 .exh-l .x-frase{font-family:var(--serif);font-size:1.12rem;font-style:italic;color:var(--ivory);line-height:1.55;margin-bottom:12px}
 .exh-l .x-block{font-size:.86rem;color:var(--dim);line-height:1.65;margin-bottom:12px}
 .exh-l .x-block b{color:var(--ivory)}
@@ -331,6 +353,33 @@ body.is-mobile .qmap{aspect-ratio:1.25}
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
+/* ===== arquétipos (cartas de tarô) ===== */
+.arche-wrap{margin:18px 0 6px}
+.arche-head{margin-bottom:14px}
+.tcards{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap}
+.t-arrow{font-size:1.6rem;color:var(--neon);opacity:.7;text-shadow:0 0 14px rgba(159,214,230,.5)}
+.tarot{width:220px;min-height:340px;border-radius:20px;padding:20px 18px 18px;position:relative;text-align:center;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.022));
+  border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 30px 70px -34px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.08);
+  transition:transform .5s cubic-bezier(.2,.7,.2,1), box-shadow .5s}
+.tarot::before{content:"";position:absolute;inset:7px;border:1px solid rgba(255,255,255,.14);border-radius:14px;pointer-events:none}
+.tarot::after{content:"";position:absolute;inset:0;border-radius:20px;pointer-events:none;
+  box-shadow:inset 0 0 40px -10px rgba(159,214,230,.12)}
+.tarot:hover{transform:translateY(-6px) rotate(-.4deg);box-shadow:0 40px 90px -34px rgba(0,0,0,.95), 0 0 30px -8px rgba(159,214,230,.28)}
+.tarot[data-arche="arquétipo ideal"]{background:linear-gradient(180deg,rgba(159,214,230,.1),rgba(255,255,255,.02));border-color:rgba(159,214,230,.3)}
+.t-num{font-family:var(--serif);font-size:.9rem;letter-spacing:.3em;color:var(--gold2)}
+.t-role{font-family:var(--mono);font-size:.5rem;letter-spacing:.24em;text-transform:uppercase;color:var(--neon);opacity:.8;margin-top:2px}
+.t-sym{font-family:var(--serif);font-size:4.4rem;line-height:1.1;color:#fff;margin:8px 0 4px;text-shadow:0 0 26px rgba(159,214,230,.4)}
+.t-card{font-family:var(--serif);font-size:1.45rem;color:#fff;letter-spacing:.02em}
+.t-arq{font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim2);margin:4px 0 10px}
+.t-kw{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:10px}
+.t-kw span{font-family:var(--mono);font-size:.54rem;letter-spacing:.06em;color:var(--dim);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:2px 8px}
+.t-txt{font-family:var(--serif);font-size:.92rem;font-style:italic;color:var(--dim);line-height:1.5}
+.arche-note{font-size:.86rem;color:var(--dim);text-align:center;max-width:640px;margin:16px auto 4px;line-height:1.6}
+.arche-note b{color:var(--ivory)}
+body.is-mobile .tarot{width:170px;min-height:290px}
+body.is-mobile .t-sym{font-size:3.4rem}
 </style>
 </head>
 <body>

@@ -218,6 +218,50 @@ function interpPlanet(k){
   return {sintese:sin,manif,alta,baixa,confirma,fund};
 }
 
+/* ============================================================
+   ARQUÉTIPO (carta de tarô) por planeta — símbolo dominante do regente.
+   Arquétipo ATUAL = regente do Ascendente · IDEAL = regente do Lote do Espírito.
+   ============================================================ */
+const ARCHETYPE={
+  sun:{card:'O Imperador',num:'IV',sym:'♔',arq:'O Rei',kw:['autoridade','vontade','centro'],txt:'governar em nome próprio, dar rosto e direção ao que faz'},
+  moon:{card:'A Sacerdotisa',num:'II',sym:'☾',arq:'A Guardiã',kw:['intuição','ritmo','cuidado'],txt:'sentir o clima, guardar o que importa e nutrir'},
+  mercury:{card:'O Mago',num:'I',sym:'☿',arq:'O Mensageiro',kw:['palavra','razão','habilidade'],txt:'ligar as coisas pela mente e pela fala, negociar e traduzir'},
+  venus:{card:'A Imperatriz',num:'III',sym:'♀',arq:'A Amante',kw:['beleza','acordo','prazer'],txt:'conciliar, agradar e criar harmonia e vínculo'},
+  mars:{card:'A Torre',num:'XVI',sym:'⚔',arq:'O Guerreiro',kw:['coragem','corte','ação'],txt:'agir, cortar e defender — romper o que trava'},
+  jupiter:{card:'A Roda da Fortuna',num:'X',sym:'♃',arq:'O Benfeitor',kw:['expansão','fé','mestre'],txt:'ampliar, ensinar e abrir caminho com generosidade'},
+  saturn:{card:'O Eremita',num:'IX',sym:'⌛',arq:'O Ancião',kw:['tempo','limite','disciplina'],txt:'estruturar, podar e sustentar no tempo, mesmo só'}};
+function tarotCard(k,role,pos){
+  const a=ARCHETYPE[k]; if(!a)return '';
+  const dig=pos?(', '+pos.dig+', casa '+pos.h):'';
+  return '<div class="tarot" data-arche="'+role+'">'
+    +'<div class="t-num">'+a.num+'</div>'
+    +'<div class="t-role">'+role+'</div>'
+    +'<div class="t-sym">'+a.sym+'</div>'
+    +'<div class="t-card">'+a.card+'</div>'
+    +'<div class="t-arq">'+a.arq+' · '+PT_NAME[k]+'</div>'
+    +'<div class="t-kw">'+a.kw.map(w=>'<span>'+w+'</span>').join('')+'</div>'
+    +'<div class="t-txt">'+a.txt+dig+'.</div>'
+    +'</div>';
+}
+function archetypeCards(){
+  if(!NATAL)return '';
+  const ascR=NATAL.meta.ascRuler;
+  const sp=NATAL.pts.spirit, spR=SIGN_RULER[signOf(sp.lon)];
+  const same=ascR===spR;
+  return '<div class="arche-wrap">'
+    +'<div class="arche-head"><span class="kicker">Arquétipo — quem você é · quem você pode ser</span>'
+      +'<p class="mono" style="margin:2px 0 0;color:var(--dim2)">Regente do Ascendente (o ponto de partida) frente ao regente do Lote do Espírito (a direção a integrar).</p></div>'
+    +'<div class="tcards">'
+      +tarotCard(ascR,'arquétipo atual',NATAL.pts[ascR])
+      +'<div class="t-arrow">→</div>'
+      +tarotCard(spR,'arquétipo ideal',NATAL.pts[spR])
+    +'</div>'
+    +'<p class="arche-note">'+(same
+      ?'Regente do Ascendente e do Espírito coincidem em <b>'+PT_NAME[ascR]+'</b>: o ponto de partida já aponta para a direção — resta amadurecê-lo.'
+      :'O caminho vai de <b>'+ARCHETYPE[ascR].arq+' ('+PT_NAME[ascR]+')</b> a <b>'+ARCHETYPE[spR].arq+' ('+PT_NAME[spR]+')</b>: integrar '+ARCHETYPE[spR].txt+', sem abandonar a força de partida.')+'</p>'
+    +'</div>';
+}
+
 /* ---------- síntese em uma frase (cabeçalho) ---------- */
 function interpFrase(k){
   const p=NATAL.pts[k]; if(!p)return '';
