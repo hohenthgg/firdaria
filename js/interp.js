@@ -123,11 +123,11 @@ function receptionsOf(k){
 /* ---------- condição essencial em rótulo comportamental ---------- */
 function digReading(k,p){
   const d=p.dig||'';
-  if(d.includes('domicílio'))return {q:'forte',t:'age com recursos próprios: o que promete, tende a cumprir sem depender de terceiros'};
-  if(d.includes('exaltação'))return {q:'forte',t:'age com ímpeto acima do comum: entrega visível, com risco de exagerar o próprio papel'};
-  if(d.includes('exílio'))return {q:'fraca',t:'cumpre com desconto: precisa de apoio externo e tende a compensar — ora por excesso, ora por omissão'};
-  if(d.includes('queda'))return {q:'fraca',t:'opera abaixo do que promete: os resultados exigem repetição e prazo maior do que o esperado'};
-  return {q:'média',t:'opera pela mediania: nem garante nem nega — o resultado depende dos apoios (recepções, aspectos e regente do termo)'};
+  if(d.includes('domicílio'))return {q:'forte',t:'joga em casa: cumpre o que promete sem pedir favor a ninguém'};
+  if(d.includes('exaltação'))return {q:'forte',t:'é o convidado de honra: entrega acima do normal — e tende a se achar por isso'};
+  if(d.includes('exílio'))return {q:'fraca',t:'joga fora de casa: rende pouco, reclama muito e vive de favor alheio'};
+  if(d.includes('queda'))return {q:'fraca',t:'opera no porão: promete e não sustenta; só sai alguma coisa com repetição teimosa'};
+  return {q:'média',t:'é um sem-terra: faz o que os aliados (recepções, aspectos, senhor do termo) deixarem'};
 }
 
 /* ============================================================
@@ -163,7 +163,7 @@ function interpPlanet(k){
   } else if(ang){
     efe='Posição angular: o planeta age em público e sem mediação — seus temas são visíveis '+IN_CAMPO[p.h]+'.';
   } else if([6,8,12].includes(p.h)){
-    efe='Casa difícil: os temas do planeta operam com resistência, custo ou recolhimento — o proveito exige método, não espontaneidade.';
+    efe='Casa ruim, sem eufemismo — '+HOUSE_BLUNT[p.h]+'. O planeta trabalha pagando pedágio: o que sai daqui, sai suado.';
   } else {
     efe='Posição intermediária: o planeta trabalha com apoio do contexto, sem o peso nem a exposição dos ângulos.';
   }

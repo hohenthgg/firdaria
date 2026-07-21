@@ -230,14 +230,21 @@ function searchWindows(act,startDate,endDate,h0,h1,stepH){
 
 /* ---------- síntese literal do ano (recuperada do MVP) ---------- */
 function synthYear(age,p,f){
-  const H=p.houseN,hs=HOUSE_SIG[H],lord=NATAL.pts[p.lordKey];
+  const H=p.houseN,lord=NATAL.pts[p.lordKey];
   const sub=f.subKey&&NATAL.pts[f.subKey]?f.subKey:null;
-  const limNote=lord.hBack?(' — posição liminar: fundo na casa '+lord.hBack+', manifestação na '+lord.h+' (regra dos 5°, peso '+Math.round((lord.limW||1)*100)+'%)'):'';
-  let t='Pela profecção, o Ascendente avança ao signo de <b>'+(p.sign||SIGNS[p.signIdx])+'</b> e ativa a <b>casa '+H+'</b> — '+hs.q+': <b>'+hs.s+'</b>. O Senhor do Ano é o regente desse signo, <b>'+PT_NAME[p.lordKey]+'</b> ('+lord.dig+', casa '+lord.h+' natal'+limNote+'), que também rege a '+listRuled(p.lordKey)+': estes assuntos são arrastados para dentro do ano.';
-  if(sub&&sub!==p.lordKey){t+=' Na sub-firdária de <b>'+PT_NAME[sub]+'</b>'+(ruledHouses(sub).length?(' — que rege a '+listRuled(sub)+' —'):'')+' esses temas entram no jogo da casa '+H+'.';}
+  const ruledL=ruledHouses(p.lordKey), ruledS=sub?ruledHouses(sub):[];
+  let t='<b>Casa '+H+'</b>: '+HOUSE_ACID[H]+'.';
+  t+=' Quem manda no ano é <b>'+PT_NAME[p.lordKey]+'</b>, regente de '+(p.sign||SIGNS[p.signIdx])+' — e no seu mapa ele responde por '+(ruledL.map(h=>h+'ª ('+HOUSE_BLUNT[h]+')').join(' e ')||'nada')+'. Esses assuntos entram no ano junto.';
+  if(sub&&sub!==p.lordKey)t+=' O sub-período é de <b>'+PT_NAME[sub]+'</b>'+(ruledS.length?(', que responde pela '+ruledS.map(h=>h+'ª').join(' e pela ')):'')+'.';
+  // sem véu: senhores do período que respondem por 6ª/8ª/12ª
+  const hard=[...new Set(ruledL.concat(ruledS))].filter(h=>[6,8,12].includes(h));
+  if(hard.length)t+=' <b>Na lata:</b> '+hard.map(h=>({
+    6:'o senhor do período responde pela 6ª — doença e rotina que esmaga têm passagem comprada',
+    8:'o senhor do período responde pela 8ª natal — chance real de morte no entorno, perda, luto, ansiedade, crise',
+    12:'o senhor do período responde pela 12ª — inimigo oculto, isolamento, hospital, e a sabotagem costuma ser sua'}[h])).join('; ')+'.';
   const mal=[6,8,12].includes(H);
-  t+=mal?' <b>Casa maléfica</b>: espere resistência, perda ou medo nos temas acima; o proveito vem por método e pelas recepções que fiam o senhor.'
-        :((STR[p.lordKey]||3)>=6?' Senhor dignificado: <b>entrega visível</b> pelos temas da casa.':' Senhor debilitado: cumpre com atraso e desconto — cobrar constância, não brilho.');
+  t+=mal?' Casa maléfica: o ano cobra pedágio — o que se salva vem por método, não por sorte.'
+        :((STR[p.lordKey]||3)>=6?' Senhor forte: o ano entrega o que promete.':' Senhor fraco: promete, entrega a metade, e atrasado.');
   return t;
 }
 

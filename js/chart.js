@@ -246,32 +246,33 @@ function temperTestimonies(){
   const fx=[]; const Q={quente:0,frio:0,seco:0,'úmido':0};
   const add=(qs,w,label)=>{qs.forEach(q=>Q[q]+=w);fx.push([label,qs.join('-'),w]);};
   const sq=L=>SIGN_ELEM[signOf(L)];
-  add(ELEMQ[sq(NATAL.asc)],3,'Asc em '+SIGNS[signOf(NATAL.asc)]);
-  const ru=NATAL.meta.ascRuler;
-  add(ELEMQ[sq(NATAL.pts[ru].lon)],3,'Regente do Asc ('+PT_NAME[ru]+') em '+SIGNS[signOf(NATAL.pts[ru].lon)]);
-  // planetas sobre o Ascendente ou na casa I imprimem as PRÓPRIAS qualidades
-  // (Saturno conjunto ao Asc esfria o signo). Colado à cúspide > dentro da casa.
+  /* pesos fixos da técnica:
+     planeta na cúspide da 1 = 3 (assume a casa; ≥ Ascendente)
+     Ascendente = 2 · regente do Ascendente = 3 · planetas dentro da 1 = 2
+     Lua = 3 · fase da Lua = 1 · senhor da genitura = 1,5 · estação do Sol = 0,5.
+     O planeta contribui a PRÓPRIA natureza, sustentada no signo em que está. */
   const PQUAL={sun:['quente','seco'],moon:['frio','úmido'],mercury:['frio','seco'],venus:['quente','úmido'],mars:['quente','seco'],jupiter:['quente','úmido'],saturn:['frio','seco']};
+  add(ELEMQ[sq(NATAL.asc)],2,'Ascendente em '+SIGNS[signOf(NATAL.asc)]+' · peso 2');
+  const ru=NATAL.meta.ascRuler;
+  add(ELEMQ[sq(NATAL.pts[ru].lon)],3,'Regente do Ascendente ('+PT_NAME[ru]+') em '+SIGNS[signOf(NATAL.pts[ru].lon)]+' · peso 3');
   Object.keys(PT_NAME).forEach(k=>{const p=NATAL.pts[k];if(!p)return;
     const dAsc=adiff(p.lon,NATAL.asc);
     let w1=0,lbl='';
-    if(dAsc<=3){w1=4;lbl='conjunto ao Ascendente ('+fmtOrb(dAsc)+') — imprime a própria natureza no signo';}
-    else if(dAsc<=6){w1=3;lbl='junto ao Ascendente ('+fmtOrb(dAsc)+')';}
-    else if(p.h===1){w1=2;lbl='dentro da casa I';}
-    else if(p.hBack===1){w1=1;lbl='casa I ao fundo (regra dos 5°)';}
+    if(dAsc<=5){w1=3;lbl='na cúspide da casa 1 ('+fmtOrb(dAsc)+' do Ascendente): assume a casa · peso 3';}
+    else if(p.h===1){w1=2;lbl='dentro da casa 1 · peso 2';}
+    else if(p.hBack===1){w1=1;lbl='casa 1 ao fundo (regra dos 5°) · peso 1';}
     if(w1>0){
-      add(PQUAL[k],w1,PT_NAME[k]+' '+lbl);
-      add(ELEMQ[sq(p.lon)],1,PT_NAME[k]+' sustentado pelo signo de '+SIGNS[signOf(p.lon)]);
+      add(PQUAL[k],w1,PT_NAME[k]+' '+lbl+' — imprime a própria natureza');
+      add(ELEMQ[sq(p.lon)],w1/3,PT_NAME[k]+' sustentado pelo signo de '+SIGNS[signOf(p.lon)]);
     }});
-  add(ELEMQ[sq(NATAL.pts.moon.lon)],3,'Lua em '+SIGNS[signOf(NATAL.pts.moon.lon)]);
+  add(ELEMQ[sq(NATAL.pts.moon.lon)],3,'Lua em '+SIGNS[signOf(NATAL.pts.moon.lon)]+' · peso 3');
   const elong=n360(NATAL.pts.moon.lon-NATAL.pts.sun.lon);
   const ph=elong<90?['quente','úmido']:elong<180?['quente','seco']:elong<270?['frio','seco']:['frio','úmido'];
-  add(ph,3,'Fase da Lua ('+Math.round(elong)+'° do Sol)');
+  add(ph,1,'Fase da Lua ('+Math.round(elong)+'° do Sol) · peso 1');
   const season=[['quente','úmido'],['quente','seco'],['frio','seco'],['frio','úmido']][Math.floor(signOf(NATAL.pts.sun.lon)/3)];
-  add(season,2,'Estação do Sol (hemisfério norte)');
+  add(season,0.5,'Estação do Sol · peso 0,5');
   const lord=Object.keys(STR).sort((a,b)=>STR[b]-STR[a])[0];
-  const PQ={sun:['quente','seco'],moon:['frio','úmido'],mercury:['frio','seco'],venus:['quente','úmido'],mars:['quente','seco'],jupiter:['quente','úmido'],saturn:['frio','seco']};
-  add(PQ[lord],1,'Senhor da genitura: '+PT_NAME[lord]);
+  add(PQUAL[lord],1.5,'Senhor da genitura: '+PT_NAME[lord]+' · peso 1,5');
   const hot=Q.quente-Q.frio,dry=Q.seco-Q['úmido'];
   const humor=hot>=0?(dry>=0?'colérico':'sanguíneo'):(dry>=0?'melancólico':'fleumático');
   const total=Q.quente+Q.frio+Q.seco+Q['úmido'];
@@ -291,16 +292,16 @@ function addRS(parsed, year){
   if(parsed.asc!==null){
     const ascSg=signOf(parsed.asc), ascRuler=SIGN_RULER[ascSg];
     const rsRulerPos=parsed.pts[ascRuler];
-    ascTxt='A Revolução nasce com o <b>Ascendente em '+SIGNS[ascSg]+'</b> ('+zfmt(parsed.asc)+'); o regente de '+SIGNS[ascSg]+' é <b>'+PT_NAME[ascRuler]+'</b>, que governa o nascimento do ano'
-      +(rsRulerPos?(' e está em '+SIGNS[signOf(rsRulerPos.lon)]+(rsRulerPos.h?(', casa '+rsRulerPos.h+' da Revolução'):'')):'')+'.'
-      +(rsAscHouseNatal?(' Esse Ascendente cai na <b>casa '+rsAscHouseNatal+' natal</b>, podendo trazer ao primeiro plano '+HOUSE_SHORT[rsAscHouseNatal]+'.'):'');
+    ascTxt='A Revolução nasce com o <b>Ascendente em '+SIGNS[ascSg]+'</b>; quem governa o ano da Revolução é <b>'+PT_NAME[ascRuler]+'</b>'
+      +(rsRulerPos?(', que está em '+SIGNS[signOf(rsRulerPos.lon)]+(rsRulerPos.h?(', casa '+rsRulerPos.h+' da própria Revolução'):'')):'')+'.'
+      +(rsAscHouseNatal?(' Esse Ascendente cai na <b>casa '+rsAscHouseNatal+' natal</b> — '+HOUSE_BLUNT[rsAscHouseNatal]+'. É por aí que o ano entra.'):'');
   } else ascTxt='O Ascendente da Revolução não consta nos dados.';
-  // Senhor do Ano (pela profecção) em frase completa
+  // Senhor do Ano (pela profecção), sem rodeio
   const rsLord=parsed.pts[p.lordKey];
   if(rsLord){
     const d=dignityOf(p.lordKey,rsLord.lon,rsLord.retro,parsed.pts.sun?parsed.pts.sun.lon:undefined);
-    notes.push('Pela profecção, o ano ativa a casa '+p.houseN+' e o signo de '+SIGNS[p.signIdx]+'; o Senhor do Ano é o regente desse signo, <b>'+PT_NAME[p.lordKey]+'</b>. Na Revolução ele aparece em '+SIGNS[signOf(rsLord.lon)]+' ('+zfmt(rsLord.lon)+')'+(rsLord.h?(', casa '+rsLord.h+' da Revolução'):'')+', em condição de '+d.tags.join(', ')
-      +(signOf(rsLord.lon)===signOf(lord.lon)?' — e <b>repete o signo que ocupa no natal</b>, o que para Abu Mashar confirma a promessa natal para este ano':'')+'.');
+    notes.push('Pela profecção, o ano ativa a casa '+p.houseN+' — '+HOUSE_BLUNT[p.houseN]+' — e o Senhor do Ano é o regente de '+SIGNS[p.signIdx]+', <b>'+PT_NAME[p.lordKey]+'</b>. Na Revolução ele está em '+SIGNS[signOf(rsLord.lon)]+(rsLord.h?(', casa '+rsLord.h):'')+', '+d.tags.join(', ')
+      +(signOf(rsLord.lon)===signOf(lord.lon)?' — e <b>repete o signo natal</b>: promessa confirmada para este ano':'')+'.');
   } else notes.push('Pela profecção, o Senhor do Ano é '+PT_NAME[p.lordKey]+', mas ele não consta nos dados da Revolução.');
   // planetas da RS sobre pontos natais / retornos ao próprio grau
   Object.entries(parsed.pts).forEach(([k,rp])=>{

@@ -42,6 +42,33 @@ const HOUSE_SIG={
  11:{q:'sucedente · alegria de Júpiter · BENÉFICA',s:'amigos, apoios, esperanças e os frutos do ofício'},
  12:{q:'cadente · MALÉFICA (não vê o Ascendente)',s:'inimigos ocultos, prisões, exílios, autossabotagem e animais grandes'}};
 const HOUSE_SHORT={1:'o corpo e a vida',2:'o dinheiro',3:'estudos, irmãos e a palavra',4:'a casa e o pai',5:'filhos, prazeres e criações',6:'doenças e trabalho',7:'cônjuge, sócios e contendas',8:'morte, medos e dívidas',9:'doutrina e longas viagens',10:'o ofício e as honras',11:'amigos e apoios',12:'inimigos ocultos e exílios'};
+/* significações cruas, à la Lilly/Frawley — sem véu, para leigo entender */
+const HOUSE_BLUNT={
+ 1:'você mesmo: corpo, saúde, cara',
+ 2:'o seu dinheiro — o que entra e o que some',
+ 3:'irmãos, papelada, vizinhança, trajetos curtos',
+ 4:'pai, casa, terra, família — e o fim de toda coisa',
+ 5:'filhos, prazer, romance, aposta',
+ 6:'doença, trabalho pesado, subordinados',
+ 7:'casamento, sócio, processo — e o inimigo de cara limpa',
+ 8:'morte, luto, medo, dívida, dinheiro dos outros',
+ 9:'religião, estudo longo, estrangeiro',
+ 10:'carreira, chefe, fama — e queda pública',
+ 11:'amigos e pistolões',
+ 12:'inimigo oculto, hospital, prisão, autossabotagem'};
+const HOUSE_ACID={ // o clima do ano quando a casa é ativada — na lata
+ 1:'ano de si mesmo: corpo, saúde e imagem em cima da mesa',
+ 2:'ano de bolso: ou o dinheiro entra, ou sangra',
+ 3:'ano de papelada, trajeto curto e assunto de irmão',
+ 4:'ano de casa e família: mudança, obra, pai — ou luto de raiz',
+ 5:'ano de filho, romance e aposta — com a conta chegando depois',
+ 6:'ano em que a saúde manda a fatura e o trabalho pesa',
+ 7:'ano de aliança ou de briga: casamento, sociedade, processo',
+ 8:'ano de perda: morte no entorno, luto, ansiedade, dívida — o tema visita, convidado ou não',
+ 9:'ano de fé, faculdade ou estrangeiro — convicções em teste',
+ 10:'ano de carreira: promoção ou exposição, e as duas cobram',
+ 11:'ano de rede: amigo abre porta que mérito não abre',
+ 12:'ano de recolhimento: isolamento, hospital, inimigo que não dá as caras — e sabotagem sua'};
 const OLAVO_CASA={1:'a autoimagem imediata: o que a pessoa vê de si sem intermediários',2:'o confronto com o mundo físico: o real enquanto peso, forma e densidade',3:'a linguagem: transformar a realidade em signo — o mundo virando discurso',4:'a intimidade: o rio do tempo interno, a vivência direta das emoções',5:'a consciência do poder pessoal: o que se sabe poder ou não poder fazer agora',6:'o rendimento: o balanço entre os recursos próprios e as exigências de fora',7:'o eu apreendido pelo espelho do outro: expectativas bilaterais',8:'o potencial de decisão imediata: a estimativa quase premonitória da situação',9:'o arquivo do já sabido: as certezas sobre as quais todo pensamento se assenta',10:'os lugares sociais efetivos: o poder exercido e sofrido diante da sociedade inteira',11:'os projetos de futuro: o personagem que se quer ser, a inserção na própria época',12:'o espaço além do mundo conhecido: o que se pressente fora da esfera reconhecida'};
 /* firdária: ordens e durações */
 const FIRD_DIURNAL=[['sun','Sol',10],['venus','Vênus',8],['mercury','Mercúrio',13],['moon','Lua',9],['saturn','Saturno',11],['jupiter','Júpiter',12],['mars','Marte',7],['nn','Nodo N.',3],['sn','Nodo S.',2]];
