@@ -229,30 +229,65 @@ function searchWindows(act,startDate,endDate,h0,h1,stepH){
 }
 
 /* ---------- síntese literal do ano (recuperada do MVP) ---------- */
+/* temas de um planeta pelas casas que rege (regência interna) — frase curta e literal */
+function themeOfRuler(k){
+  const hs=ruledHouses(k);
+  if(!hs.length)return 'assuntos gerais';
+  return hs.map(h=>HOUSE_THEME[h]).join('; ');
+}
 function synthYear(age,p,f){
   const H=p.houseN,lord=NATAL.pts[p.lordKey];
   const sub=f.subKey&&NATAL.pts[f.subKey]?f.subKey:null;
-  const ruledL=ruledHouses(p.lordKey), ruledS=sub?ruledHouses(sub):[];
-  let t='<b>Casa '+H+'</b>: '+HOUSE_ACID[H]+'.';
-  t+=' Quem manda no ano é <b>'+PT_NAME[p.lordKey]+'</b>, regente de '+(p.sign||SIGNS[p.signIdx])+' — e no seu mapa ele responde por '+(ruledL.map(h=>h+'ª ('+HOUSE_BLUNT[h]+')').join(' e ')||'nada')+'. Esses assuntos entram no ano junto.';
-  if(sub&&sub!==p.lordKey)t+=' O sub-período é de <b>'+PT_NAME[sub]+'</b>'+(ruledS.length?(', que responde pela '+ruledS.map(h=>h+'ª').join(' e pela ')):'')+'.';
-  // sem véu: senhores do período que respondem por 6ª/8ª/12ª
-  const hard=[...new Set(ruledL.concat(ruledS))].filter(h=>[6,8,12].includes(h));
-  if(hard.length)t+=' <b>Na lata:</b> '+hard.map(h=>({
-    6:'o senhor do período responde pela 6ª — doença e rotina que esmaga têm passagem comprada',
-    8:'o senhor do período responde pela 8ª natal — chance real de morte no entorno, perda, luto, ansiedade, crise',
-    12:'o senhor do período responde pela 12ª — inimigo oculto, isolamento, hospital, e a sabotagem costuma ser sua'}[h])).join('; ')+'.';
-  const mal=[6,8,12].includes(H);
-  t+=mal?' Casa maléfica: o ano cobra pedágio — o que se salva vem por método, não por sorte.'
-        :((STR[p.lordKey]||3)>=6?' Senhor forte: o ano entrega o que promete.':' Senhor fraco: promete, entrega a metade, e atrasado.');
+  // TEMA principal = casas que a firdária maior rege · SUBTEMA = casas do sub-período
+  const mk=f.majorKey;
+  let t;
+  if(PT_NAME[mk]){const rl=ruledHouses(mk);
+    t='<b>Tema do período</b> (firdária de '+f.major+'): '+PT_NAME[mk]+' rege '+(rl.map(h=>h+'ª').join(' e ')||'—')+' — trata-se de '+themeOfRuler(mk)+'.';
+  } else t='<b>Tema do período</b>: capítulo de '+f.major+' (Nodo) — passagem breve, sem regência de casa.';
+  if(sub&&sub!==mk&&PT_NAME[sub])
+    t+=' <b>Subtema</b> (sub-firdária de '+PT_NAME[sub]+'): rege '+(ruledHouses(sub).map(h=>h+'ª').join(' e ')||'—')+' — entram '+themeOfRuler(sub)+'.';
+  // profecção: senhor do ano
+  t+=' <b>Ano</b> (profecção): ativa a casa '+H+' em '+(p.sign||SIGNS[p.signIdx])+' — '+HOUSE_THEME[H]+'; o Senhor do Ano é '+PT_NAME[p.lordKey]+', que rege '+themeOfRuler(p.lordKey)+'.';
   return t;
 }
 
+/* ---------- regra dos 5° na personalidade ----------
+   Planeta a menos de 5° da cúspide do Ascendente empurra CONCRETAMENTE
+   traços da própria natureza nos eixos cujo polo casa com esses traços.
+   (Ex.: Saturno na cúspide → introversão, vigilância, rigidez, disciplina,
+   autocontrole, reserva, seletividade, pessimismo prudencial; e reduz
+   espontaneidade, flexibilidade, confiança imediata.) */
+const ANG_PUSH={
+  saturn:['introversão','reserva','reticência','vigilância','cautela','deliberação','ordem','disciplina','rigidez','controle','planejamento','perfeccionismo','autocontrole','pessimismo','dogmatismo','tradição','seletividade','concentração','retenção','estabilidade','conservação','blindagem'],
+  mars:['atividade','rapidez','iniciativa','audácia','irritabilidade','intensidade','impulsividade','competição','dominação','assertividade','execução','autonomia'],
+  sun:['dominação','ambição','honra','autonomia','coesão','controle','iniciativa','transparência'],
+  jupiter:['otimismo','expansão','generosidade','idealismo','sociabilidade','confiança','vinculação','tolerância à pressão'],
+  venus:['emotividade','conciliação','vinculação','hedonismo','sociabilidade','expressividade afetiva','receptividade simbólica','acomodação'],
+  mercury:['abstração','análise','flexibilidade','rapidez','dispersão','improvisação','sociabilidade'],
+  moon:['sensibilidade','emotividade','variabilidade','receptividade','vinculação','mudança','suscetibilidade']};
+function angularBias(name){
+  if(typeof NATAL==='undefined'||!NATAL)return {bias:0,facts:[]};
+  const parts=name.toLowerCase().split('–'); const facts=[]; let bias=0;
+  Object.keys(PT_NAME).forEach(k=>{
+    const p=NATAL.pts[k]; if(!p)return;
+    const d=adiff(p.lon,NATAL.asc); if(d>5)return;
+    const push=ANG_PUSH[k]; if(!push)return;
+    const strength=1-d/5;                       // 0..1, mais forte na cúspide
+    push.forEach(kw=>{
+      let dir=0;
+      if(parts[0].includes(kw))dir=1; else if(parts[1].includes(kw))dir=-1;
+      if(dir){bias+=dir*strength*0.45; if(Math.abs(strength)>0.2)facts.push(PT_NAME[k]+' na cúspide do Ascendente reforça '+kw);}
+    });
+  });
+  return {bias:Math.max(-0.7,Math.min(0.7,bias)),facts:[...new Set(facts)]};
+}
 /* ---------- motor dos 48 eixos ---------- */
 function computeAxis(name,tests,sigKey){
   let pos=0,neg=0,wsum=0;const facts=[];
   tests.forEach(([v,w,lb])=>{const c=v*w; if(c>=0)pos+=c;else neg-=c; wsum+=w; if(Math.abs(v)>0.05)facts.push(lb);});
-  const raw=(pos-neg)/Math.max(1,wsum);              // -1..1
+  const ab=angularBias(name);
+  let raw=(pos-neg)/Math.max(1,wsum);                // -1..1
+  if(ab.bias){raw=Math.max(-1,Math.min(1,raw+ab.bias)); wsum+=2; ab.facts.forEach(f=>facts.push(f));}
   const val=Math.max(1,Math.min(4,2.5+raw*1.5));
   const inten=Math.abs(val-2.5)/1.5;                  // 0..1
   const conf=Math.min(1,wsum/8);

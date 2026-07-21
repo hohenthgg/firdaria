@@ -208,18 +208,16 @@ function renderPlanetas(){
     +'<div class="exh-l">'
       +'<div class="x-name">'+p.nm+'</div>'
       +'<div class="x-sub">'+SIGNS[sg]+' · casa '+p.h+(p.hBack?(' · fundo na '+p.hBack):'')+(lord===k?' · senhor da genitura':'')+'</div>'
-      +'<div class="x-frase">'+interpFrase(k)+'</div>'
-      +'<div class="x-block"><b>Interpretação.</b> '+it.efe+'</div>'
-      +'<div class="x-block"><b>Função.</b> '+it.fun+'</div>'
+      +'<div class="x-block x-sintese">'+it.sintese+'</div>'
+      +'<div class="isec"><span class="ik">manifestações concretas</span><ul class="ilist">'+it.manif.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>'
+      +'<div class="isec"><span class="ik">expressão construtiva / problemática</span>'
+        +'<div class="iexp alta" style="margin-bottom:8px"><span class="mono">construtiva</span><ul class="ilist">'+it.alta.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>'
+        +'<div class="iexp baixa"><span class="mono">problemática · sob aflição</span><ul class="ilist">'+it.baixa.map(m=>'<li>'+m+'</li>').join('')+'</ul></div></div>'
       +(prom?('<div class="x-block"><b>Promessa natal.</b> '+prom.fat+' '+prom.cond+'</div>'):'')
-      +'<details><summary class="ik" style="cursor:pointer;padding:8px 0">aprofundar — as seis partes auditáveis ▾</summary>'
-        +'<div class="isec"><span class="ik">1 · fator técnico</span><p>'+it.tec+'</p></div>'
-        +'<div class="isec"><span class="ik">4 · manifestações possíveis</span><ul class="ilist">'+it.manif.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>'
-        +'<div class="isec"><span class="ik">5 · expressão construtiva / problemática</span>'
-          +'<div class="iexp alta" style="margin-bottom:8px"><span class="mono">construtiva</span><ul class="ilist">'+it.alta.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>'
-          +'<div class="iexp baixa"><span class="mono">problemática · sob aflição</span><ul class="ilist">'+it.baixa.map(m=>'<li>'+m+'</li>').join('')+'</ul></div></div>'
-        +'<div class="isec"><span class="ik">6 · fundamento visível</span><p class="mono" style="font-size:.68rem;line-height:1.7">'+it.fund+'</p>'
-          +'<div class="isrc"><button class="btn" data-loadsrc="'+k+'">consultar fontes do corpus</button></div></div>'
+      +'<details><summary class="ik" style="cursor:pointer;padding:8px 0">fatores que confirmam ou moderam · fundamento técnico ▾</summary>'
+        +'<ul class="ilist">'+it.confirma.map(m=>'<li>'+m+'</li>').join('')+'</ul>'
+        +'<p class="mono" style="font-size:.68rem;line-height:1.7">'+it.fund+'</p>'
+        +'<div class="isrc"><button class="btn" data-loadsrc="'+k+'">consultar fontes do corpus</button></div>'
       +'</details>'
     +'</div>'
     +'<div class="exh-c">'+natalWheel(k)+'<div class="x-cap">'+p.nm+' em '+SIGNS[sg]+' · roda natal</div></div>'
@@ -268,108 +266,120 @@ function cordRange(){
   const c=CURSOR.getTime();
   return [c-span/2,c+span/2];
 }
-/* corda VERTICAL minimalista e rechonchuda:
-   firdárias como blocos gordos, subfirdárias como coluna fina,
-   revoluções como pontos clicáveis, anos à esquerda, cursor horizontal com data.
-   Sem profecção, sem trânsitos lentos, sem ativações aqui — isso mora no painel ao lado. */
+/* corda HORIZONTAL em balões grandes, brancos/cinza-claro, nuveados, com sombra.
+   Quatro faixas visíveis: FIRDÁRIA · SUB-FIRDÁRIA · PROFECÇÃO · REVOLUÇÕES.
+   Balões clicáveis; cursor vertical com data. Zoom vida/década/ano/mês/dia. */
 function drawCord(){
-  const svg=$('cord'); const W=300,H=780;
+  const svg=$('cord'); const W=svg.clientWidth||1040,H=356;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   const [t0,t1]=cordRange();
-  const T=26,B=18;
-  const YY=t=>T+((t-t0)/(t1-t0))*(H-T-B);
-  let s='';
-  const IVO='#ffffff', DIM='#b8bcc4', DIM2='#7b8089', LINE='rgba(255,255,255,.14)';
-  // eixo fino
-  s+='<line x1="58" y1="'+T+'" x2="58" y2="'+(H-B)+'" stroke="'+LINE+'"/>';
-  // régua de anos
-  const years=(t1-t0)/DAY/365.25;
-  const tick=years>30?5:years>8?2:years>1.5?0.5:years>0.1?1/12:1/365;
-  for(let yy=Math.ceil((t0-BIRTH)/DAY/365.2425/tick)*tick;;yy+=tick){
-    const t=BIRTH+yy*365.2425*DAY;if(t>t1)break;
-    const y=YY(t), d=new Date(t);
-    const lbl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
-    s+='<line x1="52" y1="'+y+'" x2="58" y2="'+y+'" stroke="'+LINE+'"/>';
-    s+='<text x="46" y="'+(y+3)+'" text-anchor="end" font-size="9" font-family="IBM Plex Mono" fill="'+DIM2+'">'+lbl+'</text>';
-  }
-  // FIRDÁRIA: blocos gordos e arredondados
-  let age0=0; const byY=new Date(BIRTH).getUTCFullYear();
+  const L=118, R=20;
+  const XX=t=>L+((t-t0)/(t1-t0))*(W-L-R);
+  const IVO='#ffffff', DIM='#cfd2d8', DIM2='#8b8f98', INK='#0c0c10';
+  // filtros: sombra suave + textura de nuvem
+  let s='<defs>'
+    +'<filter id="soft" x="-20%" y="-40%" width="140%" height="180%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity=".55"/></filter>'
+    +'<radialGradient id="cloud" cx="34%" cy="26%" r="80%"><stop offset="0%" stop-color="#ffffff" stop-opacity=".96"/><stop offset="55%" stop-color="#e6e8ec" stop-opacity=".88"/><stop offset="100%" stop-color="#c3c7cf" stop-opacity=".82"/></radialGradient>'
+    +'<radialGradient id="cloudDim" cx="34%" cy="26%" r="80%"><stop offset="0%" stop-color="#eceef1" stop-opacity=".5"/><stop offset="100%" stop-color="#b9bdc6" stop-opacity=".42"/></radialGradient>'
+    +'</defs>';
+  const rowLbl=(y,txt)=>{s+='<text x="10" y="'+y+'" font-size="10" font-family="IBM Plex Mono" letter-spacing="2.5" fill="'+DIM2+'">'+txt+'</text>';};
+  // balão nuveado
+  const balloon=(x,w,y,h,dim,glyph,title,sub,data)=>{
+    if(w<3)return;
+    const rx=Math.min(h/2,26);
+    const attr=data?(' data-rs="'+data+'" style="cursor:pointer"'):'';
+    s+='<g'+attr+'><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+rx+'" fill="url(#'+(dim?'cloudDim':'cloud')+')" filter="url(#soft)" stroke="#fff" stroke-opacity="'+(dim?'.25':'.5')+'"/>';
+    if(w>66&&title){
+      s+='<text x="'+(x+18)+'" y="'+(y+h/2-3)+'" font-size="'+Math.min(21,h*0.34)+'" font-family="Cormorant Garamond" fill="'+INK+'">'+glyph+'</text>';
+      s+='<text x="'+(x+18+Math.min(22,h*0.32))+'" y="'+(y+h/2-3)+'" font-size="13" font-family="Inter" font-weight="600" fill="'+INK+'">'+title+'</text>';
+      if(sub)s+='<text x="'+(x+18)+'" y="'+(y+h/2+15)+'" font-size="10.5" font-family="IBM Plex Mono" fill="#4a4d55">'+sub+'</text>';
+    } else if(w>22){
+      s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+5)+'" text-anchor="middle" font-size="'+Math.min(17,h*0.5)+'" font-family="Cormorant Garamond" fill="'+INK+'">'+glyph+'</text>';
+    }
+    s+='</g>';
+  };
+  const byY=new Date(BIRTH).getUTCFullYear();
+  // ---- FIRDÁRIA (balões gigantes) ----
+  rowLbl(56,'FIRDÁRIA');
+  let age0=0;
   FIRD.forEach(([k,nm,len])=>{
     const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;const yA=byY+Math.round(age0);age0+=len;
     if(b<t0||a>t1)return;
-    const ya=Math.max(YY(Math.max(a,t0)),T), yb=Math.min(YY(Math.min(b,t1)),H-B);
-    const hh=Math.max(6,yb-ya-4);
-    const col=FIRD_COLORS[nm]||'#888';
-    s+='<rect x="66" y="'+(ya+2)+'" width="112" height="'+hh+'" rx="'+Math.min(16,hh/2)+'" fill="'+col+'" fill-opacity=".13" stroke="'+col+'" stroke-opacity=".55" stroke-width="1"/>';
-    if(hh>44){
-      s+='<text x="'+80+'" y="'+(ya+2+hh/2-4)+'" font-size="15" font-family="Cormorant Garamond" fill="'+IVO+'">'+(PT_GLYPH[k]||'')+'</text>';
-      s+='<text x="'+96+'" y="'+(ya+2+hh/2-4)+'" font-size="11" font-family="Inter" fill="'+IVO+'">'+nm+'</text>';
-      s+='<text x="'+80+'" y="'+(ya+2+hh/2+11)+'" font-size="8" font-family="IBM Plex Mono" fill="'+DIM2+'">'+yA+'–'+(yA+len)+'</text>';
-    } else if(hh>14){
-      s+='<text x="'+122+'" y="'+(ya+2+hh/2+4)+'" text-anchor="middle" font-size="12" font-family="Cormorant Garamond" fill="'+DIM+'">'+(PT_GLYPH[k]||nm[0])+'</text>';
-    }
+    const x=Math.max(XX(Math.max(a,t0)),L), x2=Math.min(XX(Math.min(b,t1)),W-R);
+    const now=ageAt(CURSOR)>=(yA-byY)&&ageAt(CURSOR)<(yA-byY+len);
+    balloon(x+3,x2-x-6,30,80,false,(PT_GLYPH[k]||''),nm,yA+'–'+(yA+len)+' · '+len+' anos');
+    if(now){const cx=Math.max(x,L);s+='<rect x="'+(x+3)+'" y="30" width="'+(x2-x-6)+'" height="80" rx="26" fill="none" stroke="#fff" stroke-width="2.4"/>';}
   });
-  // SUB: coluna fina
+  // ---- SUB-FIRDÁRIA ----
+  rowLbl(134,'SUB-FIRDÁRIA');
   for(let a=0;a<75;){
     const f=firdAt(a); const st=f.subStart,en=f.subEnd;
     if(!st){a+=0.02;continue;}
     const enAge=(en-BIRTH)/DAY/365.2425;
     if(!(en<t0||st>t1)){
-      const ya=Math.max(YY(Math.max(st,t0)),T), yb=Math.min(YY(Math.min(en,t1)),H-B);
-      const hh=Math.max(3,yb-ya-2);
-      const col=FIRD_COLORS[f.sub]||'#888';
-      s+='<rect x="186" y="'+(ya+1)+'" width="18" height="'+hh+'" rx="'+Math.min(8,hh/2)+'" fill="'+col+'" fill-opacity=".22" stroke="'+col+'" stroke-opacity=".4" stroke-width=".6"/>';
-      if(hh>15)s+='<text x="195" y="'+(ya+1+hh/2+3.5)+'" text-anchor="middle" font-size="9" font-family="Cormorant Garamond" fill="'+DIM+'">'+(PT_GLYPH[f.subKey]||'')+'</text>';
+      const x=Math.max(XX(Math.max(st,t0)),L), x2=Math.min(XX(Math.min(en,t1)),W-R);
+      balloon(x+2,x2-x-4,142,46,true,(PT_GLYPH[f.subKey]||''),PT_NAME[f.subKey]||'',null);
     }
     a=enAge>a+1e-4?enAge:a+0.02;
   }
-  // REVOLUÇÕES: pontos clicáveis
+  // ---- PROFECÇÃO (pílulas anuais com número da casa) ----
+  rowLbl(212,'PROFECÇÃO');
+  for(let yr=0;yr<75;yr++){
+    const a=BIRTH+yr*365.2425*DAY,b=BIRTH+(yr+1)*365.2425*DAY;
+    if(b<t0||a>t1)continue;
+    const p=profAt(yr);
+    const x=Math.max(XX(Math.max(a,t0)),L), x2=Math.min(XX(Math.min(b,t1)),W-R), w=x2-x;
+    if(w<2)continue;
+    s+='<rect x="'+(x+1)+'" y="220" width="'+Math.max(1,w-2)+'" height="40" rx="'+Math.min(18,w/2)+'" fill="url(#cloudDim)" stroke="#fff" stroke-opacity=".22"/>';
+    if(w>17)s+='<text x="'+((x+x2)/2)+'" y="245" text-anchor="middle" font-size="14" font-family="Cormorant Garamond" fill="#14151a">'+p.houseN+'</text>';
+  }
+  // ---- REVOLUÇÕES (balões-ponto clicáveis) ----
+  rowLbl(290,'REVOLUÇÕES');
+  s+='<line x1="'+L+'" y1="286" x2="'+(W-R)+'" y2="286" stroke="rgba(255,255,255,.16)"/>';
   const selY=rsYearOf(CURSOR);
   Object.keys(RS_DATA).forEach(y=>{
     const t=Date.UTC(+y,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate());
     if(t<t0||t>t1)return;
-    const on=+y===selY, yy=YY(t);
-    s+='<circle data-rs="'+y+'" cx="222" cy="'+yy+'" r="'+(on?6:4)+'" fill="'+(on?IVO:'#0a0a0d')+'" stroke="'+(on?IVO:DIM2)+'" stroke-width="1.1" style="cursor:pointer"><title>Revolução '+y+' — clique</title></circle>';
+    const on=+y===selY, x=XX(t);
+    s+='<circle data-rs="'+y+'" cx="'+x+'" cy="286" r="'+(on?9:6)+'" fill="url(#'+(on?'cloud':'cloudDim')+')" stroke="#fff" stroke-opacity="'+(on?'.8':'.4')+'" stroke-width="'+(on?2:1)+'" filter="url(#soft)" style="cursor:pointer"><title>Revolução '+y+' — clique</title></circle>';
+    if(on)s+='<text x="'+x+'" y="'+312+'" text-anchor="middle" font-size="10" font-family="IBM Plex Mono" fill="'+IVO+'">'+y+'</text>';
   });
-  // EVENTOS: losangos
-  EVENTS.forEach(ev=>{
-    const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
-    const y=YY(t);
-    s+='<path d="M 244 '+(y-4)+' l 4 4 l -4 4 l -4 -4 z" fill="#b8a6d9"><title>'+esc(ev.txt)+' ('+ev.d+')</title></path>';
-  });
-  // promessa ativa: faixa lateral
-  if(ACTIVE_PROM){const pr=PROMESSAS.find(p2=>p2.id===ACTIVE_PROM);
-    if(pr)pr.anos.forEach(y1=>{
-      const a=Date.UTC(y1,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate());
-      const b=a+365.2425*DAY;
-      if(b<t0||a>t1)return;
-      s+='<rect x="256" y="'+YY(Math.max(a,t0))+'" width="5" height="'+Math.max(2,YY(Math.min(b,t1))-YY(Math.max(a,t0)))+'" rx="2.5" fill="#7da28d" opacity=".8"/>';
-    });}
-  // pino A + cursor horizontal com data
-  if(PINNED){const py=YY(PINNED.getTime());
-    s+='<line x1="52" y1="'+py+'" x2="'+(W-8)+'" y2="'+py+'" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';}
-  const cy=Math.max(T,Math.min(H-B,YY(CURSOR.getTime())));
-  s+='<line x1="52" y1="'+cy+'" x2="'+(W-8)+'" y2="'+cy+'" stroke="'+IVO+'" stroke-width="1.2"/>'
-    +'<circle cx="58" cy="'+cy+'" r="3.2" fill="'+IVO+'"/>';
+  // eventos
+  EVENTS.forEach(ev=>{const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
+    s+='<path d="M '+XX(t)+' 280 l 5 5 l -5 5 l -5 -5 z" fill="#c7bce0"><title>'+esc(ev.txt)+' ('+ev.d+')</title></path>';});
+  // ---- régua de anos ----
+  const years=(t1-t0)/DAY/365.25;
+  const tick=years>30?10:years>8?2:years>1.5?0.5:years>0.1?1/12:1/365;
+  for(let yy=Math.ceil((t0-BIRTH)/DAY/365.2425/tick)*tick;;yy+=tick){
+    const t=BIRTH+yy*365.2425*DAY;if(t>t1)break;
+    const x=XX(t), d=new Date(t);
+    const lbl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
+    s+='<text x="'+x+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="'+DIM2+'">'+lbl+'</text>';
+  }
+  // ---- pino A + cursor vertical com data ----
+  if(PINNED){const px=XX(PINNED.getTime());s+='<line x1="'+px+'" y1="26" x2="'+px+'" y2="'+(H-18)+'" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';}
+  const cx=Math.max(L,Math.min(W-R,XX(CURSOR.getTime())));
+  s+='<line x1="'+cx+'" y1="24" x2="'+cx+'" y2="'+(H-18)+'" stroke="'+IVO+'" stroke-width="1.4"/>'
+    +'<path d="M '+cx+' 16 l 5 8 l -5 8 l -5 -8 z" fill="'+IVO+'"/>';
   const dtxt=fdate(CURSOR);
-  const pw=dtxt.length*5.6+14, pyy=Math.max(0,Math.min(H-15,cy-18));
-  s+='<rect x="'+(W-pw-6)+'" y="'+pyy+'" width="'+pw+'" height="14" rx="7" fill="#101014" stroke="'+LINE+'"/>'
-    +'<text x="'+(W-pw/2-6)+'" y="'+(pyy+10)+'" text-anchor="middle" font-size="8.5" font-family="IBM Plex Mono" fill="'+IVO+'">'+dtxt+'</text>';
+  const pw=dtxt.length*5.8+16, px=Math.max(L,Math.min(W-R-pw,cx-pw/2));
+  s+='<rect x="'+px+'" y="0" width="'+pw+'" height="15" rx="7.5" fill="'+INK+'" stroke="rgba(255,255,255,.2)"/>'
+    +'<text x="'+(px+pw/2)+'" y="10.5" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="'+IVO+'">'+dtxt+'</text>';
   svg.innerHTML=s;
 }
 function cordDrag(){
   const svg=$('cord'); let dragging=false;
   const pick=e=>{
     const r=svg.getBoundingClientRect();
-    const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
-    const Hv=r.height, T=26*(Hv/780), B=18*(Hv/780);
+    const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+    const W=r.width, L=118*(W/(svg.viewBox.baseVal.width||W)), R=20*(W/(svg.viewBox.baseVal.width||W));
     const [t0,t1]=cordRange();
-    const t=t0+((y-T)/(Hv-T-B))*(t1-t0);
+    const t=t0+((x-L)/(W-L-R))*(t1-t0);
     if(isFinite(t)){CURSOR=new Date(Math.max(BIRTH,Math.min(BIRTH+75*365.2425*DAY,t)));syncTempo();}
   };
   svg.addEventListener('pointerdown',e=>{
-    const rs=e.target&&e.target.dataset&&e.target.dataset.rs;
-    if(rs){const b=new Date(BIRTH);CURSOR=new Date(Date.UTC(+rs,b.getUTCMonth(),b.getUTCDate(),b.getUTCHours()));syncTempo();return;}
+    const rs=e.target&&e.target.closest&&e.target.closest('[data-rs]');
+    if(rs){const y=rs.dataset.rs;const b=new Date(BIRTH);CURSOR=new Date(Date.UTC(+y,b.getUTCMonth(),b.getUTCDate(),b.getUTCHours()));syncTempo();return;}
     dragging=true;pick(e);});
   window.addEventListener('pointermove',e=>{if(dragging)pick(e);});
   window.addEventListener('pointerup',()=>dragging=false);

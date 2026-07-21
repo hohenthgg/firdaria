@@ -55,7 +55,15 @@ function aspectBetween(La,Lb){
 }
 /* ---------- construir NATAL a partir do parse ---------- */
 function buildChart(parsed, birthISO, sectMode, name){
-  const cusps=parsed.cusps.map(c=>c===null?0:c);
+  // cúspide ausente NÃO vira 0° de Áries — interrompe e informa o que falta
+  const faltando=[];
+  parsed.cusps.forEach((c,i)=>{if(c===null)faltando.push(i+1);});
+  if(parsed.asc===null)faltando.push(1);
+  if(faltando.length){
+    const uniq=[...new Set(faltando)].sort((a,b)=>a-b);
+    throw new Error('Cúspides ausentes (casas '+uniq.join(', ')+'). O cálculo foi interrompido: informe todas as 12 cúspides — nenhuma é assumida como 0° de Áries.');
+  }
+  const cusps=parsed.cusps.slice();
   const asc=parsed.asc, mcv=parsed.mc!==null?parsed.mc:cusps[9];
   BIRTH=new Date(birthISO).getTime();
   // seita
