@@ -196,12 +196,13 @@ input[type=datetime-local]{background:var(--panel);border:1px solid var(--line2)
 textarea{border-radius:16px!important}
 select{font-family:var(--sans)}
 label.f{display:block;font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);margin:8px 0 4px}
-#cord{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.02)}
+#cord{width:100%;height:auto;display:block;overflow:visible}
 .zoombar{display:flex;gap:4px}
 .zoombar .btn.on{color:var(--gold);border-color:var(--gold2)}
-.tempo-wrap{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;margin-top:12px}
-.tempo-wrap>svg{position:sticky;top:12px}
-body.is-mobile .tempo-wrap{grid-template-columns:132px 1fr;gap:10px}
+.tempo-wrap{margin-top:12px}
+.tempo-wrap>svg{width:100%;margin-bottom:18px}
+#tempo-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:14px;align-items:start}
+body.is-mobile #tempo-info{grid-template-columns:1fr}
 /* ===== razão anual: linha do tempo vertical, espinha central, nós alternados ===== */
 .tline{position:relative;margin:26px 0;padding:8px 0}
 .tline::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;

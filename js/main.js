@@ -92,7 +92,8 @@ function loadFromState(){
   if(!STATE.natal)return false;
   const parsed=parseChartText(STATE.natal.text);
   if(!parsed.ok)return false;
-  buildChart(parsed,STATE.natal.birth,STATE.natal.sect,STATE.natal.name);
+  try{buildChart(parsed,STATE.natal.birth,STATE.natal.sect,STATE.natal.name);}
+  catch(err){console.error(err);return false;}
   Object.entries(STATE.rs).forEach(([y,txt])=>{try{addRS(parseChartText(txt),+y);}catch(e){console.error('RS',y,e);}});
   return true;
 }
@@ -120,7 +121,8 @@ function bindImport(){
         document.getElementById('in-sect').value='auto';
         STATE.natal={text:res.natalText,birth:res.birthISO+':00Z',sect:'auto',name:res.name,place:res.place};
         RS_DATA={};RSMETA={angular:{},echo:{}};
-        buildChart(parsed,STATE.natal.birth,'auto',res.name);
+        try{buildChart(parsed,STATE.natal.birth,'auto',res.name);}
+        catch(err){st.textContent=err.message;return;}
         STATE.rs={};
         Object.entries(res.rsTexts).forEach(([y,txt])=>{
           try{addRS(parseChartText(txt),+y);STATE.rs[y]=txt;}catch(e){console.error('RS',y,e);}
@@ -141,7 +143,8 @@ function bindDados(){
     if(!parsed.ok){st.textContent='problemas: '+parsed.problems.join('; ');return;}
     STATE.natal={text:txt,birth:birth+(birth.length===16?':00Z':'Z'),sect:document.getElementById('in-sect').value,name:document.getElementById('in-name').value||'mapa'};
     RS_DATA={};RSMETA={angular:{},echo:{}};
-    buildChart(parsed,STATE.natal.birth,STATE.natal.sect,STATE.natal.name);
+    try{buildChart(parsed,STATE.natal.birth,STATE.natal.sect,STATE.natal.name);}
+    catch(err){st.textContent=err.message;return;}
     Object.entries(STATE.rs).forEach(([y,t2])=>{try{addRS(parseChartText(t2),+y);}catch(e){}});
     saveState();
     st.textContent='mapa carregado: '+(parsed.problems.length?('avisos: '+parsed.problems.join('; ')):'12 cúspides e pontos OK')+' · seita '+NATAL.sect+'.';

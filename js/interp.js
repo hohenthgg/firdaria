@@ -120,18 +120,38 @@ function receptionsOf(k){
   return (NATAL.meta.receptions||[]).filter(r=>r.includes(PT_GLYPH[k]));
 }
 
-/* ---------- condição essencial em rótulo comportamental ---------- */
+/* ---------- condição essencial: leitura medida, sem determinismo ---------- */
 function digReading(k,p){
   const d=p.dig||'';
-  if(d.includes('domicílio'))return {q:'forte',t:'joga em casa: cumpre o que promete sem pedir favor a ninguém'};
-  if(d.includes('exaltação'))return {q:'forte',t:'é o convidado de honra: entrega acima do normal — e tende a se achar por isso'};
-  if(d.includes('exílio'))return {q:'fraca',t:'joga fora de casa: rende pouco, reclama muito e vive de favor alheio'};
-  if(d.includes('queda'))return {q:'fraca',t:'opera no porão: promete e não sustenta; só sai alguma coisa com repetição teimosa'};
-  return {q:'média',t:'é um sem-terra: faz o que os aliados (recepções, aspectos, senhor do termo) deixarem'};
+  if(d.includes('domicílio'))return {q:'forte',t:'com dignidade essencial (domicílio): tende a cumprir o que promete por meios próprios, sem depender de apoio externo'};
+  if(d.includes('exaltação'))return {q:'forte',t:'exaltado: opera acima do usual, com risco de superestimar o próprio papel'};
+  if(d.includes('exílio'))return {q:'fraca',t:'em exílio: rende com desconto e depende de apoio externo; a tendência é compensar por excesso ou por omissão'};
+  if(d.includes('queda'))return {q:'fraca',t:'em queda: entrega abaixo do que a casa promete; os resultados costumam exigir repetição e prazo maior'};
+  return {q:'média',t:'peregrino (sem dignidade essencial): o alcance depende dos apoios — recepções, aspectos e regente do termo'};
 }
 
+/* ---------- manifestação da presença de um planeta na 1ª/apresentação ---------- */
+const IN_PRESENT={
+  sun:'presença que busca visibilidade e decide em nome próprio',
+  moon:'presença sensível ao ambiente, de humor visível e ritmo mutável',
+  mercury:'presença falante, analítica e inquieta',
+  venus:'presença conciliadora, agradável e atenta à própria imagem',
+  mars:'presença pronta ao embate, de reação rápida',
+  jupiter:'presença expansiva, confiante e cordial',
+  saturn:'postura reservada, autocontrole, seriedade e dificuldade de agir espontaneamente'};
+/* fundo típico (casa de origem na regra dos 5°), medido */
+const IN_ORIGIN={
+  1:'a própria iniciativa',2:'a questão material',3:'estudo e comunicação',4:'família e origem',
+  5:'prazer e criação',6:'trabalho e saúde',7:'o outro (sócio, cônjuge, adversário)',
+  8:'perdas, medos e dependências',9:'convicções e doutrina',10:'carreira e imagem pública',
+  11:'a rede de apoios',12:'isolamento, ruminação e medo de exposição'};
+
 /* ============================================================
-   interpPlanet(k) → objeto com as seis partes
+   interpPlanet(k) — leitura INTEGRADA (não concatena palavras-chave):
+   determina quem DOMINA, quem MODIFICA, quem CONTRADIZ, como as casas
+   regidas entram, e daí extrai manifestações concretas.
+   Saída (6 blocos): sintese · manif · alta · baixa · confirma · fund.
+   Linguagem literal, não determinista.
    ============================================================ */
 function interpPlanet(k){
   const p=NATAL.pts[k]; if(!p)return null;
@@ -141,68 +161,68 @@ function interpPlanet(k){
   const sectBen=(NATAL.sect==='diurno'&&k==='jupiter')||(NATAL.sect==='noturno'&&k==='venus');
   const combust=(p.dig||'').includes('combusto'), cazimi=(p.dig||'').includes('cazimi');
   const asp=aspectPhrases(k), rec=receptionsOf(k);
+  const dAsc=adiff(p.lon,NATAL.asc), onAsc=dAsc<=5;
+  const ruTemas=ru.map(h=>HOUSE_THEME[h]);
 
-  /* 1 — dado técnico */
-  let tec=PT_NAME[k]+' a '+zfmt(p.lon)+', casa '+p.h;
-  if(lim) tec+=' pela regra dos 5° (a '+fmtOrb(p.limDist)+' da cúspide: '+lim.faixa+', peso ~'+lim.pct+'% — casa '+p.hBack+' permanece como fundo)';
-  tec+='. Dignidades: '+p.dig+'. Força '+(STR[k]||4)+'/8.';
-  if(ru.length) tec+=' Rege a '+ru.map(h=>h+'ª').join(' e a ')+'.';
-  tec+=' Mapa '+NATAL.sect+(sectMal?' — maléfico contrário à seita (o ponto de atrito recorrente do mapa)':sectBen?' — benéfico da seita (o apoio mais confiável do mapa)':'')+'.';
-  if(p.retro) tec+=' Retrógrado.';
-  if(p.star&&p.star!=='—') tec+=' Estrela: '+p.star+'.';
-
-  /* 2 — função */
-  let fun=PT_NAME[k]+' representa '+IN_FUNC[k]+'.';
-  if(ru.length) fun+=' Como rege a '+ru.map(h=>h+'ª ('+HOUSE_SHORT[h]+')').join(' e a ')+', carrega esses assuntos para onde está: o que acontece na casa '+p.h+' repercute diretamente neles.';
-
-  /* 3 — efeito estrutural */
-  const ang=[1,4,7,10].includes(p.h);
-  let efe='';
-  if(p.h===1||p.hBack===1){
-    efe='Atua diretamente sobre corpo, identidade e modo de reagir: a pessoa tende a apresentar-se '+({sun:'com autoridade e necessidade de reconhecimento',moon:'com humor visível e sensibilidade ao ambiente',mercury:'falante, analítica e inquieta',venus:'conciliadora e atenta à própria imagem',mars:'pronta ao embate, com reação corporal rápida',jupiter:'expansiva e confiante',saturn:'mais séria, controlada e defensiva do que o Ascendente isoladamente indicaria'}[k])+'.';
-  } else if(ang){
-    efe='Posição angular: o planeta age em público e sem mediação — seus temas são visíveis '+IN_CAMPO[p.h]+'.';
-  } else if([6,8,12].includes(p.h)){
-    efe='Casa ruim, sem eufemismo — '+HOUSE_BLUNT[p.h]+'. O planeta trabalha pagando pedágio: o que sai daqui, sai suado.';
+  /* ---------- SÍNTESE INTEGRADA (domina → modifica → contradiz → regências) ---------- */
+  let sin='';
+  // DOMINA: colocação (com regra dos 5° tratada como estrutura, não rótulo)
+  if(onAsc && p.hBack){
+    // planeta antes do Ascendente vindo da 12ª/casa anterior: fundo + manifestação
+    sin='<b>'+PT_NAME[k]+' domina parcialmente a apresentação pessoal.</b> A origem na '+p.hBack+'ª ('+IN_ORIGIN[p.hBack]+') forma o fundo da identidade; a proximidade ao Ascendente ('+fmtOrb(dAsc)+') torna isso visível como '+IN_PRESENT[k]+'.';
+  } else if(p.h===1){
+    sin='<b>'+PT_NAME[k]+' marca diretamente a identidade e o corpo:</b> '+IN_PRESENT[k]+'.';
   } else {
-    efe='Posição intermediária: o planeta trabalha com apoio do contexto, sem o peso nem a exposição dos ângulos.';
+    sin='<b>'+PT_NAME[k]+'</b> atua sobretudo '+IN_CAMPO[p.h]+'.';
   }
-  efe+=' No signo de '+SIGNS[sg]+', expressa-se '+IN_ELEM_STYLE[SIGN_ELEM[sg]]+', '+IN_MODE_STYLE[SIGN_MODE[sg]]+'.';
-  efe+=' Condição essencial '+dr.q+': '+dr.t+'.';
-  if(p.retro) efe+=' A retrogradação inclina a revisar decisões já tomadas e a concluir em segunda tentativa o que não fechou na primeira.';
-  if(combust) efe+=' Combusto: o tema opera encoberto pela identidade — a pessoa tem dificuldade de ver este próprio traço, que os outros percebem antes dela.';
-  if(cazimi) efe+=' Cazimi: o tema funde-se ao propósito central com precisão rara.';
+  // MODIFICA: signo
+  sin+=' Em '+SIGNS[sg]+' ('+SIGN_ELEM[sg]+', '+SIGN_MODE[sg]+'), a expressão tende a ser '+IN_ELEM_STYLE[SIGN_ELEM[sg]]+', '+IN_MODE_STYLE[SIGN_MODE[sg]]+'.';
+  // CONTRADIZ / MODERA: dignidade, seita, combustão, retrogradação
+  const contra=[];
+  if(dr.q==='fraca')contra.push('a condição essencial '+dr.t+', o que reduz o alcance');
+  else if(dr.q==='forte')contra.push('a condição essencial '+dr.t);
+  if(sectMal)contra.push('por ser o maléfico contrário à seita, é o ponto de atrito mais recorrente do mapa');
+  if(sectBen)contra.push('por ser o benéfico da seita, tende a socorrer quando acionado');
+  if(combust)contra.push('combusto pelo Sol, o traço costuma ser percebido pelos outros antes do próprio nativo');
+  if(p.retro)contra.push('retrógrado, inclina a revisar decisões e a concluir em segunda tentativa');
+  if(contra.length)sin+=' Contam a favor ou contra: '+contra.join('; ')+'.';
+  // REGÊNCIAS entram na situação
+  if(ru.length)sin+=' Como rege a '+ru.map(h=>h+'ª').join(' e a ')+', ligam-se a isso '+ruTemas.join('; ')+' — esses assuntos tendem a atravessar '+(p.h===1||p.hBack===1?'a identidade':'a área acima')+'.';
 
-  /* 4 — manifestações literais */
+  /* ---------- MANIFESTAÇÕES CONCRETAS (da combinação) ---------- */
   const manif=[];
-  // fundo/manifestação quando liminar
-  if(lim){
-    manif.push('<i>Fundo da casa '+p.hBack+'</i> — '+IN_FUNDO[p.hBack]+': parte do processo acontece '+IN_CAMPO[p.hBack]+', longe do resultado visível.');
-    manif.push('<i>Manifestação na casa '+p.h+'</i> — é '+IN_CAMPO[p.h]+' que o efeito aparece com maior força; quanto menor a distância da cúspide ('+fmtOrb(p.limDist)+'), maior esse peso.');
-  } else {
-    manif.push('O efeito concentra-se '+IN_CAMPO[p.h]+'.');
+  if(onAsc&&p.hBack){
+    manif.push('Parte do processo corre '+IN_CAMPO[p.hBack]+' (fundo), e aparece '+IN_CAMPO[p.h]+' (manifestação); quanto menor a distância à cúspide ('+fmtOrb(dAsc)+'), mais forte o segundo.');
   }
-  IN_TRAIT[k].forEach(t=>manif.push(t.charAt(0).toUpperCase()+t.slice(1)+' — aplicada '+IN_CAMPO[p.h]+'.'));
-  ru.forEach(h=>{ if(h!==p.h) manif.push('Pela regência da '+h+'ª: os assuntos de '+HOUSE_SHORT[h]+' dependem do estado deste planeta — quando ele é ativado (trânsito, profecção, firdária), essa casa responde junto.');});
+  IN_TRAIT[k].forEach(t=>manif.push('Pode manifestar-se como '+t+' '+IN_CAMPO[p.h]+'.'));
+  ru.forEach(h=>{ if(h!==p.h) manif.push('Pela regência da '+h+'ª, '+HOUSE_THEME[h]+' ficam ligados ao estado deste planeta; quando ele é ativado (trânsito, profecção, firdária), esses assuntos respondem junto.');});
   asp.slice(0,3).forEach(a=>manif.push(a+'.'));
-  if(rec.length) manif.push('Recepções: '+rec.join('; ')+' — o planeta tem onde se apoiar; os temas acima encontram fiador interno.');
-  if(sectMal) manif.push('Como maléfico fora da seita, é o ponto que mais produz atrito recorrente: dar-lhe trabalho regular '+IN_CAMPO[p.h]+' antes que ele o tome à força.');
 
-  /* 5 — forma elevada / problemática */
-  const alta=IN_HIGH[k].slice(), baixa=IN_LOW[k].slice();
-  if(dr.q==='fraca') baixa.unshift('a debilidade essencial acentua a lista abaixo quando não há apoio externo');
-  if(dr.q==='forte') alta.unshift('a dignidade essencial dá lastro à lista abaixo');
+  /* ---------- CONSTRUTIVA / PROBLEMÁTICA ---------- */
+  const alta=IN_HIGH[k].map(x=>'favorece '+x), baixa=IN_LOW[k].map(x=>'sob aflição, pode aumentar '+x);
 
-  /* 6 — fundamento visível */
-  let fund='Fatores que produziram este texto: posição '+zfmt(p.lon)+' (signo '+SIGNS[sg]+', elemento '+SIGN_ELEM[sg]+', modo '+SIGN_MODE[sg]+'); casa funcional '+p.h+(lim?(' com fundo na '+p.hBack+' (regra dos 5°, peso '+lim.pct+'%)'):'')+'; dignidades ['+p.dig+']; força '+(STR[k]||4)+'/8; seita '+NATAL.sect+(sectMal?' (maléfico contrário)':sectBen?' (benéfico da seita)':'')+'; regências ['+(ru.join('ª, ')+(ru.length?'ª':'—'))+']; aspectos ['+((NATAL_ASP[k]||[]).join(' · ')||'nenhum listado')+']; recepções ['+(rec.join('; ')||'nenhuma')+']'+(p.star&&p.star!=='—'?('; estrela ['+p.star+']'):'')+'. Modificam a leitura: condição do regente do signo ('+PT_NAME[SIGN_RULER[sg]]+'), trânsitos e técnicas temporais vigentes.';
+  /* ---------- FATORES QUE CONFIRMAM OU MODERAM ---------- */
+  const confirma=[];
+  if(rec.length)confirma.push('confirmam/moderam: recepções — '+rec.join('; '));
+  if(asp.length>3)confirma.push('demais aspectos: '+(NATAL_ASP[k]||[]).slice(3).join(' · '));
+  if(p.star&&p.star!=='—')confirma.push('estrela fixa conjunta: '+p.star);
+  confirma.push('regente do signo ('+PT_NAME[SIGN_RULER[sg]]+', '+(NATAL.pts[SIGN_RULER[sg]]?NATAL.pts[SIGN_RULER[sg]].dig:'—')+') dá a última palavra sobre este planeta');
+  confirma.push('a leitura só se confirma quando repetida por outros testemunhos do mapa');
 
-  return {tec,fun,efe,manif,alta,baixa,fund};
+  /* ---------- FUNDAMENTO TÉCNICO VISÍVEL ---------- */
+  const limTxt=lim?(', fundo na '+p.hBack+' pela regra dos 5° a '+fmtOrb(p.limDist)+' da cúspide, peso '+lim.pct+'%'):'';
+  const sectTxt=sectMal?' (maléfico contrário)':sectBen?' (benéfico da seita)':'';
+  const starTxt=(p.star&&p.star!=='—')?('; estrela ['+p.star+']'):'';
+  const fund='Posição '+zfmt(p.lon)+' — signo '+SIGNS[sg]+' ('+SIGN_ELEM[sg]+'/'+SIGN_MODE[sg]+'); casa funcional '+p.h+limTxt+'; dignidades ['+p.dig+']; força '+(STR[k]||4)+'/8; seita '+NATAL.sect+sectTxt+'; regências ['+(ru.map(h=>h+'ª').join(', ')||'—')+']; aspectos ['+((NATAL_ASP[k]||[]).join(' · ')||'nenhum')+']; recepções ['+(rec.join('; ')||'nenhuma')+']'+starTxt+'.';
+
+  return {sintese:sin,manif,alta,baixa,confirma,fund};
 }
 
-/* ---------- síntese em uma frase (para cabeçalho do card) ---------- */
+/* ---------- síntese em uma frase (cabeçalho) ---------- */
 function interpFrase(k){
   const p=NATAL.pts[k]; if(!p)return '';
-  const lim=limLabel(p);
-  const alvo=lim?('entre a casa '+p.hBack+' (fundo) e a casa '+p.h+' (manifestação)'):('na casa '+p.h);
-  return PT_NAME[k]+' opera '+alvo+': '+IN_FUNC[k].split('—')[0].trim()+' '+IN_CAMPO[p.h]+'.';
+  const ru=ruledHouses(k);
+  const dAsc=adiff(p.lon,NATAL.asc);
+  const alvo=(dAsc<=5&&p.hBack)?('domina em parte a identidade, vindo da '+p.hBack+'ª'):p.h===1?'marca a identidade':('atua '+IN_CAMPO[p.h]);
+  return PT_NAME[k]+' '+alvo+(ru.length?('; rege '+ru.map(h=>h+'ª').join(' e ')+' ('+ru.map(h=>HOUSE_THEME[h].split(',')[0].split(':')[0]).join('; ')+')'):'')+'.';
 }
