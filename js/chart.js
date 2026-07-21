@@ -68,7 +68,8 @@ function buildChart(parsed, birthISO, sectMode, name){
   const spiritL=n360(sect==='diurno'?asc+sunL-moonL:asc+moonL-sunL);
   // pontos com dignidades
   const pts={}, order=['sun','moon','mercury','venus','mars','jupiter','saturn','nn','sn','fort'];
-  const angBonus=h=>[1,4,7,10].includes(h)?2:[2,5,8,11].includes(h)?1:0;
+  // força acidental: angular +2 · sucedente +1 · cadente 0 · casas 6/8/12 penalizam (−2)
+  const angBonus=h=>([1,4,7,10].includes(h)?2:[2,5,8,11].includes(h)?1:0)-([6,8,12].includes(h)?2:0);
   order.forEach(k=>{
     const src=parsed.pts[k]; if(!src&&k!=='fort')return;
     const lon=src?src.lon:fortL;
@@ -77,9 +78,11 @@ function buildChart(parsed, birthISO, sectMode, name){
     const h=lim.main;
     let dig='—';
     if(PT_NAME[k]){const d=dignityOf(k,lon,retro,sunL);dig=d.tags.join(' · ');
-      // força acidental ponderada pela posição liminar: casa principal pesa w, a de fundo pesa 1-w
-      const acc=lim.back?Math.round(lim.w*angBonus(lim.main)+(1-lim.w)*angBonus(lim.back)):angBonus(h);
-      STR[k]=Math.max(1,Math.min(8,4+d.pts+acc));}
+      // ponderação liminar: casa principal pesa w, a de fundo pesa 1-w
+      let acc=lim.back?lim.w*angBonus(lim.main)+(1-lim.w)*angBonus(lim.back):angBonus(h);
+      // colado num ângulo (≤3° da cúspide angular): mais forte que estar apenas dentro da casa
+      if(lim.back&&[1,4,7,10].includes(lim.main)&&lim.dist<=3) acc+=1;
+      STR[k]=Math.max(1,Math.min(8,4+d.pts+Math.round(acc)));}
     pts[k]={g:PT_GLYPH[k],nm:PT_FULL[k],lon,h,hBack:lim.back,limW:lim.w,limDist:lim.dist,dig,retro,star:''};
   });
   pts.spirit={g:PT_GLYPH.spirit,nm:'Espírito',lon:spiritL,h:houseByRule(spiritL,cusps),dig:'regido por '+PT_NAME[SIGN_RULER[signOf(spiritL)]],star:''};
@@ -92,6 +95,15 @@ function buildChart(parsed, birthISO, sectMode, name){
     else if(pts[st.who]) pts[st.who].star=(pts[st.who].star?pts[st.who].star+' · ':'')+line;
   });
   order.concat(['spirit']).forEach(k=>{if(pts[k]&&!pts[k].star)pts[k].star='—';});
+  // estrelas violentas derrubam força; reais protetoras somam — o senhor da genitura
+  // exige dignidade essencial E acidental (Vênus domiciliada na 12ª ☌ Algol não preside)
+  const STAR_MALUS={'Algol':-2,'Scheat':-1,'Alphard':-1,'Antares':-1};
+  const STAR_BONUS={'Regulus':1,'Spica':1};
+  Object.keys(PT_NAME).forEach(k=>{
+    const p=pts[k]; if(!p||!p.star||p.star==='—')return;
+    Object.entries(STAR_MALUS).forEach(([s,v])=>{if(p.star.includes(s))STR[k]=Math.max(1,(STR[k]||4)+v);});
+    Object.entries(STAR_BONUS).forEach(([s,v])=>{if(p.star.includes(s))STR[k]=Math.min(8,(STR[k]||4)+v);});
+  });
   // regências das casas
   const rulers={}; for(let h=1;h<=12;h++) rulers[h]=SIGN_RULER[signOf(cusps[h-1])];
   // aspectos entre planetas (dos dados; completar por cálculo se não vieram)
@@ -237,12 +249,20 @@ function temperTestimonies(){
   add(ELEMQ[sq(NATAL.asc)],3,'Asc em '+SIGNS[signOf(NATAL.asc)]);
   const ru=NATAL.meta.ascRuler;
   add(ELEMQ[sq(NATAL.pts[ru].lon)],3,'Regente do Asc ('+PT_NAME[ru]+') em '+SIGNS[signOf(NATAL.pts[ru].lon)]);
+  // planetas sobre o Ascendente ou na casa I imprimem as PRÓPRIAS qualidades
+  // (Saturno conjunto ao Asc esfria o signo). Colado à cúspide > dentro da casa.
+  const PQUAL={sun:['quente','seco'],moon:['frio','úmido'],mercury:['frio','seco'],venus:['quente','úmido'],mars:['quente','seco'],jupiter:['quente','úmido'],saturn:['frio','seco']};
   Object.keys(PT_NAME).forEach(k=>{const p=NATAL.pts[k];if(!p)return;
-    // regra dos 5°: peso proporcional à participação na casa I (principal w, fundo 1-w)
-    let w1=0;
-    if(p.h===1)w1=p.limW||1;
-    else if(p.hBack===1)w1=1-(p.limW||1);
-    if(w1>0.05)add(ELEMQ[sq(p.lon)],Math.max(1,Math.round(3*w1)),PT_NAME[k]+' na casa I'+(w1<1?' (liminar, peso '+Math.round(w1*100)+'%)':''));});
+    const dAsc=adiff(p.lon,NATAL.asc);
+    let w1=0,lbl='';
+    if(dAsc<=3){w1=4;lbl='conjunto ao Ascendente ('+fmtOrb(dAsc)+') — imprime a própria natureza no signo';}
+    else if(dAsc<=6){w1=3;lbl='junto ao Ascendente ('+fmtOrb(dAsc)+')';}
+    else if(p.h===1){w1=2;lbl='dentro da casa I';}
+    else if(p.hBack===1){w1=1;lbl='casa I ao fundo (regra dos 5°)';}
+    if(w1>0){
+      add(PQUAL[k],w1,PT_NAME[k]+' '+lbl);
+      add(ELEMQ[sq(p.lon)],1,PT_NAME[k]+' sustentado pelo signo de '+SIGNS[signOf(p.lon)]);
+    }});
   add(ELEMQ[sq(NATAL.pts.moon.lon)],3,'Lua em '+SIGNS[signOf(NATAL.pts.moon.lon)]);
   const elong=n360(NATAL.pts.moon.lon-NATAL.pts.sun.lon);
   const ph=elong<90?['quente','úmido']:elong<180?['quente','seco']:elong<270?['frio','seco']:['frio','úmido'];
@@ -266,42 +286,52 @@ function addRS(parsed, year){
   const lord=NATAL.pts[p.lordKey];
   const rsAscHouseNatal=parsed.asc!==null?houseByRule(parsed.asc,NATAL.cusps):null;
   const notes=[], angular=[];
-  // senhor do ano na RS
+  // Ascendente da RS em frase completa: signo → regente → casa natal onde cai
+  let ascTxt;
+  if(parsed.asc!==null){
+    const ascSg=signOf(parsed.asc), ascRuler=SIGN_RULER[ascSg];
+    const rsRulerPos=parsed.pts[ascRuler];
+    ascTxt='A Revolução nasce com o <b>Ascendente em '+SIGNS[ascSg]+'</b> ('+zfmt(parsed.asc)+'); o regente de '+SIGNS[ascSg]+' é <b>'+PT_NAME[ascRuler]+'</b>, que governa o nascimento do ano'
+      +(rsRulerPos?(' e está em '+SIGNS[signOf(rsRulerPos.lon)]+(rsRulerPos.h?(', casa '+rsRulerPos.h+' da Revolução'):'')):'')+'.'
+      +(rsAscHouseNatal?(' Esse Ascendente cai na <b>casa '+rsAscHouseNatal+' natal</b>, podendo trazer ao primeiro plano '+HOUSE_SHORT[rsAscHouseNatal]+'.'):'');
+  } else ascTxt='O Ascendente da Revolução não consta nos dados.';
+  // Senhor do Ano (pela profecção) em frase completa
   const rsLord=parsed.pts[p.lordKey];
   if(rsLord){
     const d=dignityOf(p.lordKey,rsLord.lon,rsLord.retro,parsed.pts.sun?parsed.pts.sun.lon:undefined);
-    notes.push('Senhor do Ano <b>'+PT_NAME[p.lordKey]+'</b> na RS: '+zfmt(rsLord.lon)+(rsLord.h?(', casa '+rsLord.h+' da RS'):'')+' ('+d.tags.join(' · ')+')'+(signOf(rsLord.lon)===signOf(lord.lon)?' — <b>repete o signo natal: promessa confirmada (Abu Mashar)</b>':''));
-  } else notes.push('Senhor do Ano '+PT_NAME[p.lordKey]+' não consta nos dados da RS.');
-  // planetas sobre pontos natais / retornos
+    notes.push('Pela profecção, o ano ativa a casa '+p.houseN+' e o signo de '+SIGNS[p.signIdx]+'; o Senhor do Ano é o regente desse signo, <b>'+PT_NAME[p.lordKey]+'</b>. Na Revolução ele aparece em '+SIGNS[signOf(rsLord.lon)]+' ('+zfmt(rsLord.lon)+')'+(rsLord.h?(', casa '+rsLord.h+' da Revolução'):'')+', em condição de '+d.tags.join(', ')
+      +(signOf(rsLord.lon)===signOf(lord.lon)?' — e <b>repete o signo que ocupa no natal</b>, o que para Abu Mashar confirma a promessa natal para este ano':'')+'.');
+  } else notes.push('Pela profecção, o Senhor do Ano é '+PT_NAME[p.lordKey]+', mas ele não consta nos dados da Revolução.');
+  // planetas da RS sobre pontos natais / retornos ao próprio grau
   Object.entries(parsed.pts).forEach(([k,rp])=>{
     if(!PT_NAME[k])return;
     Object.entries(NATAL.pts).forEach(([nk,np])=>{
       if(nk==='spirit')return;
       const o=adiff(rp.lon,np.lon);
       if(k==='sun'&&nk==='sun')return;
-      if(o<1.2) notes.push(PT_GLYPH[k]+' da RS sobre <b>'+np.nm+' natal</b> ('+fmtOrb(o)+')'+(k===nk?' — retorno ao próprio grau':''));
+      if(o<1.2) notes.push(PT_NAME[k]+' da Revolução pousa exatamente sobre '+(k===nk?('o próprio lugar natal — <b>retorno de '+PT_NAME[k]+' ao grau de nascimento</b>'):('<b>'+np.nm+' natal</b>'))+' (distância de '+fmtOrb(o)+'): o que esse ponto promete no mapa é convocado neste ano');
     });
     if(rp.h&&[1,4,7,10].includes(rp.h)) angular.push(k);
     if(k!=='sun'&&signOf(rp.lon)===signOf(NATAL.pts[k]?NATAL.pts[k].lon:-99)&&k!==p.lordKey)
-      notes.push(PT_GLYPH[k]+' repete o signo natal na RS');
+      notes.push(PT_NAME[k]+' volta ao signo que ocupa no natal — reforço da promessa desse planeta no ano');
   });
   // aglomerados por casa da RS
-  const byH={}; Object.entries(parsed.pts).forEach(([k,rp])=>{if(PT_NAME[k]&&rp.h){(byH[rp.h]=byH[rp.h]||[]).push(PT_GLYPH[k]);}});
-  Object.entries(byH).forEach(([h,arr])=>{if(arr.length>=3)notes.push('Aglomerado na casa '+h+' da RS: '+arr.join(' ')+' — '+HOUSE_SHORT[h]+' concentram o ano');});
+  const byH={}; Object.entries(parsed.pts).forEach(([k,rp])=>{if(PT_NAME[k]&&rp.h){(byH[rp.h]=byH[rp.h]||[]).push(PT_NAME[k]);}});
+  Object.entries(byH).forEach(([h,arr])=>{if(arr.length>=3)notes.push('Três ou mais planetas ('+arr.join(', ')+') concentram-se na casa '+h+' da Revolução: o ano converge para '+HOUSE_SHORT[h]);});
   // aspectos mais apertados
   const asps=(parsed.aspects||[]).filter(a=>a.orb!==null).sort((a,b)=>a.orb-b.orb).slice(0,3)
-    .map(a=>PT_GLYPH[a.a]+ASPECTS.find(A=>A[0]===a.ang)[1]+PT_GLYPH[a.b]+' '+fmtOrb(a.orb));
-  if(asps.length)notes.push('Aspectos mais apertados da RS: '+asps.join(' · '));
+    .map(a=>PT_NAME[a.a]+' '+({harm:'em harmonia com',tens:'em tensão com',conj:'em conjunção com'})[ASPECTS.find(A=>A[0]===a.ang)[2]]+' '+PT_NAME[a.b]+' ('+fmtOrb(a.orb)+')');
+  if(asps.length)notes.push('Os aspectos mais exatos da Revolução: '+asps.join('; '));
   // estrelas nos ângulos e no senhor
   const angSt=(parsed.stars||[]).filter(s=>['asc','mc','ic','dsc'].includes(s.who))
-    .map(s=>s.who.toUpperCase()+' ☌ '+s.star+(STAR_MEANINGS[s.star]?(' — '+STAR_MEANINGS[s.star]):''));
-  const lordSt=(parsed.stars||[]).filter(s=>s.who===p.lordKey).map(s=>PT_GLYPH[s.who]+' ☌ '+s.star+(STAR_MEANINGS[s.star]?(' — '+STAR_MEANINGS[s.star]):''));
+    .map(s=>'o '+s.who.toUpperCase()+' da Revolução em conjunção com a estrela '+s.star+(STAR_MEANINGS[s.star]?(' — '+STAR_MEANINGS[s.star]):''));
+  const lordSt=(parsed.stars||[]).filter(s=>s.who===p.lordKey).map(s=>PT_NAME[s.who]+' em conjunção com a estrela '+s.star+(STAR_MEANINGS[s.star]?(' — '+STAR_MEANINGS[s.star]):''));
   RSMETA.angular[year]=angular;
   RSMETA.echo[year]=(parsed.aspects||[]).map(a=>[a.a,a.b,a.ang]);
   RS_DATA[year]={
-    asc:parsed.asc!==null?(zfmt(parsed.asc)+(rsAscHouseNatal?(' — cai na casa '+rsAscHouseNatal+' natal ('+HOUSE_SHORT[rsAscHouseNatal]+')'):'')):'Asc da RS não informado',
+    asc:ascTxt,
     destaque:notes.join('. ')+'.',
-    estrelas:(angSt.concat(lordSt).join('; ')||'sem estrelas angulares informadas'),
+    estrelas:(angSt.concat(lordSt).join('; ')||'sem estrelas nos ângulos da Revolução'),
     raw:parsed};
   return RS_DATA[year];
 }

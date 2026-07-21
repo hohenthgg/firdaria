@@ -99,6 +99,34 @@ function meanNode(date){ // nodo lunar médio (☊)
   return n360(125.04452-0.05295377*d);
 }
 
+/* ---------- estrelas fixas principais (longitude eclíptica J2000) ----------
+   Precessão ≈ +50,29″/ano. Conjunções até 2° com planetas e ângulos.
+   Nomes alinhados a STAR_MEANINGS (tables.js). */
+const FIXED_STARS=[
+  ['Algol',56.17],['Alcyone',60.00],['Aldebaran',69.79],['Rigel',76.83],
+  ['Betelgeuse',88.75],['Alhena',99.10],['Sirius',104.08],['Canopus',104.97],
+  ['Dubhe',135.20],['Alioth',158.93],['Al Jabhah',147.90],['Adhafera',147.57],
+  ['Alphard',147.28],['Regulus',149.83],['Zosma',161.32],['Denebola',171.62],
+  ['Vindemiatrix',189.93],['Porrima',190.15],['Spica',203.83],['Arcturus',204.23],
+  ['Antares',249.77],['Vega',285.32],['Altair',301.78],['Nashira',321.78],
+  ['Deneb Algedi',323.55],['Sadalsuud',323.40],['Fomalhaut',333.87],
+  ['Markab',353.48],['Scheat',359.37]];
+const STAR_EN={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',asc:'Asc',mc:'MC'};
+function fixedStarHits(ch){
+  const yr=ch.date.getUTCFullYear()+ (ch.date.getUTCMonth()+1)/12;
+  const prec=(yr-2000)*50.2879/3600; // graus
+  const hits=[];
+  const targets=Object.entries(STAR_EN).map(([k,en])=>({en,lon:k==='asc'?ch.asc:k==='mc'?ch.mc:(ch.pts[k]&&ch.pts[k].lon)})).filter(t=>t.lon!==undefined);
+  FIXED_STARS.forEach(([nm,l2000])=>{
+    const L=n360(l2000+prec);
+    targets.forEach(t=>{
+      const o=adiff(L,t.lon);
+      if(o<=2) hits.push({who:t.en,star:nm,orb:o});
+    });
+  });
+  return hits;
+}
+
 /* ---------- mapa completo num instante/lugar ---------- */
 function computeChart(date, lat, lonEast){
   const H=placidusCusps(date,lat,lonEast);
@@ -107,7 +135,9 @@ function computeChart(date, lat, lonEast){
   const nn=meanNode(date);
   pts.nn={lon:nn,retro:false}; pts.sn={lon:n360(nn+180),retro:false};
   Object.values(pts).forEach(p=>{p.h=houseByRule(p.lon,H.cusps);});
-  return {pts,cusps:H.cusps,asc:H.asc,mc:H.mc,date};
+  const ch={pts,cusps:H.cusps,asc:H.asc,mc:H.mc,date};
+  ch.stars=fixedStarHits(ch);
+  return ch;
 }
 
 /* ---------- serialização no formato de texto do app ----------
@@ -126,6 +156,13 @@ function chartToText(ch){
     lines.push(g);lines.push(sg(p.lon));lines.push(dm(p.lon));
     if(p.retro)lines.push('℞');
     lines.push('H'+p.h);lines.push('');
+  });
+  // estrelas fixas: "Sun Conjunct Algol" + orbe (formato aceito pelo parser)
+  (ch.stars||[]).forEach(st=>{
+    const d=Math.floor(st.orb), m=Math.round((st.orb%1)*60);
+    lines.push(st.who+' Conjunct '+st.star);
+    lines.push(d+'°'+String(m).padStart(2,'0')+'′');
+    lines.push('');
   });
   return lines.join('\n');
 }

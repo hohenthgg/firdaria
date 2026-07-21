@@ -121,26 +121,7 @@ function renderNatal(){
     +(M.finals.length?(' Dispositor(es) final(is): '+M.finals.map(f=>PT_NAME[f]).join(', ')+'.'):'')
     +(M.loops.length?(' Anel fechado de dispositores: '+M.loops[0].map(k=>PT_GLYPH[k]).join('→')+'→'+PT_GLYPH[M.loops[0][0]]+'.'):'')+'</p>';
   html+='<h3>Posições, dignidades, termos e estrelas</h3><table><tr><th>Ponto</th><th>Posição</th><th>Estado</th><th>Estrela (conjunções ≤ 1°)</th></tr>'+rows+stars+'</table>';
-  html+='<h3>Síntese por planeta — seis partes auditáveis</h3>';
-  Object.keys(PT_NAME).forEach(k=>{
-    const p=NATAL.pts[k]; if(!p)return;
-    const it=interpPlanet(k); if(!it)return;
-    const limTag=p.hBack?('<span class="tag gold">liminar: casa '+p.hBack+' → '+p.h+' · '+Math.round((p.limW||1)*100)+'%</span>'):'';
-    html+='<div class="card pcard">'
-      +'<div class="p-head"><span class="p-glyph">'+p.g+'</span><div><div class="p-name">'+p.nm+'</div><div class="p-pos mono">'+zfmt(p.lon)+' · casa '+p.h+(p.hBack?(' <span style="color:var(--dim2)">(fundo: '+p.hBack+')</span>'):'')+' · força '+(STR[k]||4)+'/8</div></div>'+limTag+'</div>'
-      +'<p class="p-frase">'+interpFrase(k)+'</p>'
-      +'<div class="isec"><span class="ik">1 · fator técnico</span><p>'+it.tec+'</p></div>'
-      +'<div class="isec"><span class="ik">2 · função</span><p>'+it.fun+'</p></div>'
-      +'<div class="isec"><span class="ik">3 · efeito estrutural</span><p>'+it.efe+'</p></div>'
-      +'<div class="isec"><span class="ik">4 · manifestações possíveis</span><ul class="ilist">'+it.manif.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>'
-      +'<div class="isec"><span class="ik">5 · expressão construtiva / problemática</span>'
-        +'<div class="grid2"><div class="iexp alta"><span class="mono">em expressão construtiva</span><ul class="ilist">'+it.alta.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>'
-        +'<div class="iexp baixa"><span class="mono">em expressão problemática · sob aflição</span><ul class="ilist">'+it.baixa.map(m=>'<li>'+m+'</li>').join('')+'</ul></div></div></div>'
-      +'<details class="isec ifund"><summary class="ik" style="cursor:pointer">6 · fundamento visível — o que produziu este texto</summary><p class="mono" style="font-size:.68rem;line-height:1.7">'+it.fund+'</p>'
-        +'<div class="isrc" data-srcfor="'+k+'"><button class="btn" data-loadsrc="'+k+'">consultar fontes do corpus</button></div>'
-      +'</details>'
-      +'</div>';
-  });
+  html+='<div class="card flat" style="border-style:dashed"><p style="margin:0;font-size:.85rem">A leitura planeta a planeta — interpretação, diagrama e ficha curatorial — está na sala <b>Planetas</b>.</p></div>';
   html+='<div class="card"><div class="kicker">Lote do Espírito — o daimon</div><p style="font-size:.86rem">'+CONTEUDO.daimon+'</p></div>';
   html+='<div class="card"><div class="kicker">Sol e Lua — o eixo</div><p style="font-size:.86rem">'+CONTEUDO.solLua+'</p></div>';
   $('natal-body').innerHTML=html;
@@ -171,6 +152,113 @@ function manifestFor(k){
   return M[k]||'—';
 }
 
+/* ================= SALA PLANETAS: exposição em três colunas ================= */
+let SEL_PL=null;
+function natalWheel(sel){
+  const C=210,R1=200,R2=172,R3=140,Rp=118;
+  const P=(lon,r)=>{const a=(180-(n360(lon)-NATAL.asc))*Math.PI/180;return [C+r*Math.cos(a),C-r*Math.sin(a)];};
+  let s='<svg viewBox="0 0 420 420">';
+  s+='<circle cx="'+C+'" cy="'+C+'" r="'+R1+'" fill="none" stroke="var(--line2)" stroke-width="1"/>';
+  s+='<circle cx="'+C+'" cy="'+C+'" r="'+R2+'" fill="none" stroke="var(--line)"/>';
+  s+='<circle cx="'+C+'" cy="'+C+'" r="'+R3+'" fill="none" stroke="var(--line)"/>';
+  for(let i=0;i<12;i++){
+    const [x1,y1]=P(i*30,R3),[x2,y2]=P(i*30,R1);
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="var(--line)"/>';
+    const [tx,ty]=P(i*30+15,(R1+R2)/2);
+    s+='<text x="'+tx+'" y="'+(ty+3)+'" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" letter-spacing="1.5" fill="var(--dim2)">'+SG[i]+'</text>';
+  }
+  // cúspides (finas) + Asc/MC destacados
+  NATAL.cusps.forEach((c,i)=>{
+    const strong=(i===0||i===9);
+    const [x1,y1]=P(c,strong?26:R3-18),[x2,y2]=P(c,R3);
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(strong?'var(--gold2)':'var(--line)')+'" stroke-width="'+(strong?1:0.6)+'"/>';
+    const [hx,hy]=P(c+((n360(NATAL.cusps[(i+1)%12]-c))/2||15),R3-30);
+    s+='<text x="'+hx+'" y="'+(hy+3)+'" text-anchor="middle" font-size="8" font-family="IBM Plex Mono" fill="var(--line2)">'+(i+1)+'</text>';
+  });
+  // planetas
+  Object.entries(NATAL.pts).forEach(([k,p])=>{
+    if(k==='spirit')return;
+    const on=k===sel;
+    const [x,y]=P(p.lon,Rp);
+    if(on){
+      const [cx2,cy2]=P(p.lon,R1);
+      s+='<line x1="'+x+'" y1="'+y+'" x2="'+cx2+'" y2="'+cy2+'" stroke="var(--gold2)" stroke-width=".7" opacity=".7"/>';
+      s+='<circle cx="'+x+'" cy="'+y+'" r="17" fill="rgba(233,236,240,.06)" stroke="var(--ivory)" stroke-width="1"/>';
+    }
+    s+='<text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" font-size="'+(on?17:12)+'" font-family="Cormorant Garamond" fill="'+(on?'var(--ivory2)':'var(--dim)')+'">'+p.g+'</text>';
+  });
+  s+='</svg>';
+  return s;
+}
+function renderPlanetas(){
+  const selWrap=$('pl-sel');
+  if(!NATAL){$('planetas-body').innerHTML=emptyState();selWrap.innerHTML='';return;}
+  const keys=Object.keys(PT_NAME).filter(k=>NATAL.pts[k]);
+  if(!SEL_PL||!NATAL.pts[SEL_PL])SEL_PL=keys[0];
+  selWrap.innerHTML=keys.map(k=>'<button data-pl="'+k+'"'+(k===SEL_PL?' class="on"':'')+'><span class="g">'+PT_GLYPH[k]+'</span>'+PT_NAME[k]+'</button>').join('');
+  selWrap.onclick=e=>{const b=e.target.closest('[data-pl]');if(!b)return;SEL_PL=b.dataset.pl;renderPlanetas();};
+  const k=SEL_PL,p=NATAL.pts[k],it=interpPlanet(k);
+  const sg=signOf(p.lon), ru=ruledHouses(k), rec=(NATAL.meta.receptions||[]).filter(r=>r.includes(PT_GLYPH[k]));
+  const sectMal=(NATAL.sect==='diurno'&&k==='mars')||(NATAL.sect==='noturno'&&k==='saturn');
+  const sectBen=(NATAL.sect==='diurno'&&k==='jupiter')||(NATAL.sect==='noturno'&&k==='venus');
+  const lord=Object.keys(STR).sort((a,b)=>STR[b]-STR[a])[0];
+  const prom=PROMESSAS.find(pr=>pr.pl===k);
+  const meta=(kk,vv)=>'<div class="m-k">'+kk+'</div><div class="m-v">'+vv+'</div>';
+  const html='<div class="exh">'
+    +'<div class="exh-l">'
+      +'<div class="x-name">'+p.nm+'</div>'
+      +'<div class="x-sub">'+SIGNS[sg]+' · casa '+p.h+(p.hBack?(' · fundo na '+p.hBack):'')+(lord===k?' · senhor da genitura':'')+'</div>'
+      +'<div class="x-frase">'+interpFrase(k)+'</div>'
+      +'<div class="x-block"><b>Interpretação.</b> '+it.efe+'</div>'
+      +'<div class="x-block"><b>Função.</b> '+it.fun+'</div>'
+      +(prom?('<div class="x-block"><b>Promessa natal.</b> '+prom.fat+' '+prom.cond+'</div>'):'')
+      +'<details><summary class="ik" style="cursor:pointer;padding:8px 0">aprofundar — as seis partes auditáveis ▾</summary>'
+        +'<div class="isec"><span class="ik">1 · fator técnico</span><p>'+it.tec+'</p></div>'
+        +'<div class="isec"><span class="ik">4 · manifestações possíveis</span><ul class="ilist">'+it.manif.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>'
+        +'<div class="isec"><span class="ik">5 · expressão construtiva / problemática</span>'
+          +'<div class="iexp alta" style="margin-bottom:8px"><span class="mono">construtiva</span><ul class="ilist">'+it.alta.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>'
+          +'<div class="iexp baixa"><span class="mono">problemática · sob aflição</span><ul class="ilist">'+it.baixa.map(m=>'<li>'+m+'</li>').join('')+'</ul></div></div>'
+        +'<div class="isec"><span class="ik">6 · fundamento visível</span><p class="mono" style="font-size:.68rem;line-height:1.7">'+it.fund+'</p>'
+          +'<div class="isrc"><button class="btn" data-loadsrc="'+k+'">consultar fontes do corpus</button></div></div>'
+      +'</details>'
+    +'</div>'
+    +'<div class="exh-c">'+natalWheel(k)+'<div class="x-cap">'+p.nm+' em '+SIGNS[sg]+' · roda natal</div></div>'
+    +'<div class="exh-r">'
+      +meta('posição',zfmt(p.lon)+(p.retro?' retrógrado':''))
+      +meta('casa',p.h+(p.hBack?(' <span class="soft">(fundo: '+p.hBack+' · regra dos 5°, peso '+Math.round((p.limW||1)*100)+'%)</span>'):''))
+      +meta('casas regidas',ru.length?ru.map(h=>h+'ª — '+HOUSE_SHORT[h]).join('<br>'):'—')
+      +meta('dignidade',p.dig)
+      +meta('seita',NATAL.sect+(sectMal?' — maléfico contrário à seita':sectBen?' — benéfico da seita':''))
+      +meta('aspectos',(NATAL_ASP[k]||[]).join('<br>')||'nenhum listado')
+      +meta('recepções',rec.join('<br>')||'nenhuma')
+      +meta('estrelas fixas',p.star&&p.star!=='—'?p.star:'nenhuma conjunção registrada')
+      +meta('força',(STR[k]||4)+' / 8'+(lord===k?' — a maior do mapa':''))
+    +'</div>'
+  +'</div>';
+  $('planetas-body').innerHTML=html;
+}
+
+/* ================= SALA CASAS ================= */
+function renderCasas(){
+  if(!NATAL){$('casas-body').innerHTML=emptyState();return;}
+  const ROM=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+  let html='<div class="hgrid">';
+  for(let h=1;h<=12;h++){
+    const c=NATAL.cusps[h-1], sgc=signOf(c), rul=NATAL.rulers[h], rp=NATAL.pts[rul];
+    const occ=Object.entries(NATAL.pts).filter(([k,p])=>k!=='spirit'&&PT_NAME[k]&&(p.h===h||p.hBack===h))
+      .map(([k,p])=>PT_NAME[k]+(p.hBack===h?' (ao fundo — manifesta na '+p.h+'ª)':p.hBack?(' (vindo da '+p.hBack+'ª)'):''));
+    html+='<div class="hcard">'
+      +'<div class="h-n"><span class="rn">'+ROM[h-1]+'</span>'+HOUSE_SHORT[h]+'</div>'
+      +'<div class="h-meta">cúspide '+zfmt(c)+' · '+HOUSE_SIG[h].q+'</div>'
+      +'<p><b style="color:var(--ivory)">Regente:</b> '+PT_NAME[rul]+(rp?(' — em '+SIGNS[signOf(rp.lon)]+', casa '+rp.h+' ('+rp.dig+')'):'')+'</p>'
+      +'<p class="occ"><b style="color:var(--ivory)">Ocupantes:</b> '+(occ.join('; ')||'nenhum planeta')+'</p>'
+      +'<p>'+HOUSE_SIG[h].s+'.</p>'
+      +'<p style="color:var(--dim2);font-size:.74rem">'+OLAVO_CASA[h]+'.</p>'
+    +'</div>';
+  }
+  $('casas-body').innerHTML=html+'</div>';
+}
+
 /* ================= TEMPO: corda + mandala + razão + retrospectiva ================= */
 let ZOOM='vida', ANIM=null;
 const ZSPAN={vida:75*365.2425,decada:3652.5,ano:365.25,mes:30.44,dia:1};
@@ -180,101 +268,136 @@ function cordRange(){
   const c=CURSOR.getTime();
   return [c-span/2,c+span/2];
 }
+/* corda curatorial: linha fina, capítulos translúcidos com folga (lego),
+   profecções como marcações anuais, RS como pontos selecionáveis,
+   eventos como inscrições, cursor com data. */
 function drawCord(){
-  const svg=$('cord'); const W=svg.clientWidth||1000,H=240;
+  const svg=$('cord'); const W=svg.clientWidth||1000,H=232;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
-  const [t0,t1]=cordRange(); const X=t=>((t-t0)/(t1-t0))*W;
-  const bands=[
-    {y:8,h:22,label:'firdária'},{y:34,h:16,label:'sub'},{y:54,h:16,label:'profecção'},
-    {y:74,h:14,label:'senhor'},{y:92,h:12,label:'revoluções'},{y:108,h:26,label:'trânsitos lentos'},
-    {y:138,h:26,label:'ativações'},{y:168,h:18,label:'eventos'}];
+  const [t0,t1]=cordRange();
+  const L=112, R=14;
+  const XX=t=>L+((t-t0)/(t1-t0))*(W-L-R);
   let s='';
-  // trilhas de fundo alternadas + rótulos em versalete espaçado
-  bands.forEach((b,bi)=>{
-    s+='<rect x="88" y="'+(b.y-1)+'" width="'+(W-96)+'" height="'+(b.h+2)+'" fill="'+(bi%2?'rgba(233,227,211,.015)':'rgba(233,227,211,.032)')+'" rx="2"/>';
-    s+='<text x="4" y="'+(b.y+b.h/2+3)+'" font-size="7.5" font-family="IBM Plex Mono" letter-spacing="2" fill="#6f6758">'+b.label.toUpperCase()+'</text>';
-  });
-  const L=90; // margem esquerda
-  const XX=t=>L+((t-t0)/(t1-t0))*(W-L-8);
-  // 1-2: firdária maior e sub
+  const lbl=(y,txt)=>{s+='<text x="6" y="'+y+'" font-size="7.5" font-family="IBM Plex Mono" letter-spacing="2.2" fill="#646b76">'+txt+'</text>';};
+  const IVO='#e8eaed', DIM='#9aa1ab', DIM2='#646b76', LINE='#22262d', LINE2='#31363f';
+  // bloco "lego": recuo lateral, canto arredondado, preenchimento translúcido + fio da mesma cor
+  const block=(xa,xb,y,h,col,op)=>{
+    const x=Math.max(XX(Math.max(xa,t0)),L), x2=Math.min(XX(Math.min(xb,t1)),W-R);
+    const w=Math.max(1.5,x2-x-3);
+    s+='<rect x="'+(x+1.5)+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+Math.min(6,h/2.6)+'" fill="'+col+'" fill-opacity="'+op+'" stroke="'+col+'" stroke-opacity=".5" stroke-width=".7"/>';
+    return {x:x+1.5,w};
+  };
+  // 1 — FIRDÁRIA: capítulos
+  lbl(36,'FIRDÁRIA');
   let age0=0;
+  const byY=new Date(BIRTH).getUTCFullYear();
   FIRD.forEach(([k,nm,len])=>{
-    const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;age0+=len;
+    const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;const yA=byY+Math.round(age0);age0+=len;
     if(b<t0||a>t1)return;
-    s+='<rect x="'+XX(Math.max(a,t0))+'" y="8" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="22" rx="2" fill="'+(FIRD_COLORS[nm]||'#555')+'" opacity=".82"/>';
-    if(XX(Math.min(b,t1))-XX(Math.max(a,t0))>34) s+='<text x="'+(XX(Math.max(a,t0))+4)+'" y="23" font-size="9" fill="#0b0a08" font-family="Inter">'+nm+'</text>';
+    const r=block(a,b,16,34,FIRD_COLORS[nm]||'#888',.14);
+    if(r.w>72){
+      s+='<text x="'+(r.x+9)+'" y="'+31+'" font-size="12" font-family="Cormorant Garamond" fill="'+IVO+'">'+(PT_GLYPH[k]||'')+'</text>';
+      s+='<text x="'+(r.x+22)+'" y="'+31+'" font-size="9.5" font-family="Inter" fill="'+IVO+'">'+nm+'</text>';
+      s+='<text x="'+(r.x+9)+'" y="'+43+'" font-size="7" font-family="IBM Plex Mono" fill="'+DIM2+'">'+yA+'–'+(yA+len)+'</text>';
+    } else if(r.w>16){
+      s+='<text x="'+(r.x+r.w/2)+'" y="'+36+'" text-anchor="middle" font-size="12" font-family="Cormorant Garamond" fill="'+DIM+'">'+(PT_GLYPH[k]||nm[0])+'</text>';
+    }
   });
-  // subfirdária: amostrar limites (avanço garantido: em bordas exatas de sub-período
-  // firdAt() pode devolver o sub que TERMINA em `a`, o que travava o laço e estourava a string)
+  // 2 — SUB: subdivisões finas
+  lbl(65,'SUB');
   for(let a=0;a<75;){
     const f=firdAt(a); const st=f.subStart,en=f.subEnd;
     if(!st){a+=0.02;continue;}
     const enAge=(en-BIRTH)/DAY/365.2425;
-    if(!(en<t0||st>t1))
-      s+='<rect x="'+XX(Math.max(st,t0))+'" y="34" width="'+Math.max(1,XX(Math.min(en,t1))-XX(Math.max(st,t0)))+'" height="16" rx="2" fill="'+(FIRD_COLORS[f.sub]||'#555')+'" opacity=".55" stroke="#0b0a08" stroke-width=".5"/>';
-    a=enAge>a+1e-4?enAge:a+0.02; // nunca retrocede
+    if(!(en<t0||st>t1)){
+      const r=block(st,en,58,11,FIRD_COLORS[f.sub]||'#888',.22);
+      if(r.w>20)s+='<text x="'+(r.x+r.w/2)+'" y="'+66.5+'" text-anchor="middle" font-size="8.5" font-family="Cormorant Garamond" fill="'+DIM+'">'+(PT_GLYPH[f.subKey]||'')+'</text>';
+    }
+    a=enAge>a+1e-4?enAge:a+0.02;
   }
-  // 3-4-5: profecção / senhor / RS
+  // 3 — PROFECÇÃO: marcações anuais discretas (casa do ano)
+  lbl(89,'PROFECÇÃO');
   for(let yr=0;yr<75;yr++){
     const a=BIRTH+yr*365.2425*DAY,b=BIRTH+(yr+1)*365.2425*DAY;
     if(b<t0||a>t1)continue;
-    const p=profAt(yr);
-    const mal=[6,8,12].includes(p.houseN);
-    s+='<rect x="'+XX(Math.max(a,t0))+'" y="54" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="16" rx="2" fill="'+(mal?'#b0564a':'#3d3526')+'" opacity="'+(mal?'.5':'.4')+'" stroke="#0b0a08" stroke-width=".5"/>';
-    if(XX(b)-XX(a)>26)s+='<text x="'+(XX(Math.max(a,t0))+3)+'" y="65" font-size="8" font-family="IBM Plex Mono" fill="#a59c89">'+p.houseN+'</text>';
-    s+='<rect x="'+XX(Math.max(a,t0))+'" y="74" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="14" rx="2" fill="'+(FIRD_COLORS[PT_NAME[p.lordKey]]||'#555')+'" opacity=".6" stroke="#0b0a08" stroke-width=".5"/>';
-    const y1=new Date(BIRTH).getUTCFullYear()+yr;
-    if(RS_DATA[y1]) s+='<circle cx="'+XX(a)+'" cy="98" r="3.4" fill="'+(ACTIVE_PROM&&PROMESSAS.find(p2=>p2.id===ACTIVE_PROM).anos.includes(y1)?'#6f9e83':'#8496ab')+'"/>';
-    if(ACTIVE_PROM&&PROMESSAS.find(p2=>p2.id===ACTIVE_PROM).anos.includes(y1))
-      s+='<rect x="'+XX(Math.max(a,t0))+'" y="4" width="'+Math.max(1,XX(Math.min(b,t1))-XX(Math.max(a,t0)))+'" height="182" fill="none" stroke="#6f9e83" stroke-width="1" opacity=".7"/>';
+    const p=profAt(yr), mal=[6,8,12].includes(p.houseN);
+    const xa=XX(Math.max(a,t0)), xb=XX(Math.min(b,t1));
+    s+='<line x1="'+xa+'" y1="80" x2="'+xa+'" y2="92" stroke="'+LINE2+'" stroke-width=".7"/>';
+    if(mal) s+='<rect x="'+xa+'" y="80" width="'+Math.max(1,xb-xa)+'" height="12" fill="#b06a61" fill-opacity=".12"/>';
+    if(xb-xa>=17) s+='<text x="'+((xa+xb)/2)+'" y="'+89.5+'" text-anchor="middle" font-size="8" font-family="IBM Plex Mono" fill="'+(mal?'#b06a61':DIM)+'">'+p.houseN+'</text>';
+    const y1=byY+yr;
+    if(ACTIVE_PROM&&PROMESSAS.find(p2=>p2.id===ACTIVE_PROM)&&PROMESSAS.find(p2=>p2.id===ACTIVE_PROM).anos.includes(y1))
+      s+='<rect x="'+xa+'" y="12" width="'+Math.max(1,xb-xa)+'" height="160" fill="none" stroke="#7da28d" stroke-width=".9" opacity=".65" rx="4"/>';
   }
-  // 6: trânsitos lentos (Júp/Sat por signo) — amostragem adaptada
+  // 4 — REVOLUÇÕES: pontos selecionáveis sobre uma linha fina
+  lbl(112,'REVOLUÇÕES');
+  s+='<line x1="'+L+'" y1="108" x2="'+(W-R)+'" y2="108" stroke="'+LINE+'"/>';
+  const selY=rsYearOf(CURSOR);
+  Object.keys(RS_DATA).forEach(y=>{
+    const t=Date.UTC(+y,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate());
+    if(t<t0||t>t1)return;
+    const on=+y===selY;
+    s+='<circle data-rs="'+y+'" cx="'+XX(t)+'" cy="108" r="'+(on?5.2:3.6)+'" fill="'+(on?IVO:'#0e1013')+'" stroke="'+(on?IVO:DIM2)+'" stroke-width="1" style="cursor:pointer"><title>Revolução Solar '+y+' — clique para levar o cursor</title></circle>';
+  });
+  // 5 — TRÂNSITOS LENTOS: faixas quase transparentes com o signo
   if(ZOOM!=='dia'){
+    lbl(133,'JÚPITER'); lbl(149,'SATURNO');
     const stepD=ZOOM==='vida'?120:ZOOM==='decada'?30:ZOOM==='ano'?7:1;
-    [['Jupiter','#c9a86a',110],['Saturn','#a59c89',122]].forEach(([bn,col,yy])=>{
+    [['Jupiter',126],['Saturn',142]].forEach(([bn,yy])=>{
       let prevSign=null,segStart=t0;
       for(let t=t0;t<=t1;t+=stepD*DAY){
         const sg=Math.floor(tlon(bn,new Date(t))/30);
         if(prevSign===null){prevSign=sg;segStart=t;}
         else if(sg!==prevSign||t+stepD*DAY>t1){
-          s+='<rect x="'+XX(segStart)+'" y="'+yy+'" width="'+Math.max(1,XX(t)-XX(segStart))+'" height="10" rx="2" fill="'+col+'" opacity=".35" stroke="#0b0a08" stroke-width=".5"/>';
-          if(XX(t)-XX(segStart)>24)s+='<text x="'+(XX(segStart)+2)+'" y="'+(yy+8)+'" font-size="7.5" font-family="IBM Plex Mono" fill="#e9e3d3" opacity=".7">'+SG[prevSign]+'</text>';
+          const xa=XX(segStart), xb=XX(Math.min(t,t1));
+          s+='<rect x="'+(xa+1)+'" y="'+yy+'" width="'+Math.max(1,xb-xa-2)+'" height="9" rx="3" fill="rgba(233,236,240,.05)" stroke="'+LINE2+'" stroke-width=".5"/>';
+          if(xb-xa>26)s+='<text x="'+((xa+xb)/2)+'" y="'+(yy+7)+'" text-anchor="middle" font-size="7" font-family="IBM Plex Mono" letter-spacing="1" fill="'+DIM+'">'+SG[prevSign]+'</text>';
           prevSign=sg;segStart=t;
         }
       }
     });
   }
-  // 7: ativações rápidas (só nos zooms ano/mês/dia)
+  // 6 — ATIVAÇÕES (zoom ano/mês/dia)
   if(ZOOM==='ano'||ZOOM==='mes'||ZOOM==='dia'){
+    lbl(168,'ATIVAÇÕES');
     const step=ZOOM==='ano'?7:1;
     for(let t=t0;t<=t1;t+=step*DAY){
       const top=scoredHits(new Date(t),5);
       if(top.length){const h=top[0];
-        s+='<circle cx="'+XX(t)+'" cy="150" r="'+Math.min(6,2+h.rel.score/3)+'" fill="'+(h.cls==='tens'?'#b0564a':h.cls==='harm'?'#6f9e83':'#c9a86a')+'" opacity=".8"><title>'+fdate(new Date(t))+': '+h.tg+' '+h.gl+' '+h.np.g+' ('+h.rel.tier+')</title></circle>';}
+        s+='<circle cx="'+XX(t)+'" cy="164" r="'+Math.min(5.5,2+h.rel.score/3)+'" fill="'+(h.cls==='tens'?'#b06a61':h.cls==='harm'?'#7da28d':'#b9c1cd')+'" opacity=".85"><title>'+fdate(new Date(t))+': '+h.tg+' '+h.gl+' '+h.np.g+' ('+h.rel.tier+')</title></circle>';}
     }
   }
-  // 8: eventos pessoais
-  EVENTS.forEach(ev=>{
-    const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
-    s+='<circle cx="'+XX(t)+'" cy="177" r="4" fill="#8878a8"><title>'+esc(ev.txt)+' ('+ev.d+')</title></circle>';
-  });
-  // cursor (agulha dourada com losango) + pino A
-  const cx=XX(CURSOR.getTime());
-  s+='<line x1="'+cx+'" y1="6" x2="'+cx+'" y2="190" stroke="#c9a86a" stroke-width="1.1"/>'
-    +'<path d="M '+cx+' 0 l 4 6 l -4 6 l -4 -6 z" fill="#c9a86a"/>'
-    +'<line x1="'+cx+'" y1="6" x2="'+cx+'" y2="190" stroke="rgba(233,227,211,.25)" stroke-width="3.5"/>';
-  if(PINNED) s+='<line x1="'+XX(PINNED.getTime())+'" y1="2" x2="'+XX(PINNED.getTime())+'" y2="190" stroke="#e9e3d3" stroke-width="1" stroke-dasharray="3 4"/>';
-  // régua
+  // 7 — EVENTOS: pequenas inscrições
+  if(EVENTS.length){
+    lbl(184,'EVENTOS');
+    EVENTS.forEach(ev=>{
+      const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
+      const x=XX(t);
+      s+='<path d="M '+x+' 176 l 3.4 3.6 l -3.4 3.6 l -3.4 -3.6 z" fill="#948dab"><title>'+esc(ev.txt)+' ('+ev.d+')</title></path>';
+      if((t1-t0)<12*365*DAY) s+='<text x="'+(x+7)+'" y="'+183+'" font-size="7.5" font-family="IBM Plex Mono" fill="'+DIM2+'">'+esc(ev.txt.slice(0,22))+'</text>';
+    });
+  }
+  // linha-base + régua
+  s+='<line x1="'+L+'" y1="196" x2="'+(W-R)+'" y2="196" stroke="'+LINE2+'"/>';
   const years=(t1-t0)/DAY/365.25;
   const tick=years>30?10:years>8?2:years>1.5?0.5:years>0.1?1/12:1/365;
   for(let yy=Math.ceil((t0-BIRTH)/DAY/365.2425/tick)*tick;;yy+=tick){
     const t=BIRTH+yy*365.2425*DAY;if(t>t1)break;
-    s+='<line x1="'+XX(t)+'" y1="192" x2="'+XX(t)+'" y2="198" stroke="#3d3526"/>';
+    s+='<line x1="'+XX(t)+'" y1="196" x2="'+XX(t)+'" y2="201" stroke="'+LINE2+'"/>';
     const d=new Date(t);
-    const lbl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
-    s+='<text x="'+XX(t)+'" y="210" font-size="8" text-anchor="middle" font-family="IBM Plex Mono" fill="#6f6758">'+lbl+'</text>';
+    const tl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
+    s+='<text x="'+XX(t)+'" y="212" font-size="8" text-anchor="middle" font-family="IBM Plex Mono" fill="'+DIM2+'">'+tl+'</text>';
   }
-  s+='<text x="'+(W-6)+'" y="232" font-size="8" text-anchor="end" font-family="IBM Plex Mono" fill="#6f6758">arraste para mover o cursor · zoom: '+ZOOM+'</text>';
+  // pino A + cursor com data
+  if(PINNED) s+='<line x1="'+XX(PINNED.getTime())+'" y1="10" x2="'+XX(PINNED.getTime())+'" y2="196" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';
+  const cx=XX(CURSOR.getTime());
+  s+='<line x1="'+cx+'" y1="10" x2="'+cx+'" y2="196" stroke="'+IVO+'" stroke-width="1"/>'
+    +'<circle cx="'+cx+'" cy="196" r="3" fill="'+IVO+'"/>';
+  const dtxt=fdate(CURSOR);
+  const pw=dtxt.length*5.4+14, px=Math.max(L,Math.min(W-R-pw,cx-pw/2));
+  s+='<rect x="'+px+'" y="0" width="'+pw+'" height="13" rx="6.5" fill="#171a20" stroke="'+LINE2+'" stroke-width=".7"/>'
+    +'<text x="'+(px+pw/2)+'" y="9.5" text-anchor="middle" font-size="8" font-family="IBM Plex Mono" fill="'+IVO+'">'+dtxt+'</text>';
+  s+='<text x="'+(W-6)+'" y="'+(H-6)+'" font-size="7.5" text-anchor="end" font-family="IBM Plex Mono" fill="'+DIM2+'">arraste · clique numa revolução · zoom: '+ZOOM+'</text>';
   svg.innerHTML=s;
 }
 function cordDrag(){
@@ -282,12 +405,16 @@ function cordDrag(){
   const pick=e=>{
     const r=svg.getBoundingClientRect();
     const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
-    const W=r.width,L=90*(W/(svg.viewBox.baseVal.width||W));
+    const W=r.width,L=112*(W/(svg.viewBox.baseVal.width||W));
     const [t0,t1]=cordRange();
-    const t=t0+((x-L)/(W-L-8))*(t1-t0);
+    const t=t0+((x-L)/(W-L-14))*(t1-t0);
     if(isFinite(t)){CURSOR=new Date(Math.max(BIRTH,Math.min(BIRTH+75*365.2425*DAY,t)));syncTempo();}
   };
-  svg.addEventListener('pointerdown',e=>{dragging=true;pick(e);});
+  svg.addEventListener('pointerdown',e=>{
+    // ponto de Revolução: leva o cursor exatamente ao aniversário daquele ano
+    const rs=e.target&&e.target.dataset&&e.target.dataset.rs;
+    if(rs){const b=new Date(BIRTH);CURSOR=new Date(Date.UTC(+rs,b.getUTCMonth(),b.getUTCDate(),b.getUTCHours()));syncTempo();return;}
+    dragging=true;pick(e);});
   window.addEventListener('pointermove',e=>{if(dragging)pick(e);});
   window.addEventListener('pointerup',()=>dragging=false);
 }
@@ -296,24 +423,24 @@ function mandala(d){
   const age=ageAt(d);
   const rot=(Math.floor(Math.max(0,age))%12)*30;
   const P=(lon,r)=>{const a=(180-(n360(lon)-NATAL.asc)-rot)*Math.PI/180;return [C+r*Math.cos(a),C-r*Math.sin(a)];};
-  let s='<circle cx="'+C+'" cy="'+C+'" r="'+R1+'" fill="none" stroke="#3d3526"/>'
-    +'<circle cx="'+C+'" cy="'+C+'" r="'+R2+'" fill="none" stroke="#292319"/>'
-    +'<circle cx="'+C+'" cy="'+C+'" r="'+R3+'" fill="none" stroke="#292319"/>';
+  let s='<circle cx="'+C+'" cy="'+C+'" r="'+R1+'" fill="none" stroke="#31363f"/>'
+    +'<circle cx="'+C+'" cy="'+C+'" r="'+R2+'" fill="none" stroke="#22262d"/>'
+    +'<circle cx="'+C+'" cy="'+C+'" r="'+R3+'" fill="none" stroke="#22262d"/>';
   for(let i=0;i<12;i++){const [x1,y1]=P(i*30,R3),[x2,y2]=P(i*30,R1);
-    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#292319"/>';
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#22262d"/>';
     const [tx,ty]=P(i*30+15,(R1+R2)/2);
-    s+='<text x="'+tx+'" y="'+(ty+3)+'" text-anchor="middle" font-size="8.5" font-family="IBM Plex Mono" letter-spacing="1" fill="#a88b52">'+SG[i]+'</text>';}
+    s+='<text x="'+tx+'" y="'+(ty+3)+'" text-anchor="middle" font-size="8.5" font-family="IBM Plex Mono" letter-spacing="1" fill="#8b93a1">'+SG[i]+'</text>';}
   Object.entries(NATAL.pts).forEach(([k,p])=>{if(k==='spirit')return;const [x,y]=P(p.lon,(R2+R3)/2-5);
-    s+='<text x="'+x+'" y="'+(y+4)+'" text-anchor="middle" font-size="13" font-family="Cormorant Garamond" fill="#c9a86a">'+p.g+'</text>';});
+    s+='<text x="'+x+'" y="'+(y+4)+'" text-anchor="middle" font-size="13" font-family="Cormorant Garamond" fill="#b9c1cd">'+p.g+'</text>';});
   const hits=transitHits(d), TPOS={};
   TB.forEach(([bn,key])=>{TPOS[key]=tlon(bn,d);});
   hits.slice(0,10).forEach(h=>{if(h.nk==='asc'||h.nk==='mc')return;
     const [x1,y1]=P(TPOS[h.tKey],R4),[x2,y2]=P(h.np.lon,(R2+R3)/2-12);
-    const col=h.cls==='harm'?'#6f9e83':h.cls==='tens'?'#b0564a':'#c9a86a';
+    const col=h.cls==='harm'?'#6f9e83':h.cls==='tens'?'#b0564a':'#b9c1cd';
     s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width=".9" opacity="'+(0.75-h.orb*0.07)+'"/>';});
   Object.entries(TPOS).forEach(([key,Lg])=>{const [x,y]=P(Lg,R4);const g=TB.find(t=>t[1]===key)[2];
-    s+='<circle cx="'+x+'" cy="'+y+'" r="1.8" fill="#e9e3d3"/><text x="'+x+'" y="'+(y-6)+'" text-anchor="middle" font-size="11" fill="#e9e3d3">'+g+'</text>';});
-  s+='<text x="6" y="'+(C+3)+'" font-size="8" font-family="IBM Plex Mono" fill="#6f6758">ASC·PROF</text>';
+    s+='<circle cx="'+x+'" cy="'+y+'" r="1.8" fill="#e8eaed"/><text x="'+x+'" y="'+(y-6)+'" text-anchor="middle" font-size="11" fill="#e8eaed">'+g+'</text>';});
+  s+='<text x="6" y="'+(C+3)+'" font-size="8" font-family="IBM Plex Mono" fill="#646b76">ASC·PROF</text>';
   svg.innerHTML=s;
 }
 function syncTempo(){
@@ -330,6 +457,12 @@ function syncTempo(){
   html+='<div class="card"><div class="kicker">Revolução '+y+'</div>'+(rs?('<p style="font-size:.8rem"><b style="color:var(--ivory)">'+rs.asc+'</b></p><p style="font-size:.78rem">'+rs.destaque+'</p>'):'<p>sem RS registrada.</p>')+'</div>';
   const top=scoredHits(CURSOR,0).slice(0,3);
   html+='<div class="card"><div class="kicker">ativações no cursor</div>'+(top.map(h=>renderHit(h,CURSOR,false)).join('')||'<p>—</p>')+'</div>';
+  // oportunidades e cautelas do período apontado
+  const favs=[],caus=[];
+  top.forEach(h=>{const o=orient(h,CURSOR);o.fav.forEach(x=>favs.indexOf(x)<0&&favs.push(x));o.cau.forEach(x=>caus.indexOf(x)<0&&caus.push(x));});
+  if(favs.length||caus.length)
+    html+='<div class="card"><div class="kicker">oportunidades</div><p style="font-size:.8rem;color:var(--green)">'+(favs.slice(0,5).join(' · ')||'—')+'</p>'
+      +'<div class="kicker" style="margin-top:8px">cautelas</div><p style="font-size:.8rem;color:var(--red)">'+(caus.slice(0,5).join(' · ')||'—')+'</p></div>';
   $('tempo-info').innerHTML=html;
   renderCompare();
 }
@@ -448,7 +581,7 @@ function renderRS(){
   const y=+sel.value, rs=RS_DATA[y], a=y-by, p=profAt(a), f=firdAt(a+0.05);
   const block=(yy,rr,aa)=>{
     const pp=profAt(aa),ff=firdAt(aa+0.05);
-    return '<div class="card"><div class="kicker">Revolução Solar '+yy+' · '+aa+' anos · '+ff.major+'/'+ff.sub+' · profecção casa '+pp.houseN+' ('+pp.sign+') · Senhor '+PT_NAME[pp.lordKey]+'</div>'
+    return '<div class="card"><div class="kicker">Revolução Solar '+yy+' · '+aa+' anos · firdária de '+ff.major+' (sub-período de '+ff.sub+') · profecção: casa '+pp.houseN+' em '+pp.sign+' · Senhor do Ano: '+PT_NAME[pp.lordKey]+'</div>'
       +(rr?('<p class="lede" style="font-size:1rem">'+rr.asc+'</p><p style="font-size:.85rem">'+rr.destaque+'</p><p style="font-size:.8rem;color:var(--gold)">'+rr.estrelas+'</p>')
           :'<p>Sem RS registrada para '+yy+'. Adicione em RS_DATA['+yy+'] (js/data.js).</p>')
       +'<div class="mono" style="margin-top:6px">'+synthYear(aa,pp,ff)+'</div>'

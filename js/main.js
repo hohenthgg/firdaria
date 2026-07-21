@@ -78,7 +78,7 @@ function bindView(){
 }
 /* boot */
 function renderAll(){
-  const steps=[renderAgora,renderNatal,renderTemp,renderPers,renderRS,
+  const steps=[renderAgora,renderNatal,renderPlanetas,renderCasas,renderTemp,renderPers,renderRS,
     ()=>{CURSOR=new Date();refreshNPTS();syncTempo();},renderLedger,renderTrans];
   steps.forEach(fn=>{try{fn();}catch(err){console.error('render falhou:',fn.name||'anon',err);}});
   document.getElementById('brand-sub').textContent=NATAL?(NATAL.meta.name+' · '+NATAL.sect+' · '+new Date(BIRTH).toISOString().slice(0,10)):'motor interpretativo tradicional';
