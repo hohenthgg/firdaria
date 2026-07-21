@@ -259,7 +259,7 @@ function renderCasas(){
   $('casas-body').innerHTML=html+'</div>';
 }
 
-/* ================= TEMPO: corda + mandala + razão + retrospectiva ================= */
+/* ================= TEMPO: corda vertical + razão + retrospectiva ================= */
 let ZOOM='vida', ANIM=null;
 const ZSPAN={vida:75*365.2425,decada:3652.5,ano:365.25,mes:30.44,dia:1};
 function cordRange(){
@@ -268,186 +268,117 @@ function cordRange(){
   const c=CURSOR.getTime();
   return [c-span/2,c+span/2];
 }
-/* corda curatorial: linha fina, capítulos translúcidos com folga (lego),
-   profecções como marcações anuais, RS como pontos selecionáveis,
-   eventos como inscrições, cursor com data. */
+/* corda VERTICAL minimalista e rechonchuda:
+   firdárias como blocos gordos, subfirdárias como coluna fina,
+   revoluções como pontos clicáveis, anos à esquerda, cursor horizontal com data.
+   Sem profecção, sem trânsitos lentos, sem ativações aqui — isso mora no painel ao lado. */
 function drawCord(){
-  const svg=$('cord'); const W=svg.clientWidth||1000,H=232;
+  const svg=$('cord'); const W=300,H=780;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   const [t0,t1]=cordRange();
-  const L=112, R=14;
-  const XX=t=>L+((t-t0)/(t1-t0))*(W-L-R);
+  const T=26,B=18;
+  const YY=t=>T+((t-t0)/(t1-t0))*(H-T-B);
   let s='';
-  const lbl=(y,txt)=>{s+='<text x="6" y="'+y+'" font-size="7.5" font-family="IBM Plex Mono" letter-spacing="2.2" fill="#646b76">'+txt+'</text>';};
-  const IVO='#e8eaed', DIM='#9aa1ab', DIM2='#646b76', LINE='#22262d', LINE2='#31363f';
-  // bloco "lego": recuo lateral, canto arredondado, preenchimento translúcido + fio da mesma cor
-  const block=(xa,xb,y,h,col,op)=>{
-    const x=Math.max(XX(Math.max(xa,t0)),L), x2=Math.min(XX(Math.min(xb,t1)),W-R);
-    const w=Math.max(1.5,x2-x-3);
-    s+='<rect x="'+(x+1.5)+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+Math.min(6,h/2.6)+'" fill="'+col+'" fill-opacity="'+op+'" stroke="'+col+'" stroke-opacity=".5" stroke-width=".7"/>';
-    return {x:x+1.5,w};
-  };
-  // 1 — FIRDÁRIA: capítulos
-  lbl(36,'FIRDÁRIA');
-  let age0=0;
-  const byY=new Date(BIRTH).getUTCFullYear();
+  const IVO='#ffffff', DIM='#b8bcc4', DIM2='#7b8089', LINE='rgba(255,255,255,.14)';
+  // eixo fino
+  s+='<line x1="58" y1="'+T+'" x2="58" y2="'+(H-B)+'" stroke="'+LINE+'"/>';
+  // régua de anos
+  const years=(t1-t0)/DAY/365.25;
+  const tick=years>30?5:years>8?2:years>1.5?0.5:years>0.1?1/12:1/365;
+  for(let yy=Math.ceil((t0-BIRTH)/DAY/365.2425/tick)*tick;;yy+=tick){
+    const t=BIRTH+yy*365.2425*DAY;if(t>t1)break;
+    const y=YY(t), d=new Date(t);
+    const lbl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
+    s+='<line x1="52" y1="'+y+'" x2="58" y2="'+y+'" stroke="'+LINE+'"/>';
+    s+='<text x="46" y="'+(y+3)+'" text-anchor="end" font-size="9" font-family="IBM Plex Mono" fill="'+DIM2+'">'+lbl+'</text>';
+  }
+  // FIRDÁRIA: blocos gordos e arredondados
+  let age0=0; const byY=new Date(BIRTH).getUTCFullYear();
   FIRD.forEach(([k,nm,len])=>{
     const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;const yA=byY+Math.round(age0);age0+=len;
     if(b<t0||a>t1)return;
-    const r=block(a,b,16,34,FIRD_COLORS[nm]||'#888',.14);
-    if(r.w>72){
-      s+='<text x="'+(r.x+9)+'" y="'+31+'" font-size="12" font-family="Cormorant Garamond" fill="'+IVO+'">'+(PT_GLYPH[k]||'')+'</text>';
-      s+='<text x="'+(r.x+22)+'" y="'+31+'" font-size="9.5" font-family="Inter" fill="'+IVO+'">'+nm+'</text>';
-      s+='<text x="'+(r.x+9)+'" y="'+43+'" font-size="7" font-family="IBM Plex Mono" fill="'+DIM2+'">'+yA+'–'+(yA+len)+'</text>';
-    } else if(r.w>16){
-      s+='<text x="'+(r.x+r.w/2)+'" y="'+36+'" text-anchor="middle" font-size="12" font-family="Cormorant Garamond" fill="'+DIM+'">'+(PT_GLYPH[k]||nm[0])+'</text>';
+    const ya=Math.max(YY(Math.max(a,t0)),T), yb=Math.min(YY(Math.min(b,t1)),H-B);
+    const hh=Math.max(6,yb-ya-4);
+    const col=FIRD_COLORS[nm]||'#888';
+    s+='<rect x="66" y="'+(ya+2)+'" width="112" height="'+hh+'" rx="'+Math.min(16,hh/2)+'" fill="'+col+'" fill-opacity=".13" stroke="'+col+'" stroke-opacity=".55" stroke-width="1"/>';
+    if(hh>44){
+      s+='<text x="'+80+'" y="'+(ya+2+hh/2-4)+'" font-size="15" font-family="Cormorant Garamond" fill="'+IVO+'">'+(PT_GLYPH[k]||'')+'</text>';
+      s+='<text x="'+96+'" y="'+(ya+2+hh/2-4)+'" font-size="11" font-family="Inter" fill="'+IVO+'">'+nm+'</text>';
+      s+='<text x="'+80+'" y="'+(ya+2+hh/2+11)+'" font-size="8" font-family="IBM Plex Mono" fill="'+DIM2+'">'+yA+'–'+(yA+len)+'</text>';
+    } else if(hh>14){
+      s+='<text x="'+122+'" y="'+(ya+2+hh/2+4)+'" text-anchor="middle" font-size="12" font-family="Cormorant Garamond" fill="'+DIM+'">'+(PT_GLYPH[k]||nm[0])+'</text>';
     }
   });
-  // 2 — SUB: subdivisões finas
-  lbl(65,'SUB');
+  // SUB: coluna fina
   for(let a=0;a<75;){
     const f=firdAt(a); const st=f.subStart,en=f.subEnd;
     if(!st){a+=0.02;continue;}
     const enAge=(en-BIRTH)/DAY/365.2425;
     if(!(en<t0||st>t1)){
-      const r=block(st,en,58,11,FIRD_COLORS[f.sub]||'#888',.22);
-      if(r.w>20)s+='<text x="'+(r.x+r.w/2)+'" y="'+66.5+'" text-anchor="middle" font-size="8.5" font-family="Cormorant Garamond" fill="'+DIM+'">'+(PT_GLYPH[f.subKey]||'')+'</text>';
+      const ya=Math.max(YY(Math.max(st,t0)),T), yb=Math.min(YY(Math.min(en,t1)),H-B);
+      const hh=Math.max(3,yb-ya-2);
+      const col=FIRD_COLORS[f.sub]||'#888';
+      s+='<rect x="186" y="'+(ya+1)+'" width="18" height="'+hh+'" rx="'+Math.min(8,hh/2)+'" fill="'+col+'" fill-opacity=".22" stroke="'+col+'" stroke-opacity=".4" stroke-width=".6"/>';
+      if(hh>15)s+='<text x="195" y="'+(ya+1+hh/2+3.5)+'" text-anchor="middle" font-size="9" font-family="Cormorant Garamond" fill="'+DIM+'">'+(PT_GLYPH[f.subKey]||'')+'</text>';
     }
     a=enAge>a+1e-4?enAge:a+0.02;
   }
-  // 3 — PROFECÇÃO: marcações anuais discretas (casa do ano)
-  lbl(89,'PROFECÇÃO');
-  for(let yr=0;yr<75;yr++){
-    const a=BIRTH+yr*365.2425*DAY,b=BIRTH+(yr+1)*365.2425*DAY;
-    if(b<t0||a>t1)continue;
-    const p=profAt(yr), mal=[6,8,12].includes(p.houseN);
-    const xa=XX(Math.max(a,t0)), xb=XX(Math.min(b,t1));
-    s+='<line x1="'+xa+'" y1="80" x2="'+xa+'" y2="92" stroke="'+LINE2+'" stroke-width=".7"/>';
-    if(mal) s+='<rect x="'+xa+'" y="80" width="'+Math.max(1,xb-xa)+'" height="12" fill="#b06a61" fill-opacity=".12"/>';
-    if(xb-xa>=17) s+='<text x="'+((xa+xb)/2)+'" y="'+89.5+'" text-anchor="middle" font-size="8" font-family="IBM Plex Mono" fill="'+(mal?'#b06a61':DIM)+'">'+p.houseN+'</text>';
-    const y1=byY+yr;
-    if(ACTIVE_PROM&&PROMESSAS.find(p2=>p2.id===ACTIVE_PROM)&&PROMESSAS.find(p2=>p2.id===ACTIVE_PROM).anos.includes(y1))
-      s+='<rect x="'+xa+'" y="12" width="'+Math.max(1,xb-xa)+'" height="160" fill="none" stroke="#7da28d" stroke-width=".9" opacity=".65" rx="4"/>';
-  }
-  // 4 — REVOLUÇÕES: pontos selecionáveis sobre uma linha fina
-  lbl(112,'REVOLUÇÕES');
-  s+='<line x1="'+L+'" y1="108" x2="'+(W-R)+'" y2="108" stroke="'+LINE+'"/>';
+  // REVOLUÇÕES: pontos clicáveis
   const selY=rsYearOf(CURSOR);
   Object.keys(RS_DATA).forEach(y=>{
     const t=Date.UTC(+y,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate());
     if(t<t0||t>t1)return;
-    const on=+y===selY;
-    s+='<circle data-rs="'+y+'" cx="'+XX(t)+'" cy="108" r="'+(on?5.2:3.6)+'" fill="'+(on?IVO:'#0e1013')+'" stroke="'+(on?IVO:DIM2)+'" stroke-width="1" style="cursor:pointer"><title>Revolução Solar '+y+' — clique para levar o cursor</title></circle>';
+    const on=+y===selY, yy=YY(t);
+    s+='<circle data-rs="'+y+'" cx="222" cy="'+yy+'" r="'+(on?6:4)+'" fill="'+(on?IVO:'#0a0a0d')+'" stroke="'+(on?IVO:DIM2)+'" stroke-width="1.1" style="cursor:pointer"><title>Revolução '+y+' — clique</title></circle>';
   });
-  // 5 — TRÂNSITOS LENTOS: faixas quase transparentes com o signo
-  if(ZOOM!=='dia'){
-    lbl(133,'JÚPITER'); lbl(149,'SATURNO');
-    const stepD=ZOOM==='vida'?120:ZOOM==='decada'?30:ZOOM==='ano'?7:1;
-    [['Jupiter',126],['Saturn',142]].forEach(([bn,yy])=>{
-      let prevSign=null,segStart=t0;
-      for(let t=t0;t<=t1;t+=stepD*DAY){
-        const sg=Math.floor(tlon(bn,new Date(t))/30);
-        if(prevSign===null){prevSign=sg;segStart=t;}
-        else if(sg!==prevSign||t+stepD*DAY>t1){
-          const xa=XX(segStart), xb=XX(Math.min(t,t1));
-          s+='<rect x="'+(xa+1)+'" y="'+yy+'" width="'+Math.max(1,xb-xa-2)+'" height="9" rx="3" fill="rgba(233,236,240,.05)" stroke="'+LINE2+'" stroke-width=".5"/>';
-          if(xb-xa>26)s+='<text x="'+((xa+xb)/2)+'" y="'+(yy+7)+'" text-anchor="middle" font-size="7" font-family="IBM Plex Mono" letter-spacing="1" fill="'+DIM+'">'+SG[prevSign]+'</text>';
-          prevSign=sg;segStart=t;
-        }
-      }
-    });
-  }
-  // 6 — ATIVAÇÕES (zoom ano/mês/dia)
-  if(ZOOM==='ano'||ZOOM==='mes'||ZOOM==='dia'){
-    lbl(168,'ATIVAÇÕES');
-    const step=ZOOM==='ano'?7:1;
-    for(let t=t0;t<=t1;t+=step*DAY){
-      const top=scoredHits(new Date(t),5);
-      if(top.length){const h=top[0];
-        s+='<circle cx="'+XX(t)+'" cy="164" r="'+Math.min(5.5,2+h.rel.score/3)+'" fill="'+(h.cls==='tens'?'#b06a61':h.cls==='harm'?'#7da28d':'#b9c1cd')+'" opacity=".85"><title>'+fdate(new Date(t))+': '+h.tg+' '+h.gl+' '+h.np.g+' ('+h.rel.tier+')</title></circle>';}
-    }
-  }
-  // 7 — EVENTOS: pequenas inscrições
-  if(EVENTS.length){
-    lbl(184,'EVENTOS');
-    EVENTS.forEach(ev=>{
-      const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
-      const x=XX(t);
-      s+='<path d="M '+x+' 176 l 3.4 3.6 l -3.4 3.6 l -3.4 -3.6 z" fill="#948dab"><title>'+esc(ev.txt)+' ('+ev.d+')</title></path>';
-      if((t1-t0)<12*365*DAY) s+='<text x="'+(x+7)+'" y="'+183+'" font-size="7.5" font-family="IBM Plex Mono" fill="'+DIM2+'">'+esc(ev.txt.slice(0,22))+'</text>';
-    });
-  }
-  // linha-base + régua
-  s+='<line x1="'+L+'" y1="196" x2="'+(W-R)+'" y2="196" stroke="'+LINE2+'"/>';
-  const years=(t1-t0)/DAY/365.25;
-  const tick=years>30?10:years>8?2:years>1.5?0.5:years>0.1?1/12:1/365;
-  for(let yy=Math.ceil((t0-BIRTH)/DAY/365.2425/tick)*tick;;yy+=tick){
-    const t=BIRTH+yy*365.2425*DAY;if(t>t1)break;
-    s+='<line x1="'+XX(t)+'" y1="196" x2="'+XX(t)+'" y2="201" stroke="'+LINE2+'"/>';
-    const d=new Date(t);
-    const tl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
-    s+='<text x="'+XX(t)+'" y="212" font-size="8" text-anchor="middle" font-family="IBM Plex Mono" fill="'+DIM2+'">'+tl+'</text>';
-  }
-  // pino A + cursor com data
-  if(PINNED) s+='<line x1="'+XX(PINNED.getTime())+'" y1="10" x2="'+XX(PINNED.getTime())+'" y2="196" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';
-  const cx=XX(CURSOR.getTime());
-  s+='<line x1="'+cx+'" y1="10" x2="'+cx+'" y2="196" stroke="'+IVO+'" stroke-width="1"/>'
-    +'<circle cx="'+cx+'" cy="196" r="3" fill="'+IVO+'"/>';
+  // EVENTOS: losangos
+  EVENTS.forEach(ev=>{
+    const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
+    const y=YY(t);
+    s+='<path d="M 244 '+(y-4)+' l 4 4 l -4 4 l -4 -4 z" fill="#b8a6d9"><title>'+esc(ev.txt)+' ('+ev.d+')</title></path>';
+  });
+  // promessa ativa: faixa lateral
+  if(ACTIVE_PROM){const pr=PROMESSAS.find(p2=>p2.id===ACTIVE_PROM);
+    if(pr)pr.anos.forEach(y1=>{
+      const a=Date.UTC(y1,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate());
+      const b=a+365.2425*DAY;
+      if(b<t0||a>t1)return;
+      s+='<rect x="256" y="'+YY(Math.max(a,t0))+'" width="5" height="'+Math.max(2,YY(Math.min(b,t1))-YY(Math.max(a,t0)))+'" rx="2.5" fill="#7da28d" opacity=".8"/>';
+    });}
+  // pino A + cursor horizontal com data
+  if(PINNED){const py=YY(PINNED.getTime());
+    s+='<line x1="52" y1="'+py+'" x2="'+(W-8)+'" y2="'+py+'" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';}
+  const cy=Math.max(T,Math.min(H-B,YY(CURSOR.getTime())));
+  s+='<line x1="52" y1="'+cy+'" x2="'+(W-8)+'" y2="'+cy+'" stroke="'+IVO+'" stroke-width="1.2"/>'
+    +'<circle cx="58" cy="'+cy+'" r="3.2" fill="'+IVO+'"/>';
   const dtxt=fdate(CURSOR);
-  const pw=dtxt.length*5.4+14, px=Math.max(L,Math.min(W-R-pw,cx-pw/2));
-  s+='<rect x="'+px+'" y="0" width="'+pw+'" height="13" rx="6.5" fill="#171a20" stroke="'+LINE2+'" stroke-width=".7"/>'
-    +'<text x="'+(px+pw/2)+'" y="9.5" text-anchor="middle" font-size="8" font-family="IBM Plex Mono" fill="'+IVO+'">'+dtxt+'</text>';
-  s+='<text x="'+(W-6)+'" y="'+(H-6)+'" font-size="7.5" text-anchor="end" font-family="IBM Plex Mono" fill="'+DIM2+'">arraste · clique numa revolução · zoom: '+ZOOM+'</text>';
+  const pw=dtxt.length*5.6+14, pyy=Math.max(0,Math.min(H-15,cy-18));
+  s+='<rect x="'+(W-pw-6)+'" y="'+pyy+'" width="'+pw+'" height="14" rx="7" fill="#101014" stroke="'+LINE+'"/>'
+    +'<text x="'+(W-pw/2-6)+'" y="'+(pyy+10)+'" text-anchor="middle" font-size="8.5" font-family="IBM Plex Mono" fill="'+IVO+'">'+dtxt+'</text>';
   svg.innerHTML=s;
 }
 function cordDrag(){
   const svg=$('cord'); let dragging=false;
   const pick=e=>{
     const r=svg.getBoundingClientRect();
-    const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
-    const W=r.width,L=112*(W/(svg.viewBox.baseVal.width||W));
+    const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+    const Hv=r.height, T=26*(Hv/780), B=18*(Hv/780);
     const [t0,t1]=cordRange();
-    const t=t0+((x-L)/(W-L-14))*(t1-t0);
+    const t=t0+((y-T)/(Hv-T-B))*(t1-t0);
     if(isFinite(t)){CURSOR=new Date(Math.max(BIRTH,Math.min(BIRTH+75*365.2425*DAY,t)));syncTempo();}
   };
   svg.addEventListener('pointerdown',e=>{
-    // ponto de Revolução: leva o cursor exatamente ao aniversário daquele ano
     const rs=e.target&&e.target.dataset&&e.target.dataset.rs;
     if(rs){const b=new Date(BIRTH);CURSOR=new Date(Date.UTC(+rs,b.getUTCMonth(),b.getUTCDate(),b.getUTCHours()));syncTempo();return;}
     dragging=true;pick(e);});
   window.addEventListener('pointermove',e=>{if(dragging)pick(e);});
   window.addEventListener('pointerup',()=>dragging=false);
 }
-function mandala(d){
-  const svg=$('mandala'); const C=230,R1=222,R2=190,R3=156,R4=106;
-  const age=ageAt(d);
-  const rot=(Math.floor(Math.max(0,age))%12)*30;
-  const P=(lon,r)=>{const a=(180-(n360(lon)-NATAL.asc)-rot)*Math.PI/180;return [C+r*Math.cos(a),C-r*Math.sin(a)];};
-  let s='<circle cx="'+C+'" cy="'+C+'" r="'+R1+'" fill="none" stroke="#31363f"/>'
-    +'<circle cx="'+C+'" cy="'+C+'" r="'+R2+'" fill="none" stroke="#22262d"/>'
-    +'<circle cx="'+C+'" cy="'+C+'" r="'+R3+'" fill="none" stroke="#22262d"/>';
-  for(let i=0;i<12;i++){const [x1,y1]=P(i*30,R3),[x2,y2]=P(i*30,R1);
-    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#22262d"/>';
-    const [tx,ty]=P(i*30+15,(R1+R2)/2);
-    s+='<text x="'+tx+'" y="'+(ty+3)+'" text-anchor="middle" font-size="8.5" font-family="IBM Plex Mono" letter-spacing="1" fill="#8b93a1">'+SG[i]+'</text>';}
-  Object.entries(NATAL.pts).forEach(([k,p])=>{if(k==='spirit')return;const [x,y]=P(p.lon,(R2+R3)/2-5);
-    s+='<text x="'+x+'" y="'+(y+4)+'" text-anchor="middle" font-size="13" font-family="Cormorant Garamond" fill="#b9c1cd">'+p.g+'</text>';});
-  const hits=transitHits(d), TPOS={};
-  TB.forEach(([bn,key])=>{TPOS[key]=tlon(bn,d);});
-  hits.slice(0,10).forEach(h=>{if(h.nk==='asc'||h.nk==='mc')return;
-    const [x1,y1]=P(TPOS[h.tKey],R4),[x2,y2]=P(h.np.lon,(R2+R3)/2-12);
-    const col=h.cls==='harm'?'#6f9e83':h.cls==='tens'?'#b0564a':'#b9c1cd';
-    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width=".9" opacity="'+(0.75-h.orb*0.07)+'"/>';});
-  Object.entries(TPOS).forEach(([key,Lg])=>{const [x,y]=P(Lg,R4);const g=TB.find(t=>t[1]===key)[2];
-    s+='<circle cx="'+x+'" cy="'+y+'" r="1.8" fill="#e8eaed"/><text x="'+x+'" y="'+(y-6)+'" text-anchor="middle" font-size="11" fill="#e8eaed">'+g+'</text>';});
-  s+='<text x="6" y="'+(C+3)+'" font-size="8" font-family="IBM Plex Mono" fill="#646b76">ASC·PROF</text>';
-  svg.innerHTML=s;
-}
 function syncTempo(){
   if(!NATAL){$('tempo-info').innerHTML=emptyState();$('fird-ledger').innerHTML='';return;}
   $('tempo-date').textContent=fdate(CURSOR)+' · '+Math.floor(ageAt(CURSOR))+' anos';
   $('tempo-pick').value=CURSOR.toISOString().slice(0,10);
-  drawCord(); mandala(CURSOR);
+  drawCord();
   const age=ageAt(CURSOR), f=firdAt(age), p=profAt(age), y=rsYearOf(CURSOR), rs=RS_DATA[y];
   const conv=convergence(CURSOR);
   let html='<div class="card"><div class="kicker">no cursor</div>'
@@ -766,15 +697,3 @@ function renderPers(){
 }
 
 /* ================= FONTES E MÉTODO ================= */
-function renderFontes(){
-  $('fontes-body').innerHTML=CONTEUDO.explic.map(([t,d])=>'<div class="card"><b style="color:var(--gold);font-family:var(--serif);font-size:1rem">'+t+'</b><p style="font-size:.84rem;margin:5px 0 0">'+d+'</p></div>').join('')
-   +'<div class="card"><b style="color:var(--gold);font-family:var(--serif);font-size:1rem">Motor de relevância</b><p style="font-size:.84rem;margin:5px 0 0">Cada trânsito recebe pontos por: senhor da firdária (+3), da sub-firdária (+2), Senhor do Ano (+3), regência da casa profectada (+2), angularidade na Revolução (+2), toque em Asc/Sol/Lua/MC (+2), toque no Senhor do Ano natal (+2), repetição de aspecto da Revolução (+2), orbe &lt;1° (+2). Faixas: ≥8 convergência muito alta; ≥5 alta; ≥3 moderada. É medida interna de repetição entre técnicas — não é probabilidade científica.</p></div>';
-  RAG.load().then(()=>{$('rag-status').textContent=RAG.status;});
-  $('rag-run').onclick=async()=>{
-    await RAG.load();
-    const q=$('rag-q').value.trim(); if(!q)return;
-    const units=q.split(/\s+/).map(w=>[w,1,'termo: '+w]);
-    const r=RAG.query(units,5);
-    $('rag-out').innerHTML=r.length?renderSources(r):'<div class="card">Nenhum trecho recuperado. '+esc(RAG.status)+'</div>';
-  };
-}
