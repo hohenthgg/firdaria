@@ -233,7 +233,7 @@ function synthYear(age,p,f){
   const H=p.houseN,hs=HOUSE_SIG[H],lord=NATAL.pts[p.lordKey];
   const sub=f.subKey&&NATAL.pts[f.subKey]?f.subKey:null;
   const limNote=lord.hBack?(' — posição liminar: fundo na casa '+lord.hBack+', manifestação na '+lord.h+' (regra dos 5°, peso '+Math.round((lord.limW||1)*100)+'%)'):'';
-  let t='Ativa a <b>casa '+H+'</b> — '+hs.q+': <b>'+hs.s+'</b>. Senhor do Ano <b>'+PT_NAME[p.lordKey]+'</b> ('+lord.dig+', casa '+lord.h+' natal'+limNote+'), regente da '+listRuled(p.lordKey)+': estes assuntos são arrastados para dentro do ano.';
+  let t='Pela profecção, o Ascendente avança ao signo de <b>'+(p.sign||SIGNS[p.signIdx])+'</b> e ativa a <b>casa '+H+'</b> — '+hs.q+': <b>'+hs.s+'</b>. O Senhor do Ano é o regente desse signo, <b>'+PT_NAME[p.lordKey]+'</b> ('+lord.dig+', casa '+lord.h+' natal'+limNote+'), que também rege a '+listRuled(p.lordKey)+': estes assuntos são arrastados para dentro do ano.';
   if(sub&&sub!==p.lordKey){t+=' Na sub-firdária de <b>'+PT_NAME[sub]+'</b>'+(ruledHouses(sub).length?(' — que rege a '+listRuled(sub)+' —'):'')+' esses temas entram no jogo da casa '+H+'.';}
   const mal=[6,8,12].includes(H);
   t+=mal?' <b>Casa maléfica</b>: espere resistência, perda ou medo nos temas acima; o proveito vem por método e pelas recepções que fiam o senhor.'
