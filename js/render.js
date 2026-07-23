@@ -273,133 +273,102 @@ function cordRange(){
   const c=CURSOR.getTime();
   return [c-span/2,c+span/2];
 }
-/* corda HORIZONTAL — GRÁFICO DE BARRAS (Gantt) sobre o calendário.
-   FIRDÁRIA: barras contíguas por período (planeta).
-   SUB-FIRDÁRIA: barra INTERNA aninhada na base de cada barra de firdária.
-   PROFECÇÃO: barra por ano (casa). REVOLUÇÕES: barra por ano (Asc·Senhor).
-   Cursor com data; chips de profecção e revolução no cursor. */
+/* LINHA DO TEMPO — quatro faixas horizontais contínuas (Firdária, Sub-firdária,
+   Profecção, Revoluções). Sóbrio: só o segmento ativo é preenchido; transições
+   por pequenos traços; nomes quando há espaço; cursor único fino com a data acima.
+   Detalhes por clique (data-layer / data-goto / data-rs) e tooltip (<title>). */
 function drawCord(){
-  const svg=$('cord'); const W=svg.clientWidth||1240,H=326;
+  const svg=$('cord'); const W=svg.clientWidth||1200,H=214;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   const [t0,t1]=cordRange();
-  const L=140, R=26;
+  const L=118, R=18;
   const XX=t=>L+((t-t0)/(t1-t0))*(W-L-R);
-  const IVO='#f2f3f6', DIM='#aeb2ba', DIM2='#7b8089', LINE='rgba(255,255,255,.12)';
-  let s='<defs>'
-    +'<filter id="soft" x="-30%" y="-60%" width="160%" height="220%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity=".6"/></filter>'
-    +'<filter id="glow" x="-40%" y="-80%" width="180%" height="260%"><feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#9fd6e6" flood-opacity=".6"/></filter>'
-    +'</defs>';
-  const rowLbl=(y,txt)=>{s+='<text x="10" y="'+y+'" font-size="10" font-family="IBM Plex Mono" letter-spacing="2.4" fill="'+DIM2+'">'+txt+'</text>';};
   const clampX=x=>Math.max(L,Math.min(W-R,x));
+  const IVO='#eef0f3', DIM='#9aa1ab', DIM2='#6c727b', LINE='rgba(255,255,255,.09)', AC='143,163,187';
   const byY=new Date(BIRTH).getUTCFullYear();
   const cursAge=ageAt(CURSOR);
   const years=(t1-t0)/DAY/365.25;
   const selY=rsYearOf(CURSOR);
+  let s='';
+  const rows={fird:34, sub:74, prof:112, rev:150}, RH=28, SUBH=24;
+  // rótulo da faixa (caixa normal)
+  const lbl=(y,txt)=>{s+='<text x="0" y="'+(y+18)+'" font-size="12" font-family="Inter" fill="'+DIM+'">'+txt+'</text>';};
+  // banda de fundo de uma faixa
+  const band=(y,h)=>{s+='<rect x="'+L+'" y="'+y+'" width="'+(W-L-R)+'" height="'+h+'" rx="6" fill="rgba(255,255,255,.018)" stroke="'+LINE+'"/>';};
+  // segmento: só o ativo preenche; transição = traço no início
+  const seg=(x1,x2,y,h,active,label,minW,attrs)=>{
+    const w=x2-x1; if(w<0.6)return;
+    // traço de transição no início do segmento
+    s+='<line x1="'+x1+'" y1="'+(y-3)+'" x2="'+x1+'" y2="'+(y+h+3)+'" stroke="'+LINE+'"/>';
+    if(active) s+='<rect x="'+(x1+1)+'" y="'+(y+2)+'" width="'+Math.max(1,w-2)+'" height="'+(h-4)+'" rx="4" fill="rgba('+AC+',.2)" stroke="rgba('+AC+',.55)" stroke-width="1"/>';
+    // hit + tooltip
+    s+='<rect '+(attrs||'')+' x="'+x1+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="transparent" style="cursor:pointer"/>';
+    if(label&&w>minW) s+='<text '+(attrs||'')+' x="'+(x1+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" font-size="'+(h>26?12:11)+'" font-family="Inter" fill="'+(active?IVO:DIM)+'" style="pointer-events:none">'+label+'</text>';
+  };
 
-  // banda de fundo (trilha) de uma faixa
-  const track=(y,h)=>{s+='<rect x="'+L+'" y="'+y+'" width="'+(W-L-R)+'" height="'+h+'" rx="7" fill="rgba(255,255,255,.02)" stroke="'+LINE+'" stroke-width=".7"/>';};
-
-  // ===== FIRDÁRIA (barras) + SUB-FIRDÁRIA (barra interna) =====
-  rowLbl(40,'FIRDÁRIA');
-  const FY=28, FH=110, SUBY=FY+FH-34, SUBH=30; // bloco firdária + faixa interna da sub
-  track(FY,FH);
-  s+='<line x1="'+L+'" y1="'+SUBY+'" x2="'+(W-R)+'" y2="'+SUBY+'" stroke="'+LINE+'"/>';
+  // ===== FIRDÁRIA =====
+  lbl(rows.fird,'Firdária'); band(rows.fird,RH);
   let age0=0;
   FIRD.forEach(([k,nm,len])=>{
-    const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;const yA=byY+Math.round(age0);const now=cursAge>=age0&&cursAge<age0+len;age0+=len;
+    const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;const yA=byY+Math.round(age0);const now=cursAge>=age0&&cursAge<age0+len;const mid=age0+len/2;age0+=len;
     if(b<t0||a>t1)return;
-    const x=clampX(XX(a)), x2=clampX(XX(b)), w=x2-x;
-    const col=FIRD_COLORS[nm]||'#8a8f98';
-    // barra da firdária: preenchimento tênue + faixa de acento no topo
-    s+='<rect x="'+x+'" y="'+FY+'" width="'+w+'" height="'+FH+'" rx="8" fill="'+col+'" fill-opacity=".1" stroke="'+col+'" stroke-opacity=".4" stroke-width="1"/>';
-    s+='<rect x="'+x+'" y="'+FY+'" width="'+w+'" height="5" rx="2.5" fill="'+col+'"/>';
-    if(now)s+='<rect x="'+x+'" y="'+FY+'" width="'+w+'" height="'+FH+'" rx="8" fill="none" stroke="#9fd6e6" stroke-width="1.8" filter="url(#glow)"/>';
-    if(w>66){
-      s+='<text x="'+(x+12)+'" y="'+(FY+30)+'" font-size="18" font-family="Cormorant Garamond" fill="'+IVO+'">'+(PT_GLYPH[k]||'')+'</text>';
-      s+='<text x="'+(x+34)+'" y="'+(FY+30)+'" font-size="13" font-family="Inter" font-weight="600" fill="'+IVO+'">'+nm+'</text>';
-      s+='<text x="'+(x+12)+'" y="'+(FY+46)+'" font-size="9.5" font-family="IBM Plex Mono" fill="'+DIM2+'">'+yA+'–'+(yA+len)+' · '+len+' anos</text>';
-    } else if(w>16){
-      s+='<text x="'+(x+w/2)+'" y="'+(FY+28)+'" text-anchor="middle" font-size="15" font-family="Cormorant Garamond" fill="'+DIM+'">'+(PT_GLYPH[k]||nm[0])+'</text>';
-    }
+    const x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1;
+    const label=w>90?((PT_GLYPH[k]||'')+' '+nm+' · '+yA+'–'+(yA+len)):(w>30?nm:(PT_GLYPH[k]||''));
+    seg(x1,x2,rows.fird,RH,now,label,16,'data-goto="'+mid+'" data-layer="firdaria"');
   });
-  // barra interna: SUB-FIRDÁRIA (segmentos aninhados na base da firdária)
-  s+='<text x="10" y="'+(SUBY+19)+'" font-size="8" font-family="IBM Plex Mono" letter-spacing="1.5" fill="'+DIM2+'">sub</text>';
+  // ===== SUB-FIRDÁRIA =====
+  lbl(rows.sub,'Subfirdária'); band(rows.sub,SUBH);
   for(let a=0;a<75;){
     const f=firdAt(a); const st=f.subStart,en=f.subEnd;
     if(!st){a+=0.02;continue;}
-    const enAge=(en-BIRTH)/DAY/365.2425;
+    const enAge=(en-BIRTH)/DAY/365.2425, stAge=(st-BIRTH)/DAY/365.2425;
     if(!(en<t0||st>t1)){
-      const x=clampX(XX(st)), x2=clampX(XX(en)), w=x2-x;
-      const now=cursAge>=(st-BIRTH)/DAY/365.2425&&cursAge<enAge;
-      const col=FIRD_COLORS[PT_NAME[f.subKey]]||'#8a8f98';
-      s+='<rect x="'+(x+.5)+'" y="'+(SUBY+3)+'" width="'+Math.max(1,w-1)+'" height="'+(SUBH-6)+'" rx="4" fill="'+col+'" fill-opacity="'+(now?'.4':'.16')+'" stroke="'+col+'" stroke-opacity=".4" stroke-width=".6"/>';
-      if(w>15)s+='<text x="'+(x+w/2)+'" y="'+(SUBY+19)+'" text-anchor="middle" font-size="11" font-family="Cormorant Garamond" fill="'+(now?IVO:DIM)+'">'+(PT_GLYPH[f.subKey]||'')+'</text>';
+      const x1=clampX(XX(st)),x2=clampX(XX(en)),w=x2-x1, now=cursAge>=stAge&&cursAge<enAge, mid=(stAge+enAge)/2;
+      const label=w>66?((PT_GLYPH[f.subKey]||'')+' '+(PT_NAME[f.subKey]||'')):(PT_GLYPH[f.subKey]||'');
+      seg(x1,x2,rows.sub,SUBH,now,label,14,'data-goto="'+mid+'" data-layer="sub"');
     }
     a=enAge>a+1e-4?enAge:a+0.02;
   }
-
-  // ===== PROFECÇÃO (barra por ano) =====
-  rowLbl(160,'PROFECÇÃO');
-  const PY=150, PH=40;
-  track(PY,PH);
+  // ===== PROFECÇÃO =====
+  lbl(rows.prof,'Profecção'); band(rows.prof,SUBH);
   for(let yr=0;yr<75;yr++){
     const a=BIRTH+yr*365.2425*DAY,b=BIRTH+(yr+1)*365.2425*DAY;
     if(b<t0||a>t1)continue;
-    const p=profAt(yr), now=Math.floor(cursAge)===yr, mal=[6,8,12].includes(p.houseN);
-    const x=clampX(XX(a)), x2=clampX(XX(b)), w=x2-x;
-    if(w<1.5)continue;
-    const col=mal?'#b06a61':'#8fa3bb';
-    s+='<rect x="'+(x+.6)+'" y="'+(PY+3)+'" width="'+Math.max(1,w-1.2)+'" height="'+(PH-6)+'" rx="4" fill="'+col+'" fill-opacity="'+(now?'.34':'.12')+'" stroke="'+col+'" stroke-opacity="'+(now?'.7':'.3')+'" stroke-width="'+(now?1.2:.6)+'"/>';
-    if(w>58)s+='<text x="'+(x+w/2)+'" y="'+(PY+25)+'" text-anchor="middle" font-size="11" font-family="Inter" fill="'+IVO+'">casa '+p.houseN+' · '+SG[p.signIdx]+'</text>';
-    else if(w>14)s+='<text x="'+(x+w/2)+'" y="'+(PY+26)+'" text-anchor="middle" font-size="13" font-family="Cormorant Garamond" fill="'+(now?IVO:DIM)+'">'+p.houseN+'</text>';
+    const p=profAt(yr), now=Math.floor(cursAge)===yr;
+    const x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1;
+    const label=w>62?('Casa '+p.houseN+' · '+SG[p.signIdx]):(w>16?('C'+p.houseN):'');
+    seg(x1,x2,rows.prof,SUBH,now,label,14,'data-goto="'+(yr+0.5)+'" data-layer="profeccao"');
   }
-
-  // ===== REVOLUÇÕES (barra por ano) =====
-  rowLbl(232,'REVOLUÇÕES');
-  const RY=222, RH=40;
-  track(RY,RH);
+  // ===== REVOLUÇÕES =====
+  lbl(rows.rev,'Revoluções'); band(rows.rev,SUBH);
   Object.keys(RS_DATA).forEach(y=>{
-    const a=Date.UTC(+y,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate());
-    const b=a+365.2425*DAY;
+    const a=Date.UTC(+y,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate()), b=a+365.2425*DAY;
     if(b<t0||a>t1)return;
-    const on=+y===selY;
-    const x=clampX(XX(a)), x2=clampX(XX(b)), w=x2-x;
-    if(w<1.5)return;
+    const on=+y===selY, x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1;
     const rs=RS_DATA[y]; let sg=null; if(rs&&rs.raw&&rs.raw.asc!=null)sg=signOf(rs.raw.asc);
-    const col=sg!=null?'#c9b78a':'#8a8f98';
-    s+='<rect data-rs="'+y+'" x="'+(x+.6)+'" y="'+(RY+3)+'" width="'+Math.max(1,w-1.2)+'" height="'+(RH-6)+'" rx="4" fill="'+col+'" fill-opacity="'+(on?'.34':'.12')+'" stroke="'+col+'" stroke-opacity="'+(on?'.7':'.3')+'" stroke-width="'+(on?1.2:.6)+'" style="cursor:pointer"><title>Revolução '+y+'</title></rect>';
-    if(w>78&&sg!=null)s+='<text data-rs="'+y+'" x="'+(x+w/2)+'" y="'+(RY+25)+'" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono" fill="'+IVO+'" style="cursor:pointer">'+y+' · '+SG[sg]+' '+PT_GLYPH[SIGN_RULER[sg]]+'</text>';
-    else if(w>46)s+='<text data-rs="'+y+'" x="'+(x+w/2)+'" y="'+(RY+25)+'" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono" fill="'+(on?IVO:DIM)+'" style="cursor:pointer">'+(''+y).slice(2)+(sg!=null?(' '+SG[sg]):'')+'</text>';
-    else if(w>22)s+='<text data-rs="'+y+'" x="'+(x+w/2)+'" y="'+(RY+25)+'" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono" fill="'+(on?IVO:DIM)+'" style="cursor:pointer">'+(''+y).slice(2)+'</text>';
-    else if(on&&sg!=null)s+='<text x="'+(x+w/2)+'" y="'+(RY+25)+'" text-anchor="middle" font-size="11" font-family="Cormorant Garamond" fill="'+IVO+'">'+SG[sg]+'</text>';
+    const label=w>74&&sg!=null?(y+' · '+SG[sg]+' '+PT_GLYPH[SIGN_RULER[sg]]):(w>40?((''+y).slice(2)+(sg!=null?(' '+SG[sg]):'')):(w>18?(''+y).slice(2):''));
+    seg(x1,x2,rows.rev,SUBH,on,label,14,'data-rs="'+y+'" data-layer="revolucao"');
   });
+  // eventos pessoais (traço)
   EVENTS.forEach(ev=>{const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
-    s+='<path d="M '+clampX(XX(t))+' '+(RY+RH+2)+' l 5 5 l -5 5 l -5 -5 z" fill="#c7bce0"><title>'+esc(ev.txt)+' ('+ev.d+')</title></path>';});
+    const x=clampX(XX(t)); s+='<line x1="'+x+'" y1="'+rows.rev+'" x2="'+x+'" y2="'+(rows.rev+SUBH)+'" stroke="#b9a6d6" stroke-width="1.4"><title>'+esc(ev.txt)+' ('+ev.d+')</title></line>';});
 
   // ===== régua (calendário) =====
   const tick=years>30?10:years>8?2:years>1.5?0.5:years>0.1?1/12:1/365;
   for(let yy=Math.ceil((t0-BIRTH)/DAY/365.2425/tick)*tick;;yy+=tick){
     const t=BIRTH+yy*365.2425*DAY;if(t>t1)break;
     const x=XX(t), d=new Date(t);
-    s+='<line x1="'+x+'" y1="292" x2="'+x+'" y2="297" stroke="'+LINE+'"/>';
-    const lbl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
-    s+='<text x="'+x+'" y="308" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="'+DIM2+'">'+lbl+'</text>';
+    s+='<line x1="'+x+'" y1="184" x2="'+x+'" y2="188" stroke="'+LINE+'"/>';
+    const tl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
+    s+='<text x="'+x+'" y="199" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="'+DIM2+'">'+tl+'</text>';
   }
-
-  // ===== pino A + cursor + chips =====
-  if(PINNED){const px=clampX(XX(PINNED.getTime()));s+='<line x1="'+px+'" y1="'+FY+'" x2="'+px+'" y2="290" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';}
+  // ===== pino A + cursor único + data acima =====
+  if(PINNED){const px=clampX(XX(PINNED.getTime()));s+='<line x1="'+px+'" y1="'+rows.fird+'" x2="'+px+'" y2="184" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';}
   const cx=clampX(XX(CURSOR.getTime()));
-  s+='<line x1="'+cx+'" y1="'+(FY-10)+'" x2="'+cx+'" y2="290" stroke="'+IVO+'" stroke-width="1.4"/>'
-    +'<path d="M '+cx+' '+(FY-18)+' l 6 8 l -6 8 l -6 -8 z" fill="'+IVO+'"/>';
-  const chip=(cxp,y,txt)=>{const pw=txt.length*6.1+18, px=Math.max(L,Math.min(W-R-pw,cxp-pw/2));
-    s+='<rect x="'+px+'" y="'+y+'" width="'+pw+'" height="20" rx="10" fill="#14151b" stroke="#fff" stroke-opacity=".28" filter="url(#soft)"/>'
-      +'<text x="'+(px+pw/2)+'" y="'+(y+13.5)+'" text-anchor="middle" font-size="10.5" font-family="Inter" font-weight="600" fill="'+IVO+'">'+txt+'</text>';};
-  chip(cx,0,fdate(CURSOR));
-  const pc=profAt(cursAge);
-  chip(cx,PY+PH+3,'Profecção · casa '+pc.houseN+' · '+SIGNS[pc.signIdx]+' · Senhor '+PT_NAME[pc.lordKey]);
-  const ry=rsYearOf(CURSOR), rr=RS_DATA[ry];
-  if(rr&&rr.raw&&rr.raw.asc!=null){const sg=signOf(rr.raw.asc);
-    chip(cx,RY+RH+6,'Revolução '+ry+' · Asc '+SIGNS[sg]+' · Senhor '+PT_NAME[SIGN_RULER[sg]]);}
+  s+='<line x1="'+cx+'" y1="24" x2="'+cx+'" y2="184" stroke="'+IVO+'" stroke-width="1"/>';
+  const dtxt=fdate(CURSOR), pw=dtxt.length*5.6+16, px=Math.max(L,Math.min(W-R-pw,cx-pw/2));
+  s+='<rect x="'+px+'" y="4" width="'+pw+'" height="16" rx="8" fill="#15161b" stroke="rgba(255,255,255,.16)"/>'
+    +'<text x="'+(px+pw/2)+'" y="15" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono" fill="'+IVO+'">'+dtxt+'</text>';
   svg.innerHTML=s;
 }
 function cordDrag(){
@@ -407,14 +376,19 @@ function cordDrag(){
   const pick=e=>{
     const r=svg.getBoundingClientRect();
     const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
-    const W=r.width, L=140*(W/(svg.viewBox.baseVal.width||W)), R=26*(W/(svg.viewBox.baseVal.width||W));
+    const vb=svg.viewBox.baseVal.width||r.width;
+    const L=118*(r.width/vb), R=18*(r.width/vb);
     const [t0,t1]=cordRange();
-    const t=t0+((x-L)/(W-L-R))*(t1-t0);
+    const t=t0+((x-L)/(r.width-L-R))*(t1-t0);
     if(isFinite(t)){CURSOR=new Date(Math.max(BIRTH,Math.min(BIRTH+75*365.2425*DAY,t)));syncTempo();}
   };
   svg.addEventListener('pointerdown',e=>{
+    const layEl=e.target&&e.target.closest&&e.target.closest('[data-layer]');
+    if(layEl)TP_LAYER=layEl.dataset.layer;
     const rs=e.target&&e.target.closest&&e.target.closest('[data-rs]');
     if(rs){const y=rs.dataset.rs;const b=new Date(BIRTH);CURSOR=new Date(Date.UTC(+y,b.getUTCMonth(),b.getUTCDate(),b.getUTCHours()));syncTempo();return;}
+    const g=e.target&&e.target.closest&&e.target.closest('[data-goto]');
+    if(g){const age=+g.dataset.goto;CURSOR=new Date(BIRTH+age*365.2425*DAY);syncTempo();return;}
     dragging=true;pick(e);});
   window.addEventListener('pointermove',e=>{if(dragging)pick(e);});
   window.addEventListener('pointerup',()=>dragging=false);
@@ -459,26 +433,100 @@ function hierarquiaHTML(){
   return '<table class="hier"><tr><th></th><th></th><th></th></tr>'+
     HIERARQUIA.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</table>';
 }
+/* ---- cartões executivos do momento (Firdária, Sub, Profecção, Revolução) ---- */
+function tempoExecCards(d){
+  const age=ageAt(d), f=firdAt(age), p=profAt(age), y=rsYearOf(d), rs=RS_DATA[y];
+  const byY=new Date(BIRTH).getUTCFullYear();
+  const mk=f.majorKey, sk=(f.subKey&&f.subKey!==mk&&PT_NAME[f.subKey])?f.subKey:null;
+  const card=(layer,k,title,interval,theme)=>'<div class="tpcard" data-layer="'+layer+'"><div class="tpc-k">'+k+'</div>'
+    +'<div class="tpc-t">'+title+'</div><div class="tpc-i">'+interval+'</div><div class="tpc-d">'+theme+'</div></div>';
+  // firdária
+  const fFrom=byY+Math.round(f.from||0), fTo=fFrom+(f.len||0);
+  const cF=card('firdaria','Firdária',PT_NAME[mk]||f.major,(fFrom+'–'+fTo),
+    'Agenda: '+((PT_NAME[mk]&&AGENDA_KW[mk])||'passagem de nodo')+'.');
+  // sub
+  const cS=sk?card('sub','Subfirdária',PT_NAME[mk]+' / '+PT_NAME[sk],'até '+fdate(new Date(f.subEnd)),
+    'Fase: '+AGENDA_KW[sk]+'.')
+    :card('sub','Subfirdária',PT_NAME[mk]||f.major,'fase do ciclo','Fase: repete o regente do ciclo.');
+  // profecção
+  const cP=card('profeccao','Profecção','Casa '+p.houseN+' · Senhor '+PT_NAME[p.lordKey],'ano '+y,
+    'Ano de '+HOUSE_TAG[p.houseN]+'.');
+  // revolução
+  let cR;
+  if(rs&&rs.raw&&rs.raw.asc!=null){const sg=signOf(rs.raw.asc), rl=SIGN_RULER[sg];
+    cR=card('revolucao','Revolução Solar','Asc em '+SIGNS[sg]+' · '+PT_NAME[rl]+' regente','RS '+y,'Contexto: '+RS_CTX[sg]+'.');
+  } else cR=card('revolucao','Revolução Solar','—','RS '+y,'Sem revolução registrada para o ano.');
+  return cF+cS+cP+cR;
+}
+/* ---- promessas ativadas na data ---- */
+function tempoPromsHTML(d){
+  if(!PROMESSAS.length)return '';
+  const scored=PROMESSAS.map(pr=>({pr,act:scoreProm(pr,d)})).sort((a,b)=>b.act.score-a.act.score);
+  const lvl=sc=>sc>=6?['alta','Ativação alta']:sc>=3?['moderada','Ativação moderada']:sc>=1?['disponivel','Disponível']:['latente','Latente'];
+  const rows=scored.slice(0,6).map(({pr,act})=>{const [cls,txt]=lvl(act.score);
+    return '<details class="tpprom"><summary><span class="pp-t">'+pr.t+'</span><span class="pp-lv '+cls+'">'+txt+' · '+pr.testemunhos.length+' testemunhos</span></summary>'
+      +'<div class="pp-b"><b>Fundamento natal:</b> '+pr.fat
+      +'<br><b>Técnicas que ativam:</b> '+pr.tec
+      +'<br><b>Facilitadores:</b> '+pr.facilit+' · <b>Pontos de atenção:</b> '+pr.atencao
+      +(act.factors.length?('<br><b>Convergência agora:</b> '+act.factors.map(x=>x[1]).join('; ')):'')
+      +'</div></details>';}).join('');
+  return '<h3 class="tp-h">Promessas ativadas</h3><div class="tpproms">'+rows
+    +'</div><p class="note" style="margin-top:2px">A convergência mede repetição entre técnicas — não é probabilidade científica de evento.</p>';
+}
+/* ---- painel de detalhes (ao clicar num cartão/segmento) ---- */
+let TP_LAYER=null;
+document.addEventListener('click',e=>{
+  const close=e.target.closest&&e.target.closest('[data-tpclose]');
+  if(close){TP_LAYER=null;if(typeof syncTempo==='function')syncTempo();return;}
+  const card=e.target.closest&&e.target.closest('#tempo-exec [data-layer]');
+  if(card){TP_LAYER=(TP_LAYER===card.dataset.layer)?null:card.dataset.layer;syncTempo();
+    const det=document.getElementById('tempo-detail');if(det&&TP_LAYER)det.scrollIntoView({behavior:'smooth',block:'nearest'});}
+});
+function tempoDetailHTML(layer,d){
+  const age=ageAt(d), f=firdAt(age), p=profAt(age), y=rsYearOf(d), rs=RS_DATA[y];
+  const mk=f.majorKey, sk=(f.subKey&&f.subKey!==mk&&PT_NAME[f.subKey])?f.subKey:null;
+  const sec=(k,v)=>'<div class="td-sec"><span class="td-k">'+k+'</span><span class="td-v">'+v+'</span></div>';
+  const para=v=>'<div class="td-sec"><span class="td-v">'+v+'</span></div>';
+  const planetSecs=k=>{const it=interpPlanet(k),pp=NATAL.pts[k],ru=ruledHouses(k);
+    return sec('Interpretação literal',it.sintese)
+      +sec('Casas regidas',ru.length?ru.map(h=>h+'ª — '+HOUSE_THEME[h]).join('<br>'):'—')
+      +sec('Casa ocupada natalmente',pp.h+' — '+HOUSE_THEME[pp.h]+(pp.hBack?(' · fundo na '+pp.hBack+'ª (regra dos 5°)'):''))
+      +sec('Condição do planeta',pp.dig+' · força '+(STR[k]||4)+'/8')
+      +sec('Manifestações possíveis','<ul class="ilist">'+it.manif.slice(0,4).map(m=>'<li>'+m+'</li>').join('')+'</ul>')
+      +sec('Facilitadores · pontos de atenção','favorece '+it.alta.slice(0,2).map(x=>x.replace(/^favorece /,'')).join(', ')+' · sob aflição, '+it.baixa.slice(0,2).map(x=>x.replace(/^sob aflição, pode aumentar /,'')).join(', '));
+  };
+  let head,sub,body;
+  if(layer==='firdaria'&&PT_NAME[mk]){head=PT_NAME[mk]+' — Firdária maior';sub='agenda estratégica do ciclo';
+    const fb=firdariaText(mk); body=para(fb.agenda)+para(fb.canal)+para(fb.cond)+planetSecs(mk);}
+  else if(layer==='sub'){ if(!sk){head=(PT_NAME[mk]||f.major)+' — Sub-firdária';sub='a fase repete o regente do ciclo';body=sec('Fase','O tema maior em estado concentrado.');}
+    else{head=PT_NAME[sk]+' — Sub-firdária';sub='fase operacional dentro da agenda maior';const sb=subText(mk,sk);
+      body=para(sb.entra)+para(sb.funcao)+para(sb.relacao)+planetSecs(sk);}}
+  else if(layer==='profeccao'){head='Casa '+p.houseN+' — Profecção do ano';sub='demanda específica do ano · Senhor '+PT_NAME[p.lordKey];
+    const pb=profBlocks(p);body=para(pb.materia)+para(pb.admin)+para(pb.traz)+para(pb.local)+sec('Cruzamento com a firdária',crossFirdProf(mk,sk,p))+planetSecs(p.lordKey);}
+  else if(layer==='revolucao'){head='Revolução Solar '+y;sub='cenário anual de manifestação';
+    body=rs?(sec('Ascendente e regente',rs.asc)+sec('Destaques do ano',rs.destaque)+sec('Estrelas',rs.estrelas)):sec('—','Sem revolução registrada para '+y+'.');}
+  else return '';
+  // promessas relacionadas à camada
+  const relK=layer==='profeccao'?p.lordKey:layer==='sub'?sk:layer==='revolucao'?null:mk;
+  const proms=PROMESSAS.filter(pr=>relK&&pr.pl===relK).slice(0,3);
+  if(proms.length)body+=sec('Promessas natais relacionadas',proms.map(pr=>'<b>'+pr.t+'</b> ('+pr.cond+')').join('<br>'));
+  return '<div class="tdcard"><button class="td-close" data-tpclose>✕</button><div class="td-h">'+head+'</div><div class="td-sub">'+sub+'</div>'+body+'</div>';
+}
 function syncTempo(){
-  if(!NATAL){$('tempo-info').innerHTML=emptyState();$('fird-ledger').innerHTML='';return;}
+  if(!NATAL){['tempo-exec','tempo-synth','tempo-proms','tempo-detail','fird-ledger'].forEach(id=>{if($(id))$(id).innerHTML='';});
+    if($('tempo-synth'))$('tempo-synth').innerHTML=emptyState();return;}
   $('tempo-date').textContent=fdate(CURSOR)+' · '+Math.floor(ageAt(CURSOR))+' anos';
   $('tempo-pick').value=CURSOR.toISOString().slice(0,10);
   drawCord();
-  const age=ageAt(CURSOR), f=firdAt(age), p=profAt(age), y=rsYearOf(CURSOR), rs=RS_DATA[y];
-  const conv=convergence(CURSOR);
-  let html='<div class="card mandala-card"><div class="kicker">diagrama temporal — onde você está</div>'
-    +'<div class="mandala-row">'+mandalaTempo(CURSOR)+'<div class="mandala-side">'+execCardHTML(Math.floor(Math.max(0,age)),false)+'</div></div>'
-    +'<details class="rep-det"><summary>hierarquia das camadas — o que cada técnica responde</summary>'+hierarquiaHTML()+'</details></div>';
-  html+='<div class="card"><div class="kicker">Revolução '+y+'</div>'+(rs?('<p style="font-size:.8rem"><b style="color:var(--ivory)">'+rs.asc+'</b></p><p style="font-size:.78rem">'+rs.destaque+'</p>'):'<p>sem RS registrada.</p>')+'</div>';
-  const top=scoredHits(CURSOR,0).slice(0,3);
-  html+='<div class="card"><div class="kicker">ativações no cursor</div>'+(top.map(h=>renderHit(h,CURSOR,false)).join('')||'<p>—</p>')+'</div>';
-  // oportunidades e cautelas do período apontado
-  const favs=[],caus=[];
-  top.forEach(h=>{const o=orient(h,CURSOR);o.fav.forEach(x=>favs.indexOf(x)<0&&favs.push(x));o.cau.forEach(x=>caus.indexOf(x)<0&&caus.push(x));});
-  if(favs.length||caus.length)
-    html+='<div class="card"><div class="kicker">oportunidades</div><p style="font-size:.8rem;color:var(--green)">'+(favs.slice(0,5).join(' · ')||'—')+'</p>'
-      +'<div class="kicker" style="margin-top:8px">cautelas</div><p style="font-size:.8rem;color:var(--red)">'+(caus.slice(0,5).join(' · ')||'—')+'</p></div>';
-  $('tempo-info').innerHTML=html;
+  // 2 · cartões executivos
+  $('tempo-exec').innerHTML=tempoExecCards(CURSOR);
+  if(TP_LAYER){const c=$('tempo-exec').querySelector('[data-layer="'+TP_LAYER+'"]');if(c)c.classList.add('on');}
+  // 3 · síntese literal
+  $('tempo-synth').innerHTML=synthLiteral(CURSOR);
+  // 5 · promessas ativadas
+  $('tempo-proms').innerHTML=tempoPromsHTML(CURSOR);
+  // painel de detalhes (se alguma camada estiver aberta)
+  $('tempo-detail').innerHTML=TP_LAYER?tempoDetailHTML(TP_LAYER,CURSOR):'';
   renderCompare();
 }
 function renderCompare(){
