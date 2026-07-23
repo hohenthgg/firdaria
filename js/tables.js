@@ -56,6 +56,8 @@ const HOUSE_THEME={
  10:'carreira, reputação, autoridade e vocação',
  11:'amigos, grupos, apoios e projetos',
  12:'isolamento, bastidores, hospitais e assuntos ocultos'};
+/* rótulos curtos (para títulos de promessa) */
+const HOUSE_TAG={1:'identidade e corpo',2:'dinheiro',3:'estudos e comunicação',4:'casa e família',5:'filhos e prazeres',6:'saúde e trabalho',7:'relacionamentos',8:'perdas e recursos de terceiros',9:'estudos superiores e estrangeiro',10:'carreira',11:'amigos e grupos',12:'bastidores e isolamento'};
 /* compatibilidade retro: aliases usados no restante do código */
 const HOUSE_BLUNT=HOUSE_THEME, HOUSE_ACID=HOUSE_THEME;
 const OLAVO_CASA={1:'a autoimagem imediata: o que a pessoa vê de si sem intermediários',2:'o confronto com o mundo físico: o real enquanto peso, forma e densidade',3:'a linguagem: transformar a realidade em signo — o mundo virando discurso',4:'a intimidade: o rio do tempo interno, a vivência direta das emoções',5:'a consciência do poder pessoal: o que se sabe poder ou não poder fazer agora',6:'o rendimento: o balanço entre os recursos próprios e as exigências de fora',7:'o eu apreendido pelo espelho do outro: expectativas bilaterais',8:'o potencial de decisão imediata: a estimativa quase premonitória da situação',9:'o arquivo do já sabido: as certezas sobre as quais todo pensamento se assenta',10:'os lugares sociais efetivos: o poder exercido e sofrido diante da sociedade inteira',11:'os projetos de futuro: o personagem que se quer ser, a inserção na própria época',12:'o espaço além do mundo conhecido: o que se pressente fora da esfera reconhecida'};

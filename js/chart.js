@@ -175,9 +175,12 @@ function ruledHousesOf(k){return Object.entries(NATAL.rulers).filter(([h,r])=>r=
 function buildEraTexts(){
   ERA_TXT={};
   FIRD.forEach(([k,nm])=>{
-    if(!PT_NAME[k]){ERA_TXT[nm]=k==='nn'?'Acréscimo: capítulo breve de aumento nos assuntos da casa do Nodo Norte.':'Remissão: capítulo breve de soltura e síntese.';return;}
+    if(!PT_NAME[k]){ERA_TXT[nm]=k==='nn'?'Capítulo breve de acréscimo nos assuntos da casa do Nodo Norte.':'Capítulo breve de soltura e síntese (Nodo Sul).';return;}
     const ru=ruledHousesOf(k), p=NATAL.pts[k];
-    ERA_TXT[nm]='Regente natal da '+ru.map(h=>h+'ª ('+HOUSE_SHORT[h]+')').join(' e da ')+', posto na casa '+p.h+' ('+HOUSE_SHORT[p.h]+'), '+p.dig+': era governada por esses assuntos.';
+    // distingue: assunto administrado (regidas) x campo de execução (ocupada) x condição
+    ERA_TXT[nm]=PT_NAME[k]+' administra a '+ru.map(h=>h+'ª').join(' e a ')+' ('+ru.map(h=>HOUSE_THEME[h]).join('; ')+')'
+      +' e executa esses assuntos na casa '+p.h+' ('+HOUSE_THEME[p.h]+'); '+condDelivery(k)+'. '
+      +'Esses assuntos permanecem em primeiro plano durante o ciclo.';
   });
 }
 function buildAspLabels(){/* NATAL_ASP já montado em buildChart */}
@@ -201,48 +204,99 @@ function buildOlavoFallback(){
     });
   }
 }
+/* ---------- motor de promessas por múltiplos testemunhos ----------
+   Uma promessa nasce da relação REGÊNCIA × POSIÇÃO (regente de X na casa Y)
+   e só é registrada quando há ≥2 testemunhos natais convergentes.
+   É classificada: forte · disponível · condicional · conflitiva · latente. */
 function buildPromises(){
   PROMESSAS=[];
+  const PL=['sun','moon','mercury','venus','mars','jupiter','saturn'];
+  const angulars=NATAL.meta.angStars; // (não usado aqui)
   const yearsForHouses=hs=>{const out=[];const by=new Date(BIRTH).getUTCFullYear();
-    for(let a=0;a<60&&out.length<8;a++){if(hs.includes(((a)%12)+1))out.push(by+a);}return out;};
-  const add=(id,t,pl,casas,fat,cond)=>{
-    PROMESSAS.push({id,t,pl,casas,fat,cond,
-      ajuda:(NATAL.meta.receptions.filter(r=>r.includes(PT_GLYPH[pl])).join('; ')||'sem recepções detectadas'),
-      impede:(NATAL.pts[pl].dig.includes('exílio')||NATAL.pts[pl].dig.includes('queda')?'debilidade essencial: cumpre com desconto e atraso':(NATAL.pts[pl].dig.includes('combusto')?'combustão: o tema queima perto da identidade':'poucos impedimentos essenciais')),
-      tec:'profecções das casas '+casas.join(' e ')+'; era de firdária de '+PT_NAME[pl]+'; RS com '+PT_NAME[pl]+' angular',
+    for(let a=0;a<75&&out.length<10;a++){if(hs.includes(((a)%12)+1))out.push(by+a);}return out;};
+  const vitalHouses={}; // casa ocupada por Asc/MC/Sol/Lua/Fortuna/Espírito → reforço temático
+  [['asc',1],['mc',10]].forEach(()=>{});
+  ['sun','moon','fort','spirit'].forEach(pt=>{const p=NATAL.pts[pt];if(p)vitalHouses[p.h]=(vitalHouses[pt]||0);});
+  const vitalSet=new Set();
+  ['sun','moon','fort','spirit'].forEach(pt=>{const p=NATAL.pts[pt];if(p)vitalSet.add(p.h);});
+  vitalSet.add(1); vitalSet.add(NATAL.pts.mc?houseByRule(NATAL.mc,NATAL.cusps):10);
+
+  PL.forEach(k=>{
+    const p=NATAL.pts[k]; if(!p)return;
+    const ru=ruledHousesOf(k); if(!ru.length)return;
+    const occ=p.h;
+    // casas do tema: as regidas + a ocupada
+    const casas=[...new Set(ru.concat(occ))];
+    // ---- testemunhos ----
+    const testemunhos=[];
+    testemunhos.push('regência × posição: regente da '+ru.map(h=>h+'ª').join('/')+' posto na casa '+occ);
+    let score=1;
+    // angular
+    if([1,4,7,10].includes(occ)){testemunhos.push(PT_NAME[k]+' angular na casa '+occ);score++;}
+    // dignificado
+    const dignified=(p.dig||'').includes('domicílio')||(p.dig||'').includes('exaltação');
+    if(dignified){testemunhos.push(PT_NAME[k]+' dignificado ('+p.dig+')');score++;}
+    // aspecto com outro regente relacionado
+    PL.forEach(o=>{if(o===k)return;
+      if(HAS[k+'_'+o+'_harm']||HAS[k+'_'+o+'_conj']){
+        const or=ruledHousesOf(o);
+        testemunhos.push(PT_NAME[k]+' em aspecto favorável a '+PT_NAME[o]+(or.length?(' (regente da '+or.map(h=>h+'ª').join('/')+')'):''));score++;}
+    });
+    // recepção
+    const rec=NATAL.meta.receptions.filter(r=>r.includes(PT_GLYPH[k]));
+    if(rec.length){testemunhos.push('recepção: '+rec.join('; '));score++;}
+    // ponto vital repete tema (Asc/MC/Sol/Lua/Fort/Espírito em casa do tema)
+    if(casas.some(h=>vitalSet.has(h))){testemunhos.push('ponto vital do mapa reforça o mesmo campo de casas');score++;}
+    if(testemunhos.length<2)return; // exige ≥2 testemunhos convergentes
+    // ---- condição ----
+    const debil=(p.dig||'').includes('exílio')||(p.dig||'').includes('queda');
+    const combust=(p.dig||'').includes('combusto');
+    const tenseAsp=PL.some(o=>o!==k&&HAS[k+'_'+o+'_tens']);
+    let cond;
+    if(dignified||[1,4,7,10].includes(occ)||rec.length)cond='forte';
+    else if(debil||combust)cond='condicional';
+    else if(tenseAsp&&score>=3)cond='conflitiva';
+    else cond='disponivel';
+    // ---- título e texto (assunto administrado × campo de execução) ----
+    const tagRu=HOUSE_TAG[ru[0]], tagOcc=HOUSE_TAG[occ];
+    const t=ru.includes(occ)?(cap(tagOcc)+' como campo central'):(cap(tagRu)+' por meio de '+tagOcc);
+    const fat='<b>'+PT_NAME[k]+'</b> rege a '+ru.map(h=>h+'ª').join(' e a ')+' ('+ru.map(h=>HOUSE_THEME[h]).join('; ')+') e está na casa '+occ+' ('+HOUSE_THEME[occ]+'): '
+      +ru.map(h=>HOUSE_THEME[h].split(',')[0]).join(' e ')+' tendem a se desenvolver por meio de '+HOUSE_THEME[occ].split(',')[0]+'.';
+    PROMESSAS.push({
+      id:'prom-'+k, t, pl:k, casas,
+      fat,
+      cond, testemunhos,
+      cond_manif:'Manifesta-se '+condDelivery(k)+'.',
+      facilit:(rec.length?rec.join('; '):(dignified?'dignidade de '+PT_NAME[k]:'aspectos favoráveis a '+PT_NAME[k])),
+      atencao:(debil?'debilidade essencial: tende a exigir mais esforço, revisão ou tempo':(combust?'combustão: o tema opera encoberto pela identidade':(tenseAsp?'aspecto tenso: pede conciliação':'sem debilidades essenciais relevantes detectadas'))),
+      tec:'Chaves de ativação: firdária de '+PT_NAME[k]+'; profecções das casas '+casas.join(', ')+'; '+PT_NAME[k]+' como Senhor do Ano; '+PT_NAME[k]+' angular na Revolução; trânsitos a '+PT_NAME[k]+'.',
       anos:yearsForHouses(casas)});
-  };
-  const ru1=NATAL.meta.ascRuler;
-  add('regente-asc','O caminho do regente do Ascendente',ru1,[1,NATAL.pts[ru1].h],
-    PT_NAME[ru1]+' rege o Ascendente e está na casa '+NATAL.pts[ru1].h+' ('+NATAL.pts[ru1].dig+'): a vida escoa da 1ª para '+HOUSE_SHORT[NATAL.pts[ru1].h]+'.',
-    'Realiza-se quando as iniciativas pessoais são dirigidas conscientemente ao campo da casa '+NATAL.pts[ru1].h+'.');
-  // planeta mais forte
-  const best=Object.keys(STR).sort((a,b)=>STR[b]-STR[a])[0];
-  if(best&&best!==ru1) add('mais-forte','O dom do planeta mais dignificado',best,[NATAL.pts[best].h].concat(ruledHousesOf(best)).slice(0,3),
-    PT_NAME[best]+' é o ponto mais forte do mapa ('+NATAL.pts[best].dig+', força '+STR[best]+'/8) na casa '+NATAL.pts[best].h+'.',
-    'Entrega visível pelos temas de '+HOUSE_SHORT[NATAL.pts[best].h]+' e das casas que rege.');
-  // dispositor final
-  (NATAL.meta.finals||[]).forEach(f=>{
-    add('final-'+f,'A dispositora final: '+PT_NAME[f],f,[NATAL.pts[f].h].concat(ruledHousesOf(f)).slice(0,3),
-      'Todas as cadeias de regência do mapa deságuam em '+PT_NAME[f]+' ('+NATAL.pts[f].dig+', casa '+NATAL.pts[f].h+').',
-      'A economia psíquica inteira resolve-se pelos assuntos deste planeta: cultivá-lo é cultivar o mapa.');
   });
-  // anel fechado
-  if(NATAL.meta.loops.length){
-    const L=NATAL.meta.loops[0];
-    PROMESSAS.push({id:'anel',t:'O anel fechado de dispositores',pl:L[0],casas:L.map(k=>NATAL.pts[k].h),
-      fat:'Circuito fechado: '+L.map(k=>PT_GLYPH[k]).join('→')+'→'+PT_GLYPH[L[0]]+' — nada escapa do circuito; tudo circula entre as casas '+L.map(k=>NATAL.pts[k].h).join(', ')+'.',
-      cond:'Autossuficiência interna: crises e dons giram no anel até serem digeridos.',
-      ajuda:'as recepções internas do anel',impede:'fechar-se no circuito sem saída externa',
-      tec:'qualquer trânsito a um membro do anel move os demais',
-      anos:[]});
-  }
-  // malefico contrário à seita
-  const contrary=NATAL.sect==='diurno'?'mars':'saturn';
-  if(NATAL.pts[contrary]) add('malefico','A prova do maléfico fora da seita',contrary,[NATAL.pts[contrary].h],
-    PT_NAME[contrary]+' é o maléfico contrário à seita ('+NATAL.sect+'), na casa '+NATAL.pts[contrary].h+' ('+NATAL.pts[contrary].dig+'): o ponto de maior atrito recorrente.',
-    'Administra-se com método: dar-lhe trabalho regular no campo de '+HOUSE_SHORT[NATAL.pts[contrary].h]+' antes que ele o tome à força.');
-  PROMESSAS=PROMESSAS.slice(0,7);
+  // ordena por condição e força
+  const rank={forte:0,disponivel:1,conflitiva:2,condicional:3,latente:4};
+  PROMESSAS.sort((a,b)=>(rank[a.cond]-rank[b.cond])||(STR[b.pl]-STR[a.pl]));
+  PROMESSAS=PROMESSAS.slice(0,8);
+}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+/* índice de convergência da ativação de uma promessa num instante */
+function scoreProm(pr, d){
+  const age=ageAt(d), f=firdAt(age+0.001), p=profAt(age), y=rsYearOf(d);
+  const F=[]; let s=0; const add=(pts,lb)=>{s+=pts;F.push([pts,lb]);};
+  const inPromise=k=>k===pr.pl; // planeta central da promessa
+  if(f.majorKey===pr.pl) add(3,'firdária maior é '+PT_NAME[pr.pl]);
+  if(f.subKey===pr.pl&&f.subKey!==f.majorKey) add(2,'sub-firdária é '+PT_NAME[pr.pl]);
+  if(pr.casas.includes(p.houseN)) add(3,'casa profectada ('+p.houseN+'ª) integra a promessa');
+  if(p.lordKey===pr.pl) add(3,'Senhor do Ano é '+PT_NAME[pr.pl]);
+  if((RSMETA.angular[y]||[]).includes(pr.pl)) add(2,PT_NAME[pr.pl]+' angular na Revolução '+y);
+  // RS Asc cai em casa da promessa
+  const rs=RS_DATA[y];
+  if(rs&&rs.raw&&rs.raw.asc!=null){const hh=houseByRule(rs.raw.asc,NATAL.cusps); if(pr.casas.includes(hh)) add(2,'Asc da Revolução cai na casa '+hh+' (da promessa)');}
+  // RS repete aspecto natal do planeta
+  if((RSMETA.echo[y]||[]).some(([a,b])=>a===pr.pl||b===pr.pl)) add(2,'a Revolução repete um aspecto natal de '+PT_NAME[pr.pl]);
+  // trânsito exato a esse planeta hoje
+  if(typeof transitHits==='function'){try{const hit=transitHits(d).find(h=>(h.nk===pr.pl)&&h.orb<1); if(hit) add(2,'trânsito próximo a '+PT_NAME[pr.pl]+' natal');}catch(e){}}
+  const tier=s>=9?'convergência temporal muito alta':s>=6?'promessa ativa':s>=3?'promessa disponível':'promessa latente';
+  return {score:s,tier,factors:F};
 }
 function buildConteudoDyn(){
   const sp=NATAL.pts.spirit, spr=SIGN_RULER[signOf(sp.lon)];

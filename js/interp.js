@@ -219,6 +219,131 @@ function interpPlanet(k){
 }
 
 /* ============================================================
+   MOTOR GERENCIAL DO TEMPO — hierarquia de camadas, fórmulas de
+   firdária, sub-firdária e profecção, e cruzamentos entre técnicas.
+   Distingue sempre: ASSUNTO ADMINISTRADO (casas regidas) x
+   CAMPO DE EXECUÇÃO (casa ocupada). Vocabulário gerencial.
+   ============================================================ */
+
+/* hierarquia interpretativa (aparece no app) */
+const HIERARQUIA=[
+  ['Firdária maior','Agenda estratégica do ciclo','Qual assunto domina este capítulo da vida?'],
+  ['Sub-firdária','Fase operacional dentro do ciclo','Por qual assunto o ciclo está passando agora?'],
+  ['Profecção','Demanda específica do ano','Qual área da vida exige desenvolvimento neste ano?'],
+  ['Senhor do Ano','Administrador da demanda anual','Quem conduz e conecta os acontecimentos do ano?'],
+  ['Revolução Solar','Cenário anual de manifestação','Em quais ambientes isso aparece?'],
+  ['Trânsitos','Disparadores temporais','Quando o potencial é pressionado ou liberado?'],
+  ['Promessa natal','Potencial estrutural do mapa','O que já estava inscrito e pode ser realizado?']];
+
+/* operação (natureza) de cada planeta — o tipo de ação */
+const IN_OP={sun:'liderar e dar direção',moon:'nutrir, adaptar e manter o ritmo',
+  mercury:'comunicar, negociar e organizar informação',venus:'conciliar, valorizar e criar vínculo',
+  mars:'agir, competir e executar com força',jupiter:'expandir, ensinar e buscar apoio',
+  saturn:'estruturar, limitar e sustentar no tempo'};
+
+/* relação natal entre dois planetas: aspecto / recepção / nenhuma */
+function relBetween(a,b){
+  if(a===b)return {kind:'same',txt:'o mesmo planeta'};
+  let asp=null; ['harm','tens','conj'].forEach(cls=>{if(HAS[a+'_'+b+'_'+cls])asp=cls;});
+  const rec=(NATAL.meta.receptions||[]).some(r=>r.includes(PT_GLYPH[a])&&r.includes(PT_GLYPH[b]));
+  if(asp==='harm'||asp==='conj'||rec)
+    return {kind:'favoravel',txt:'ligação natal favorável'+(asp==='conj'?' (conjunção)':asp==='harm'?' (aspecto harmônico)':'')+(rec?(asp?' e recepção':' (recepção)'):'')};
+  if(asp==='tens')return {kind:'tenso',txt:'ligação por aspecto tenso'};
+  return {kind:'nenhum',txt:'sem ligação natal direta'};
+}
+/* condição de entrega — medida, sem determinismo */
+function condDelivery(k){
+  const p=NATAL.pts[k], d=p.dig||'', parts=[];
+  if(d.includes('domicílio')||d.includes('exaltação'))parts.push('com dignidade essencial — tende a entregar com relativa facilidade');
+  else if(d.includes('exílio')||d.includes('queda'))parts.push('em debilidade essencial — tende a exigir mais esforço, revisão ou tempo');
+  else parts.push('sem debilidades essenciais relevantes — o resultado depende dos apoios');
+  if([1,4,7,10].includes(p.h))parts.push('angular, age com visibilidade');
+  else if([6,8,12].includes(p.h))parts.push('em casa difícil, age com custo ou nos bastidores');
+  if(d.includes('combusto'))parts.push('combusto, o tema opera encoberto pela identidade');
+  if(p.retro)parts.push('retrógrado, inclina a revisar e concluir em segunda tentativa');
+  const rec=(NATAL.meta.receptions||[]).filter(r=>r.includes(PT_GLYPH[k]));
+  if(rec.length)parts.push('recebido, encontra apoio externo');
+  return parts.join('; ');
+}
+const themeOf=hs=>hs.map(h=>HOUSE_THEME[h]).join('; ');
+
+/* fórmula da firdária maior: agenda (regidas) → canal (ocupada) → condição */
+function firdariaText(k){
+  if(!PT_NAME[k])return {agenda:'Capítulo breve de '+(k==='nn'?'acréscimo':'remissão')+' (passagem de nodo), sem casa regida.',canal:'',cond:'',ru:[],occ:null};
+  const ru=ruledHouses(k), p=NATAL.pts[k];
+  return {
+    agenda:'<b>Agenda principal do ciclo</b> — '+PT_NAME[k]+' ('+IN_OP[k]+') mantém em primeiro plano os assuntos da '+ru.map(h=>h+'ª').join(' e da ')+': '+themeOf(ru)+'.',
+    canal:'<b>Canal de manifestação</b> — no mapa natal, '+PT_NAME[k]+' está na casa '+p.h+', ligando esses temas a '+HOUSE_THEME[p.h]+'.',
+    cond:'<b>Condições de manifestação</b> — '+PT_NAME[k]+' '+condDelivery(k)+'.',
+    ru, occ:p.h};
+}
+
+/* fórmula da sub-firdária: assunto que entra + função + relação natal */
+function subText(mk,sk){
+  if(!sk||sk===mk||!PT_NAME[sk])return null;
+  const ru=ruledHouses(sk), rel=relBetween(mk,sk);
+  const relFrase={
+    favoravel:PT_NAME[mk]+' e '+PT_NAME[sk]+' têm '+rel.txt+': os assuntos da fase tendem a colaborar com a agenda maior de '+PT_NAME[mk]+'.',
+    tenso:PT_NAME[mk]+' e '+PT_NAME[sk]+' estão ligados por aspecto tenso: a fase pode exigir conciliação ou reorganização em torno da agenda de '+PT_NAME[mk]+'.',
+    nenhum:PT_NAME[mk]+' e '+PT_NAME[sk]+' não têm ligação natal direta: os dois grupos de assuntos correm em paralelo e exigem integração consciente.',
+    same:''
+  }[rel.kind];
+  return {
+    entra:'<b>Assunto que entra em primeiro plano agora</b> — a fase de '+PT_NAME[sk]+' introduz os temas da '+ru.map(h=>h+'ª').join(' e da ')+': '+themeOf(ru)+'.',
+    funcao:'<b>Função dentro do ciclo</b> — esses temas passam a servir, modificar ou tensionar a agenda maior de '+PT_NAME[mk]+'.',
+    relacao:'<b>Relação natal entre os regentes</b> — '+relFrase,
+    rel};
+}
+
+/* profecção em quatro componentes */
+function profBlocks(p){
+  const yl=p.lordKey, lord=NATAL.pts[yl], ru=ruledHouses(yl);
+  return {
+    materia:'<b>Matéria do ano</b> — a profecção ativa a casa '+p.houseN+' em '+(p.sign||SIGNS[p.signIdx])+': '+HOUSE_THEME[p.houseN]+'.',
+    admin:'<b>Administrador do ano</b> — o Senhor do Ano é '+PT_NAME[yl]+', que administra esses assuntos conforme sua condição natal ('+lord.dig+').',
+    traz:'<b>Assuntos que traz consigo</b> — como '+PT_NAME[yl]+' rege a '+ru.map(h=>h+'ª').join(' e a ')+', a demanda do ano mobiliza também '+themeOf(ru)+'.',
+    local:'<b>Campo natal de atuação</b> — como '+PT_NAME[yl]+' está na casa '+lord.h+', os resultados tendem a passar por '+HOUSE_THEME[lord.h]+'.'};
+}
+
+/* cruzamento firdária × profecção — frase relacional */
+function crossFirdProf(mk,sk,p){
+  const yl=p.lordKey;
+  if(mk===yl)return 'Convergência elevada: '+PT_NAME[mk]+' governa tanto a firdária quanto o ano — seus temas natais deixam de ser secundários e tornam-se o eixo principal do período.';
+  if(ruledHouses(mk).includes(p.houseN))return 'A demanda anual está subordinada ao regente do ciclo: o ano funciona como uma expressão concentrada da firdária de '+PT_NAME[mk]+'.';
+  if(sk&&sk===yl)return 'O planeta que governa a fase atual ('+PT_NAME[sk]+') também administra o ano: os assuntos da sub-firdária ganham maior capacidade de produzir acontecimentos concretos.';
+  const rel=relBetween(mk,yl);
+  const tail={favoravel:'tendem a cooperar',tenso:'tendem a exigir conciliação',nenhum:'operam em paralelo, pedindo integração consciente',same:'coincidem'}[rel.kind];
+  return 'O ciclo é administrado por '+PT_NAME[mk]+' e o ano por '+PT_NAME[yl]+'; a relação natal entre eles é '+rel.txt+' — '+tail+'.';
+}
+
+/* cartão executivo de quatro linhas + síntese */
+function periodExec(age){
+  const f=firdAt(age+0.001), p=profAt(age);
+  const mk=f.majorKey, sk=(f.subKey&&f.subKey!==mk&&PT_NAME[f.subKey])?f.subKey:null;
+  const foco = PT_NAME[mk]?themeOf(ruledHouses(mk)):'passagem de nodo';
+  const canal = sk?themeOf(ruledHouses(sk)):'a fase repete o regente do ciclo';
+  const demanda = HOUSE_THEME[p.houseN];
+  const cross = crossFirdProf(mk,sk,p);
+  // síntese: liga foco (administrado) → demanda (execução do ano) via administrador
+  const sint = 'Síntese: '+(PT_NAME[mk]?('a agenda de '+PT_NAME[mk]+' ('+foco.split(';')[0]+') '):'')
+    +'encontra no ano a demanda da casa '+p.houseN+' ('+demanda.split(',')[0]+'), administrada por '+PT_NAME[p.lordKey]+'.';
+  return {header:(f.major+(sk?(' / '+PT_NAME[sk]):''))+' · Profecção da Casa '+p.houseN,
+    foco,canal,demanda,sint,cross,f,p,mk,sk};
+}
+function execCardHTML(age,compact){
+  const e=periodExec(age);
+  let s='<div class="exec">'
+    +'<div class="exec-h">'+e.header+'</div>'
+    +'<div class="exec-l"><span>Foco principal</span>'+e.foco+'</div>'
+    +'<div class="exec-l"><span>Canal atual</span>'+e.canal+'</div>'
+    +'<div class="exec-l"><span>Demanda do ano</span>'+e.demanda+'</div>'
+    +'<div class="exec-s">'+e.sint+'</div>';
+  if(!compact)s+='<div class="exec-cross">'+e.cross+'</div>';
+  s+='</div>';
+  return s;
+}
+
+/* ============================================================
    ARQUÉTIPO (carta de tarô) por planeta — símbolo dominante do regente.
    Arquétipo ATUAL = regente do Ascendente · IDEAL = regente do Lote do Espírito.
    ============================================================ */

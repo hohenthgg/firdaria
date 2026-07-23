@@ -235,20 +235,9 @@ function themeOfRuler(k){
   if(!hs.length)return 'assuntos gerais';
   return hs.map(h=>HOUSE_THEME[h]).join('; ');
 }
+/* síntese do ano = cartão executivo (agenda → canal → demanda → síntese) */
 function synthYear(age,p,f){
-  const H=p.houseN,lord=NATAL.pts[p.lordKey];
-  const sub=f.subKey&&NATAL.pts[f.subKey]?f.subKey:null;
-  // TEMA principal = casas que a firdária maior rege · SUBTEMA = casas do sub-período
-  const mk=f.majorKey;
-  let t;
-  if(PT_NAME[mk]){const rl=ruledHouses(mk);
-    t='<b>Tema do período</b> (firdária de '+f.major+'): '+PT_NAME[mk]+' rege '+(rl.map(h=>h+'ª').join(' e ')||'—')+' — trata-se de '+themeOfRuler(mk)+'.';
-  } else t='<b>Tema do período</b>: capítulo de '+f.major+' (Nodo) — passagem breve, sem regência de casa.';
-  if(sub&&sub!==mk&&PT_NAME[sub])
-    t+=' <b>Subtema</b> (sub-firdária de '+PT_NAME[sub]+'): rege '+(ruledHouses(sub).map(h=>h+'ª').join(' e ')||'—')+' — entram '+themeOfRuler(sub)+'.';
-  // profecção: senhor do ano
-  t+=' <b>Ano</b> (profecção): ativa a casa '+H+' em '+(p.sign||SIGNS[p.signIdx])+' — '+HOUSE_THEME[H]+'; o Senhor do Ano é '+PT_NAME[p.lordKey]+', que rege '+themeOfRuler(p.lordKey)+'.';
-  return t;
+  return execCardHTML(age,true);
 }
 
 /* ---------- regra dos 5° na personalidade ----------
