@@ -353,6 +353,41 @@ body.is-mobile .qmap{aspect-ratio:1.25}
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
+.rep-det{margin-top:10px;border-top:1px solid var(--line);padding-top:6px}
+.rep-det>summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);padding:6px 0}
+.rep-det>summary::-webkit-details-marker{display:none}
+.rep-det>summary:hover{color:var(--neon)}
+/* ===== cartão executivo do período ===== */
+.exec{border:1px solid rgba(159,214,230,.18);border-radius:16px;padding:14px 16px;
+  background:linear-gradient(180deg,rgba(159,214,230,.05),rgba(255,255,255,.02));margin:2px 0}
+.exec-h{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--neon);opacity:.85;margin-bottom:8px}
+.exec-l{font-size:.84rem;color:var(--ivory);line-height:1.5;margin:3px 0;padding-left:118px;position:relative;min-height:18px}
+.exec-l span{position:absolute;left:0;top:0;width:108px;font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim2);line-height:1.7}
+.exec-s{font-family:var(--serif);font-size:1rem;color:#fff;line-height:1.5;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+.exec-cross{font-size:.8rem;color:var(--dim);line-height:1.55;margin-top:8px}
+body.is-mobile .exec-l{padding-left:0}
+body.is-mobile .exec-l span{position:static;display:block;width:auto;margin-bottom:1px}
+/* ===== mandala temporal ===== */
+.mandala-card{padding:20px 22px;grid-column:1/-1}
+.mandala-row{display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:center;margin-top:6px}
+.tmandala{width:280px;height:280px;display:block;margin:0 auto}
+.mandala-side{min-width:0}
+.mandala-side .exec{border:none;background:none;padding:0}
+body.is-mobile .mandala-row{grid-template-columns:1fr}
+.hier th{display:none}
+/* ===== hierarquia das camadas ===== */
+.hier{width:100%;border-collapse:collapse;margin:8px 0}
+.hier td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.8rem}
+.hier td:first-child{font-weight:600;color:var(--ivory);white-space:nowrap}
+.hier td:nth-child(2){color:var(--neon);opacity:.8;font-size:.76rem}
+.hier td:last-child{color:var(--dim);font-style:italic}
+/* ===== promessas (condição) ===== */
+.prom-cond{display:inline-block;font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 9px;margin-left:6px;border:1px solid}
+.prom-cond.forte{color:var(--green);border-color:var(--green)}
+.prom-cond.disponivel{color:var(--neon);border-color:rgba(159,214,230,.5)}
+.prom-cond.condicional{color:var(--gold2);border-color:var(--gold2)}
+.prom-cond.conflitiva{color:var(--red);border-color:var(--red)}
+.prom-cond.latente{color:var(--dim2);border-color:var(--line2)}
 /* ===== arquétipos (cartas de tarô) ===== */
 .arche-wrap{margin:18px 0 6px}
 .arche-head{margin-bottom:14px}
@@ -486,7 +521,7 @@ body.is-mobile .t-sym{font-size:3.4rem}
         <svg id="cord"></svg>
         <div><div id="tempo-compare"></div><div id="tempo-info"></div></div>
       </div>
-      <h3>Razão da vida — ano a ano</h3>
+      <h3>Linha do tempo anual</h3>
       <div class="toolrow">
         <label class="f" style="margin:0">evento pessoal</label>
         <input type="date" id="ev-date"><input type="text" id="ev-txt" placeholder="descrição do evento" style="min-width:180px">
@@ -499,7 +534,7 @@ body.is-mobile .t-sym{font-size:3.4rem}
 
     <section class="panel" id="p-rs">
       <div class="kicker" id="rs-kicker">retornos solares</div>
-      <h2>Revolução Solar <span>o que vence em cada ano</span></h2>
+      <h2>Revolução Solar <span>ênfases e condições de cada ano</span></h2>
       <div class="toolrow">
         <select id="rs-year"></select>
         <button class="btn" id="rs-cmp">comparar com ano seguinte</button>

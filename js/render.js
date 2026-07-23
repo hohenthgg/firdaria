@@ -125,14 +125,21 @@ function renderNatal(){
   html+='<div class="card"><div class="kicker">Lote do Espírito — o daimon</div><p style="font-size:.86rem">'+CONTEUDO.daimon+'</p></div>';
   html+='<div class="card"><div class="kicker">Sol e Lua — o eixo</div><p style="font-size:.86rem">'+CONTEUDO.solLua+'</p></div>';
   $('natal-body').innerHTML=html;
-  // promessas
-  $('prom-body').innerHTML=PROMESSAS.map(pr=>'<div class="prom" data-id="'+pr.id+'">'
-    +'<div class="p-t">'+pr.t+' <span class="mono" style="color:var(--dim2)">· '+PT_NAME[pr.pl]+' · casas '+pr.casas.join(', ')+'</span></div>'
-    +'<div class="p-b"><b>Fatores natais:</b> '+pr.fat+'<br><b>Condição de realização:</b> '+pr.cond
-    +'<br><b>Ajudam:</b> '+pr.ajuda+'<br><b>Impedem:</b> '+pr.impede
-    +'<br><b>Técnicas que a ativam:</b> '+pr.tec
-    +'<br><b>Anos de maior ativação:</b> '+pr.anos.join(', ')
-    +'<br><span class="mono" style="color:var(--dim2)">clique de novo para desmarcar na corda do tempo</span></div></div>').join('');
+  // promessas — potenciais natais por múltiplos testemunhos
+  const now=new Date();
+  $('prom-body').innerHTML=(PROMESSAS.length?PROMESSAS:[]).map(pr=>{
+    const act=(typeof scoreProm==='function')?scoreProm(pr,now):{score:0,tier:'—',factors:[]};
+    return '<div class="prom" data-id="'+pr.id+'">'
+    +'<div class="p-t">'+pr.t+' <span class="prom-cond '+pr.cond+'">'+pr.cond+'</span> <span class="mono" style="color:var(--dim2)">· '+PT_NAME[pr.pl]+' · casas '+pr.casas.join(', ')+'</span></div>'
+    +'<div class="p-b"><b>Potencial natal:</b> '+pr.fat
+    +'<br><b>Condições de manifestação:</b> '+pr.cond_manif
+    +'<br><b>Facilitadores:</b> '+pr.facilit+'<br><b>Pontos de atenção:</b> '+pr.atencao
+    +'<br><b>Testemunhos que a sustentam ('+pr.testemunhos.length+'):</b> '+pr.testemunhos.join('; ')
+    +'<br><b>'+pr.tec+'</b>'
+    +'<br><b>Ativação hoje:</b> <span class="mono">'+act.tier+' ('+act.score+')</span>'+(act.factors.length?(' — '+act.factors.map(f=>'+'+f[0]+' '+f[1]).join('; ')):'')
+    +'<br><b>Anos de maior ativação:</b> '+(pr.anos.join(', ')||'—')
+    +'<br><span class="mono" style="color:var(--dim2)">clique de novo para desmarcar na linha do tempo</span></div></div>';
+  }).join('')||'<p class="mono">Nenhuma promessa com dois ou mais testemunhos convergentes foi detectada.</p>';
   $('prom-body').onclick=e=>{
     const el=e.target.closest('.prom'); if(!el)return;
     const id=el.dataset.id;
@@ -407,6 +414,46 @@ function cordDrag(){
   window.addEventListener('pointermove',e=>{if(dragging)pick(e);});
   window.addEventListener('pointerup',()=>dragging=false);
 }
+/* mandala temporal única: anéis de progresso firdária · sub · profecção,
+   centro com Senhor do Ano + casa profectada + Asc da Revolução. Minimalista. */
+function mandalaTempo(d){
+  const age=ageAt(d), f=firdAt(age), p=profAt(age), y=rsYearOf(d), rs=RS_DATA[y];
+  const C=150, TAU=2*Math.PI;
+  const ring=(r,sw,frac,col,track)=>{
+    const circ=TAU*r, off=circ*(1-Math.max(0,Math.min(1,frac)));
+    let g='<circle cx="'+C+'" cy="'+C+'" r="'+r+'" fill="none" stroke="'+track+'" stroke-width="'+sw+'"/>';
+    g+='<circle cx="'+C+'" cy="'+C+'" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'" stroke-linecap="round" '
+      +'stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'" transform="rotate(-90 '+C+' '+C+')" filter="url(#mglow)"/>';
+    return g;
+  };
+  // frações de progresso
+  const fFrac=(f.from!=null&&f.len)?((age-f.from)/f.len):0;
+  const sFrac=(f.subStart&&f.subEnd)?((d.getTime()-f.subStart)/(f.subEnd-f.subStart)):0;
+  const yFrac=age-Math.floor(age);
+  const T='rgba(255,255,255,.08)';
+  let s='<svg viewBox="0 0 300 300" class="tmandala"><defs>'
+    +'<filter id="mglow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#9fd6e6" flood-opacity=".5"/></filter></defs>';
+  s+=ring(132,15,fFrac,'#cfd6dd',T);
+  s+=ring(108,13,sFrac,'#9fd6e6',T);
+  s+=ring(86,11,yFrac,'#c9b78a',T);
+  // rótulos dos anéis (glifos)
+  const gl=(r,txt,col)=>'<text x="'+C+'" y="'+(C-r+5)+'" text-anchor="middle" font-size="13" font-family="Cormorant Garamond" fill="'+col+'">'+txt+'</text>';
+  s+=gl(132,PT_GLYPH[f.majorKey]||'','#cfd6dd');
+  s+=gl(108,PT_GLYPH[f.subKey]||'','#9fd6e6');
+  s+=gl(86,''+p.houseN,'#c9b78a');
+  // centro: Senhor do Ano + casa + RS
+  s+='<text x="'+C+'" y="'+(C-16)+'" text-anchor="middle" font-size="34" font-family="Cormorant Garamond" fill="#fff">'+PT_GLYPH[p.lordKey]+'</text>';
+  s+='<text x="'+C+'" y="'+(C+6)+'" text-anchor="middle" font-size="10" font-family="IBM Plex Mono" letter-spacing="1" fill="var(--dim)">SENHOR DO ANO</text>';
+  s+='<text x="'+C+'" y="'+(C+24)+'" text-anchor="middle" font-size="11" font-family="Inter" fill="#fff">Casa '+p.houseN+' · '+p.sign+'</text>';
+  if(rs&&rs.raw&&rs.raw.asc!=null){const sg=signOf(rs.raw.asc);
+    s+='<text x="'+C+'" y="'+(C+40)+'" text-anchor="middle" font-size="10" font-family="IBM Plex Mono" fill="var(--neon)">RS: Asc '+SIGNS[sg]+'</text>';}
+  s+='</svg>';
+  return s;
+}
+function hierarquiaHTML(){
+  return '<table class="hier"><tr><th></th><th></th><th></th></tr>'+
+    HIERARQUIA.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</table>';
+}
 function syncTempo(){
   if(!NATAL){$('tempo-info').innerHTML=emptyState();$('fird-ledger').innerHTML='';return;}
   $('tempo-date').textContent=fdate(CURSOR)+' · '+Math.floor(ageAt(CURSOR))+' anos';
@@ -414,10 +461,9 @@ function syncTempo(){
   drawCord();
   const age=ageAt(CURSOR), f=firdAt(age), p=profAt(age), y=rsYearOf(CURSOR), rs=RS_DATA[y];
   const conv=convergence(CURSOR);
-  let html='<div class="card"><div class="kicker">no cursor</div>'
-    +'<span class="tag gold">'+f.major+' / '+f.sub+'</span><span class="tag">casa '+p.houseN+' · '+p.sign+'</span>'
-    +'<span class="tag">Senhor: '+PT_NAME[p.lordKey]+'</span><span class="tag blue">convergência: '+conv.label+'</span>'
-    +'<p style="font-size:.82rem;margin-top:8px">'+synthYear(Math.floor(Math.max(0,age)),p,f)+'</p></div>';
+  let html='<div class="card mandala-card"><div class="kicker">diagrama temporal — onde você está</div>'
+    +'<div class="mandala-row">'+mandalaTempo(CURSOR)+'<div class="mandala-side">'+execCardHTML(Math.floor(Math.max(0,age)),false)+'</div></div>'
+    +'<details class="rep-det"><summary>hierarquia das camadas — o que cada técnica responde</summary>'+hierarquiaHTML()+'</details></div>';
   html+='<div class="card"><div class="kicker">Revolução '+y+'</div>'+(rs?('<p style="font-size:.8rem"><b style="color:var(--ivory)">'+rs.asc+'</b></p><p style="font-size:.78rem">'+rs.destaque+'</p>'):'<p>sem RS registrada.</p>')+'</div>';
   const top=scoredHits(CURSOR,0).slice(0,3);
   html+='<div class="card"><div class="kicker">ativações no cursor</div>'+(top.map(h=>renderHit(h,CURSOR,false)).join('')||'<p>—</p>')+'</div>';
@@ -453,20 +499,34 @@ function renderCompare(){
 /* razão anual (preservado, + destaque de promessa) */
 function buildYearReport(a){
   const p=profAt(a), f=firdAt(a+0.05), y=new Date(BIRTH).getUTCFullYear()+a, rs=RS_DATA[y];
-  const H=p.houseN, hs=HOUSE_SIG[H], lord=NATAL.pts[p.lordKey];
+  const H=p.houseN, lord=NATAL.pts[p.lordKey];
   const sub=f.subKey&&NATAL.pts[f.subKey]?f.subKey:null;
-  const loop=NATAL.loop.includes(p.lordKey)?' Integra o anel ☾→♄→♃→♂: os efeitos encadeiam pelas quatro casas do anel.':'';
-  let s='<div class="rep">';
-  s+='<div class="rep-sec"><span class="rep-k">Casa profectada — a matéria do ano</span>Casa '+H+' ('+hs.q+'): <b>'+hs.s+'</b>. No registro do corpus: '+OLAVO_CASA[H]+'.</div>';
-  s+='<div class="rep-sec"><span class="rep-k">Senhor do Ano — quem cumpre</span><b>'+PT_NAME[p.lordKey]+'</b>, no natal: '+lord.dig+', casa '+lord.h+' ('+NATAL.houseTheme[lord.h]+'); rege a '+listRuled(p.lordKey)+' — traz esses assuntos consigo.'+loop+'<br><i>'+OLAVO_PL[p.lordKey]+'</i><br>Aspectos natais: '+(NATAL_ASP[p.lordKey]||[]).join(' · ')+'.'+(lord.star&&lord.star!=='—'?(' Estrela: '+lord.star):'')+'</div>';
-  if(sub&&sub!==p.lordKey) s+='<div class="rep-sec"><span class="rep-k">Sub-firdária</span><b>'+f.major+'/'+f.sub+'</b>: '+PT_NAME[sub]+(ruledHouses(sub).length?(' rege a '+listRuled(sub)):'')+' — estes temas entram no jogo da casa '+H+'.</div>';
-  else s+='<div class="rep-sec"><span class="rep-k">Sub-firdária</span><b>'+f.major+'/'+f.sub+'</b>: o senhor maior duplicado — o tema da era em estado puro.</div>';
-  s+='<div class="rep-sec"><span class="rep-k">Era maior</span>'+f.major+': '+(ERA_TXT[f.major]||'')+'</div>';
-  s+=rs?('<div class="rep-sec"><span class="rep-k">Revolução Solar '+y+'</span><b>Asc: '+rs.asc+'</b><br>'+rs.destaque+'<br><i>'+rs.estrelas+'</i></div>')
-       :('<div class="rep-sec"><span class="rep-k">Revolução Solar '+y+'</span>Sem RS registrada — adicione em RS_DATA['+y+'].</div>');
-  const proms=PROMESSAS.filter(pr=>pr.anos.includes(y));
-  if(proms.length) s+='<div class="rep-sec"><span class="rep-k">Promessas em ativação</span>'+proms.map(pr=>pr.t).join(' · ')+'</div>';
-  s+='<div class="rep-sec"><span class="rep-k">Conselho</span>'+CONSELHO[p.lordKey]+'</div></div>';
+  const at=new Date(Date.UTC(y,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate()+30));
+  // 1) resumo executivo literal primeiro
+  let s='<div class="rep">'+execCardHTML(a,false);
+  // 2) bloco expansível — como chegamos a essa conclusão
+  const fb=firdariaText(f.majorKey), sb=subText(f.majorKey,sub), pb=profBlocks(p);
+  s+='<details class="rep-det"><summary>Como chegamos a essa conclusão</summary>'
+    +'<div class="rep-sec"><span class="rep-k">Firdária maior — agenda do ciclo</span>'+fb.agenda+'<br>'+fb.canal+'<br>'+fb.cond+'</div>'
+    +(sb?('<div class="rep-sec"><span class="rep-k">Sub-firdária — fase atual</span>'+sb.entra+'<br>'+sb.funcao+'<br>'+sb.relacao+'</div>')
+        :'<div class="rep-sec"><span class="rep-k">Sub-firdária</span>A fase repete o regente do ciclo: o tema maior em estado concentrado.</div>')
+    +'<div class="rep-sec"><span class="rep-k">Profecção — demanda do ano</span>'+pb.materia+'<br>'+pb.admin+'<br>'+pb.traz+'<br>'+pb.local+'</div>'
+    +'<div class="rep-sec"><span class="rep-k">Cruzamento firdária × profecção</span>'+crossFirdProf(f.majorKey,sub,p)+'</div>'
+    +(rs?('<div class="rep-sec"><span class="rep-k">Revolução Solar '+y+' — cenário anual</span>'+rs.asc+'<br>'+rs.destaque+'</div>'):'')
+    +'</details>';
+  // 3) promessas relacionadas
+  const proms=PROMESSAS.filter(pr=>pr.casas.includes(H)||pr.pl===p.lordKey||pr.pl===f.majorKey);
+  if(proms.length)s+='<details class="rep-det"><summary>Potenciais natais atualmente ativados</summary>'
+    +proms.map(pr=>{const act=scoreProm(pr,at);return '<div class="rep-sec"><span class="rep-k">'+pr.t+' · '+act.tier+' ('+act.score+')</span>'+pr.fat+(act.factors.length?('<br><span class="mono" style="color:var(--dim2)">'+act.factors.map(x=>'+'+x[0]+' '+x[1]).join('; ')+'</span>'):'')+'</div>';}).join('')
+    +'</details>';
+  // 4) condição técnica dos planetas
+  s+='<details class="rep-det"><summary>Condição técnica dos planetas</summary>'
+    +'<div class="rep-sec"><span class="rep-k">Senhor do Ano — '+PT_NAME[p.lordKey]+'</span>'+lord.dig+', casa '+lord.h+'; aspectos: '+((NATAL_ASP[p.lordKey]||[]).join(' · ')||'—')+(lord.star&&lord.star!=='—'?('; estrela: '+lord.star):'')+'</div>'
+    +(sub?('<div class="rep-sec"><span class="rep-k">Sub-regente — '+PT_NAME[sub]+'</span>'+NATAL.pts[sub].dig+', casa '+NATAL.pts[sub].h+'</div>'):'')
+    +'</details>';
+  // 5) síntese simbólica (camada opcional, não na primeira leitura)
+  s+='<details class="rep-det"><summary>Síntese simbólica</summary><div class="rep-sec">'+(CONSELHO[p.lordKey]||'')+'</div></details>';
+  s+='</div>';
   return s;
 }
 function renderLedger(){
