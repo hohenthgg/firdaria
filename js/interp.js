@@ -240,6 +240,27 @@ const IN_OP={sun:'liderar e dar direção',moon:'nutrir, adaptar e manter o ritm
   mercury:'comunicar, negociar e organizar informação',venus:'conciliar, valorizar e criar vínculo',
   mars:'agir, competir e executar com força',jupiter:'expandir, ensinar e buscar apoio',
   saturn:'estruturar, limitar e sustentar no tempo'};
+/* palavra-chave curta da agenda de cada planeta (para o cartão executivo) */
+const AGENDA_KW={sun:'direção, identidade e reconhecimento',moon:'rotina, cuidado e vida doméstica',
+  mercury:'comunicação, negócios e aprendizado',venus:'recursos, relações e acordos',
+  mars:'ação, autonomia e disputas',jupiter:'expansão, apoio e sentido',
+  saturn:'estrutura, tempo e responsabilidade'};
+/* contexto anual pelo signo do Ascendente da Revolução */
+const RS_CTX=['iniciativa, coragem e novos começos','recursos, estabilidade e prazeres','trocas, estudos e comunicação',
+  'família, segurança e vida privada','criação, filhos e afirmação pessoal','trabalho, saúde e organização',
+  'relações, parcerias e acordos','crises, perdas e recursos partilhados','sentido, estudos e horizontes amplos',
+  'carreira, reputação e responsabilidades','grupos, projetos e amizades','recolhimento, bastidores e entrega'];
+/* síntese literal automática do momento (conclusão → contexto) */
+function synthLiteral(d){
+  const age=ageAt(d), f=firdAt(age), p=profAt(age), y=rsYearOf(d), rs=RS_DATA[y];
+  const mk=f.majorKey, sk=(f.subKey&&f.subKey!==mk&&PT_NAME[f.subKey])?f.subKey:null;
+  let s=cap(HOUSE_TAG[p.houseN])+' está em primeiro plano neste ano.';
+  s+=' O ciclo maior é de '+(PT_NAME[mk]||f.major)+(PT_NAME[mk]?(' — '+AGENDA_KW[mk]):'')
+    +(sk?(', e a fase atual, de '+PT_NAME[sk]+', relaciona esses assuntos a '+ruledHouses(sk).map(h=>HOUSE_TAG[h]).join(', ')+'.'):'.');
+  if(rs&&rs.raw&&rs.raw.asc!=null){const sg=signOf(rs.raw.asc), rl=SIGN_RULER[sg];
+    s+=' O contexto anual da Revolução, com Ascendente em '+SIGNS[sg]+' regido por '+PT_NAME[rl]+', volta-se a '+RS_CTX[sg]+'.';}
+  return s;
+}
 
 /* relação natal entre dois planetas: aspecto / recepção / nenhuma */
 function relBetween(a,b){

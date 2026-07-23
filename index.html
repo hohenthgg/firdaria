@@ -367,6 +367,62 @@ body.is-mobile .qmap{aspect-ratio:1.25}
 .exec-cross{font-size:.8rem;color:var(--dim);line-height:1.55;margin-top:8px}
 body.is-mobile .exec-l{padding-left:0}
 body.is-mobile .exec-l span{position:static;display:block;width:auto;margin-bottom:1px}
+/* ===== TEMPO reformulado — sóbrio, um acento azul-acinzentado ===== */
+:root{--accent:#8fa3bb}
+/* 1 · cabeçalho compacto */
+.tphead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 18px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.07)}
+.tphead-date{font-family:var(--serif);font-size:1.35rem;color:#fff;font-weight:500;margin-right:2px}
+.tphead-pick{font-family:var(--sans)!important;border-radius:8px!important;padding:6px 10px!important;font-size:.72rem!important}
+.tp-ghost{font-family:var(--sans);font-size:.76rem;color:var(--dim);background:transparent;border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:6px 12px;cursor:pointer;transition:.15s}
+.tp-ghost:hover{color:#fff;border-color:rgba(255,255,255,.22)}
+.tp-play{width:32px;padding:6px 0;text-align:center}
+.tpseg{display:inline-flex;border:1px solid rgba(255,255,255,.1);border-radius:9px;overflow:hidden;margin-left:auto}
+.tpseg .btn{margin:0;border:none;border-radius:0;background:transparent;color:var(--dim);font-family:var(--sans);
+  font-size:.76rem;font-weight:500;letter-spacing:0;text-transform:none;padding:7px 15px;transition:.15s}
+.tpseg .btn:hover{color:#fff;transform:none;border:none}
+.tpseg .btn.on{background:rgba(143,163,187,.16);color:#fff}
+/* 2 · painel executivo — 4 cartões */
+.tpexec{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.tpcard{border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.022);
+  padding:14px 15px;cursor:pointer;transition:.18s;position:relative}
+.tpcard:hover{border-color:rgba(143,163,187,.4);background:rgba(143,163,187,.05)}
+.tpcard.on{border-color:rgba(143,163,187,.55);background:rgba(143,163,187,.08)}
+.tpc-k{font-family:var(--sans);font-size:.62rem;letter-spacing:.02em;text-transform:uppercase;color:var(--dim2);margin-bottom:6px}
+.tpc-t{font-family:var(--sans);font-size:1.02rem;font-weight:600;color:#fff;line-height:1.2}
+.tpc-i{font-family:var(--mono);font-size:.64rem;color:var(--accent);margin:3px 0 7px}
+.tpc-d{font-size:.78rem;color:var(--dim);line-height:1.45}
+body.is-mobile .tpexec{grid-template-columns:1fr 1fr}
+/* 3 · síntese literal */
+.tpsynth{border-left:2px solid var(--accent);padding:2px 0 2px 16px;margin:0 0 18px;
+  font-family:var(--serif);font-size:1.14rem;color:var(--ivory);line-height:1.55}
+/* 4 · linha do tempo */
+#cord{width:100%;height:auto;display:block;overflow:visible;margin-bottom:14px}
+/* 5 · promessas ativadas */
+.tpproms{margin:6px 0 4px}
+.tpprom{border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:0;margin:8px 0;overflow:hidden;background:rgba(255,255,255,.018)}
+.tpprom>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:12px 15px}
+.tpprom>summary::-webkit-details-marker{display:none}
+.tpprom .pp-t{font-weight:600;color:#fff;font-size:.9rem;flex:1}
+.tpprom .pp-lv{font-family:var(--mono);font-size:.58rem;letter-spacing:.04em;text-transform:uppercase;
+  border:1px solid;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.pp-lv.alta{color:var(--accent);border-color:rgba(143,163,187,.55)}
+.pp-lv.moderada{color:var(--dim);border-color:rgba(255,255,255,.2)}
+.pp-lv.disponivel,.pp-lv.latente{color:var(--dim2);border-color:rgba(255,255,255,.12)}
+.tpprom .pp-b{padding:0 15px 14px;font-size:.82rem;color:var(--dim);line-height:1.55}
+.tpprom .pp-b b{color:var(--ivory)}
+/* painel de detalhes */
+.tdetail{margin-top:8px}
+.tdetail .tdcard{border:1px solid rgba(143,163,187,.25);border-radius:12px;background:rgba(255,255,255,.025);padding:18px 20px;margin-top:10px}
+.tdetail .td-h{font-family:var(--sans);font-size:1.05rem;font-weight:600;color:#fff;margin-bottom:2px}
+.tdetail .td-sub{font-family:var(--mono);font-size:.62rem;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.tdetail .td-sec{border-top:1px solid rgba(255,255,255,.07);padding:9px 0}
+.tdetail .td-sec:first-of-type{border-top:none}
+.tdetail .td-k{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);display:block;margin-bottom:3px}
+.tdetail .td-v{font-size:.85rem;color:var(--dim);line-height:1.6}
+.tdetail .td-v b{color:var(--ivory)}
+.tdetail .td-close{float:right;cursor:pointer;color:var(--dim2);font-size:1.1rem;line-height:1;border:none;background:none}
+h3.tp-h{font-family:var(--sans);font-size:.82rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);margin:22px 0 4px}
 /* ===== mandala temporal ===== */
 .mandala-card{padding:20px 22px;grid-column:1/-1}
 .mandala-row{display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:center;margin-top:6px}
@@ -505,31 +561,41 @@ body.is-mobile .t-sym{font-size:3.4rem}
     </section>
 
     <section class="panel" id="p-tempo">
-      <div class="kicker">firdária · profecção · revoluções · trânsitos · eventos</div>
-      <h2>Tempo <span>a corda da vida sincronizada</span></h2>
-      <div class="tl-controls">
-        <div class="tl-date">Cursor: <b id="tempo-date">—</b></div>
-        <input type="date" id="tempo-pick">
-        <button class="btn" id="tempo-today">hoje</button>
-        <button class="btn" id="tempo-anim">▶ animar</button>
-        <span class="zoombar" id="tempo-zoom">
-          <button class="btn on" data-z="vida">vida</button><button class="btn" data-z="decada">década</button><button class="btn" data-z="ano">ano</button><button class="btn" data-z="mes">mês</button><button class="btn" data-z="dia">dia</button>
+      <h2>Tempo <span>o que está ativo na data selecionada</span></h2>
+      <!-- 1 · cabeçalho compacto -->
+      <div class="tphead">
+        <b id="tempo-date" class="tphead-date">—</b>
+        <input type="date" id="tempo-pick" class="tphead-pick">
+        <button class="tp-ghost" id="tempo-today">Hoje</button>
+        <button class="tp-ghost tp-play" id="tempo-anim" title="reproduzir">▶</button>
+        <span class="tpseg" id="tempo-zoom">
+          <button class="btn on" data-z="vida">Vida</button><button class="btn" data-z="decada">Década</button><button class="btn" data-z="ano">Ano</button><button class="btn" data-z="mes">Mês</button>
         </span>
-        <button class="btn" id="tempo-pin">fixar A/B</button>
+        <button class="tp-ghost" id="tempo-pin" title="comparar A/B">A/B</button>
       </div>
-      <div class="tempo-wrap">
-        <svg id="cord"></svg>
-        <div><div id="tempo-compare"></div><div id="tempo-info"></div></div>
-      </div>
-      <h3>Linha do tempo anual</h3>
-      <div class="toolrow">
-        <label class="f" style="margin:0">evento pessoal</label>
-        <input type="date" id="ev-date"><input type="text" id="ev-txt" placeholder="descrição do evento" style="min-width:180px">
-        <button class="btn" id="ev-add">registrar</button>
-        <button class="btn" id="retro-open">O que estava ativo?</button>
-      </div>
-      <div id="retro-body"></div>
-      <div id="fird-ledger"></div>
+      <!-- 2 · painel executivo do momento -->
+      <div id="tempo-exec" class="tpexec"></div>
+      <!-- 3 · síntese literal -->
+      <div id="tempo-synth" class="tpsynth"></div>
+      <!-- 4 · linha do tempo (4 faixas) -->
+      <svg id="cord"></svg>
+      <div id="tempo-compare"></div>
+      <!-- 5 · promessas ativadas -->
+      <div id="tempo-proms"></div>
+      <!-- painel de detalhes (abre ao clicar num cartão) -->
+      <div id="tempo-detail" class="tdetail"></div>
+      <!-- secundário: eventos, retrospectiva e linha do tempo ano a ano -->
+      <details class="rep-det" id="tempo-more">
+        <summary>Eventos, retrospectiva e linha do tempo ano a ano</summary>
+        <div class="toolrow" style="margin-top:8px">
+          <label class="f" style="margin:0">evento pessoal</label>
+          <input type="date" id="ev-date"><input type="text" id="ev-txt" placeholder="descrição do evento" style="min-width:180px">
+          <button class="btn" id="ev-add">registrar</button>
+          <button class="btn" id="retro-open">O que estava ativo?</button>
+        </div>
+        <div id="retro-body"></div>
+        <div id="fird-ledger"></div>
+      </details>
     </section>
 
     <section class="panel" id="p-rs">

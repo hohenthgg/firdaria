@@ -16,8 +16,8 @@ document.getElementById('tempo-pick').addEventListener('change',function(){
 document.getElementById('tempo-today').onclick=()=>{CURSOR=new Date();syncTempo();};
 let TANIM=null;
 document.getElementById('tempo-anim').onclick=function(){
-  if(TANIM){clearInterval(TANIM);TANIM=null;this.textContent='▶ animar';return;}
-  this.textContent='❚❚ pausar';
+  if(TANIM){clearInterval(TANIM);TANIM=null;this.textContent='▶';return;}
+  this.textContent='❚❚';
   const step={vida:200,decada:30,ano:5,mes:1,dia:1/24}[ZOOM]*DAY;
   TANIM=setInterval(()=>{CURSOR=new Date(CURSOR.getTime()+step);if(CURSOR.getTime()>BIRTH+75*365.2425*DAY)CURSOR=new Date(BIRTH);syncTempo();},110);
 };
