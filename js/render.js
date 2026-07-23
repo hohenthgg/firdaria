@@ -273,128 +273,133 @@ function cordRange(){
   const c=CURSOR.getTime();
   return [c-span/2,c+span/2];
 }
-/* corda HORIZONTAL — balões PRETOS grandes, com sombra e brilho de vidro.
-   Faixas: FIRDÁRIA · SUB-FIRDÁRIA · PROFECÇÃO · REVOLUÇÕES.
-   No cursor, chips pretos mostram a PROFECÇÃO (casa · signo · Senhor) e a
-   REVOLUÇÃO (Asc · Senhor). Balões de revolução clicáveis. */
+/* corda HORIZONTAL — GRÁFICO DE BARRAS (Gantt) sobre o calendário.
+   FIRDÁRIA: barras contíguas por período (planeta).
+   SUB-FIRDÁRIA: barra INTERNA aninhada na base de cada barra de firdária.
+   PROFECÇÃO: barra por ano (casa). REVOLUÇÕES: barra por ano (Asc·Senhor).
+   Cursor com data; chips de profecção e revolução no cursor. */
 function drawCord(){
-  const svg=$('cord'); const W=svg.clientWidth||1240,H=486;
+  const svg=$('cord'); const W=svg.clientWidth||1240,H=326;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   const [t0,t1]=cordRange();
   const L=140, R=26;
   const XX=t=>L+((t-t0)/(t1-t0))*(W-L-R);
-  const IVO='#f2f3f6', DIM='#aeb2ba', DIM2='#7b8089';
+  const IVO='#f2f3f6', DIM='#aeb2ba', DIM2='#7b8089', LINE='rgba(255,255,255,.12)';
   let s='<defs>'
-    +'<filter id="soft" x="-30%" y="-60%" width="160%" height="220%"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#000" flood-opacity=".75"/></filter>'
-    +'<linearGradient id="blk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#24262e"/><stop offset="42%" stop-color="#15161c"/><stop offset="100%" stop-color="#0a0b0f"/></linearGradient>'
-    +'<linearGradient id="blkDim" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#181a20"/><stop offset="100%" stop-color="#0a0b0e"/></linearGradient>'
-    +'<linearGradient id="blkSel" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2b2d37"/><stop offset="100%" stop-color="#0e1016"/></linearGradient>'
-    +'<filter id="glow" x="-40%" y="-80%" width="180%" height="260%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#9fd6e6" flood-opacity=".55"/></filter>'
+    +'<filter id="soft" x="-30%" y="-60%" width="160%" height="220%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity=".6"/></filter>'
+    +'<filter id="glow" x="-40%" y="-80%" width="180%" height="260%"><feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#9fd6e6" flood-opacity=".6"/></filter>'
     +'</defs>';
-  const rowLbl=(y,txt)=>{s+='<text x="10" y="'+y+'" font-size="10.5" font-family="IBM Plex Mono" letter-spacing="2.5" fill="'+DIM2+'">'+txt+'</text>';};
-  // balão preto (glass): topo claro, corpo escuro, borda de vidro
-  const balloon=(x,w,y,h,grad,glyph,title,sub,data)=>{
-    if(w<3)return;
-    const rx=Math.min(h/2,30);
-    const attr=data?(' data-rs="'+data+'" style="cursor:pointer"'):'';
-    s+='<g'+attr+'><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+rx+'" fill="url(#'+grad+')" filter="url(#soft)" stroke="#fff" stroke-opacity=".1"/>';
-    s+='<rect x="'+(x+1.5)+'" y="'+(y+1.5)+'" width="'+(w-3)+'" height="'+Math.max(2,h*0.42)+'" rx="'+rx+'" fill="#fff" fill-opacity=".05"/>';
-    if(w>72&&title){
-      s+='<text x="'+(x+20)+'" y="'+(y+h/2-4)+'" font-size="'+Math.min(24,h*0.32)+'" font-family="Cormorant Garamond" fill="'+IVO+'">'+glyph+'</text>';
-      s+='<text x="'+(x+20+Math.min(26,h*0.3))+'" y="'+(y+h/2-4)+'" font-size="14" font-family="Inter" font-weight="600" fill="'+IVO+'">'+title+'</text>';
-      if(sub)s+='<text x="'+(x+20)+'" y="'+(y+h/2+16)+'" font-size="11" font-family="IBM Plex Mono" fill="'+DIM+'">'+sub+'</text>';
-    } else if(w>22){
-      s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+5)+'" text-anchor="middle" font-size="'+Math.min(18,h*0.5)+'" font-family="Cormorant Garamond" fill="'+IVO+'">'+glyph+'</text>';
-    }
-    s+='</g>';
-  };
+  const rowLbl=(y,txt)=>{s+='<text x="10" y="'+y+'" font-size="10" font-family="IBM Plex Mono" letter-spacing="2.4" fill="'+DIM2+'">'+txt+'</text>';};
+  const clampX=x=>Math.max(L,Math.min(W-R,x));
   const byY=new Date(BIRTH).getUTCFullYear();
   const cursAge=ageAt(CURSOR);
-  // ---- FIRDÁRIA ----
-  rowLbl(72,'FIRDÁRIA');
+  const years=(t1-t0)/DAY/365.25;
+  const selY=rsYearOf(CURSOR);
+
+  // banda de fundo (trilha) de uma faixa
+  const track=(y,h)=>{s+='<rect x="'+L+'" y="'+y+'" width="'+(W-L-R)+'" height="'+h+'" rx="7" fill="rgba(255,255,255,.02)" stroke="'+LINE+'" stroke-width=".7"/>';};
+
+  // ===== FIRDÁRIA (barras) + SUB-FIRDÁRIA (barra interna) =====
+  rowLbl(40,'FIRDÁRIA');
+  const FY=28, FH=110, SUBY=FY+FH-34, SUBH=30; // bloco firdária + faixa interna da sub
+  track(FY,FH);
+  s+='<line x1="'+L+'" y1="'+SUBY+'" x2="'+(W-R)+'" y2="'+SUBY+'" stroke="'+LINE+'"/>';
   let age0=0;
   FIRD.forEach(([k,nm,len])=>{
     const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;const yA=byY+Math.round(age0);const now=cursAge>=age0&&cursAge<age0+len;age0+=len;
     if(b<t0||a>t1)return;
-    const x=Math.max(XX(Math.max(a,t0)),L), x2=Math.min(XX(Math.min(b,t1)),W-R);
-    balloon(x+3,x2-x-6,34,120,now?'blkSel':'blk',(PT_GLYPH[k]||''),nm,yA+'–'+(yA+len)+' · '+len+' anos');
-    if(now)s+='<rect x="'+(x+3)+'" y="34" width="'+(x2-x-6)+'" height="120" rx="30" fill="none" stroke="#9fd6e6" stroke-opacity=".8" stroke-width="1.6" filter="url(#glow)"/>';
+    const x=clampX(XX(a)), x2=clampX(XX(b)), w=x2-x;
+    const col=FIRD_COLORS[nm]||'#8a8f98';
+    // barra da firdária: preenchimento tênue + faixa de acento no topo
+    s+='<rect x="'+x+'" y="'+FY+'" width="'+w+'" height="'+FH+'" rx="8" fill="'+col+'" fill-opacity=".1" stroke="'+col+'" stroke-opacity=".4" stroke-width="1"/>';
+    s+='<rect x="'+x+'" y="'+FY+'" width="'+w+'" height="5" rx="2.5" fill="'+col+'"/>';
+    if(now)s+='<rect x="'+x+'" y="'+FY+'" width="'+w+'" height="'+FH+'" rx="8" fill="none" stroke="#9fd6e6" stroke-width="1.8" filter="url(#glow)"/>';
+    if(w>66){
+      s+='<text x="'+(x+12)+'" y="'+(FY+30)+'" font-size="18" font-family="Cormorant Garamond" fill="'+IVO+'">'+(PT_GLYPH[k]||'')+'</text>';
+      s+='<text x="'+(x+34)+'" y="'+(FY+30)+'" font-size="13" font-family="Inter" font-weight="600" fill="'+IVO+'">'+nm+'</text>';
+      s+='<text x="'+(x+12)+'" y="'+(FY+46)+'" font-size="9.5" font-family="IBM Plex Mono" fill="'+DIM2+'">'+yA+'–'+(yA+len)+' · '+len+' anos</text>';
+    } else if(w>16){
+      s+='<text x="'+(x+w/2)+'" y="'+(FY+28)+'" text-anchor="middle" font-size="15" font-family="Cormorant Garamond" fill="'+DIM+'">'+(PT_GLYPH[k]||nm[0])+'</text>';
+    }
   });
-  // ---- SUB-FIRDÁRIA ----
-  rowLbl(196,'SUB-FIRDÁRIA');
+  // barra interna: SUB-FIRDÁRIA (segmentos aninhados na base da firdária)
+  s+='<text x="10" y="'+(SUBY+19)+'" font-size="8" font-family="IBM Plex Mono" letter-spacing="1.5" fill="'+DIM2+'">sub</text>';
   for(let a=0;a<75;){
     const f=firdAt(a); const st=f.subStart,en=f.subEnd;
     if(!st){a+=0.02;continue;}
     const enAge=(en-BIRTH)/DAY/365.2425;
     if(!(en<t0||st>t1)){
-      const x=Math.max(XX(Math.max(st,t0)),L), x2=Math.min(XX(Math.min(en,t1)),W-R);
+      const x=clampX(XX(st)), x2=clampX(XX(en)), w=x2-x;
       const now=cursAge>=(st-BIRTH)/DAY/365.2425&&cursAge<enAge;
-      balloon(x+2,x2-x-4,172,64,now?'blkSel':'blkDim',(PT_GLYPH[f.subKey]||''),PT_NAME[f.subKey]||'',null);
+      const col=FIRD_COLORS[PT_NAME[f.subKey]]||'#8a8f98';
+      s+='<rect x="'+(x+.5)+'" y="'+(SUBY+3)+'" width="'+Math.max(1,w-1)+'" height="'+(SUBH-6)+'" rx="4" fill="'+col+'" fill-opacity="'+(now?'.4':'.16')+'" stroke="'+col+'" stroke-opacity=".4" stroke-width=".6"/>';
+      if(w>15)s+='<text x="'+(x+w/2)+'" y="'+(SUBY+19)+'" text-anchor="middle" font-size="11" font-family="Cormorant Garamond" fill="'+(now?IVO:DIM)+'">'+(PT_GLYPH[f.subKey]||'')+'</text>';
     }
     a=enAge>a+1e-4?enAge:a+0.02;
   }
-  // ---- PROFECÇÃO ----
-  rowLbl(290,'PROFECÇÃO');
+
+  // ===== PROFECÇÃO (barra por ano) =====
+  rowLbl(160,'PROFECÇÃO');
+  const PY=150, PH=40;
+  track(PY,PH);
   for(let yr=0;yr<75;yr++){
     const a=BIRTH+yr*365.2425*DAY,b=BIRTH+(yr+1)*365.2425*DAY;
     if(b<t0||a>t1)continue;
-    const p=profAt(yr), now=Math.floor(cursAge)===yr;
-    const x=Math.max(XX(Math.max(a,t0)),L), x2=Math.min(XX(Math.min(b,t1)),W-R), w=x2-x;
-    if(w<2)continue;
-    balloon(x+1,w-2,262,56,now?'blkSel':'blkDim','',null,null);
-    if(w>60)s+='<text x="'+(x+w/2)+'" y="'+289+'" text-anchor="middle" font-size="11.5" font-family="Inter" fill="'+IVO+'">casa '+p.houseN+' · '+SG[p.signIdx]+'</text>';
-    else if(w>16)s+='<text x="'+(x+w/2)+'" y="'+295+'" text-anchor="middle" font-size="15" font-family="Cormorant Garamond" fill="'+IVO+'">'+p.houseN+'</text>';
+    const p=profAt(yr), now=Math.floor(cursAge)===yr, mal=[6,8,12].includes(p.houseN);
+    const x=clampX(XX(a)), x2=clampX(XX(b)), w=x2-x;
+    if(w<1.5)continue;
+    const col=mal?'#b06a61':'#8fa3bb';
+    s+='<rect x="'+(x+.6)+'" y="'+(PY+3)+'" width="'+Math.max(1,w-1.2)+'" height="'+(PH-6)+'" rx="4" fill="'+col+'" fill-opacity="'+(now?'.34':'.12')+'" stroke="'+col+'" stroke-opacity="'+(now?'.7':'.3')+'" stroke-width="'+(now?1.2:.6)+'"/>';
+    if(w>58)s+='<text x="'+(x+w/2)+'" y="'+(PY+25)+'" text-anchor="middle" font-size="11" font-family="Inter" fill="'+IVO+'">casa '+p.houseN+' · '+SG[p.signIdx]+'</text>';
+    else if(w>14)s+='<text x="'+(x+w/2)+'" y="'+(PY+26)+'" text-anchor="middle" font-size="13" font-family="Cormorant Garamond" fill="'+(now?IVO:DIM)+'">'+p.houseN+'</text>';
   }
-  // ---- REVOLUÇÕES ----
-  rowLbl(388,'REVOLUÇÕES');
-  s+='<line x1="'+L+'" y1="384" x2="'+(W-R)+'" y2="384" stroke="rgba(255,255,255,.14)"/>';
-  const selY=rsYearOf(CURSOR);
-  const years=(t1-t0)/DAY/365.25;
+
+  // ===== REVOLUÇÕES (barra por ano) =====
+  rowLbl(232,'REVOLUÇÕES');
+  const RY=222, RH=40;
+  track(RY,RH);
   Object.keys(RS_DATA).forEach(y=>{
-    const t=Date.UTC(+y,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate());
-    if(t<t0||t>t1)return;
-    const on=+y===selY, x=XX(t);
-    // largura aproximada de um ano em px
-    const wYr=(W-L-R)/Math.max(1,years);
-    if(wYr>44){ // cabe balãozinho com Asc/Senhor
-      const rs=RS_DATA[y]; let info=y;
-      if(rs&&rs.raw&&rs.raw.asc!=null){const sg=signOf(rs.raw.asc);info=y+'  '+SG[sg]+' '+PT_GLYPH[SIGN_RULER[sg]];}
-      balloon(x-wYr*0.42,wYr*0.84,360,48,on?'blkSel':'blkDim','',null,null,y);
-      s+='<text data-rs="'+y+'" x="'+x+'" y="388" text-anchor="middle" font-size="12" font-family="IBM Plex Mono" fill="'+IVO+'" style="cursor:pointer">'+info+'</text>';
-    } else {
-      s+='<circle data-rs="'+y+'" cx="'+x+'" cy="384" r="'+(on?11:7)+'" fill="url(#'+(on?'blkSel':'blkDim')+')" stroke="#fff" stroke-opacity="'+(on?'.5':'.28')+'" stroke-width="'+(on?2:1)+'" filter="url(#soft)" style="cursor:pointer"><title>Revolução '+y+'</title></circle>';
-      if(on){const rs=RS_DATA[y];let lab='RS '+y;if(rs&&rs.raw&&rs.raw.asc!=null){const sg=signOf(rs.raw.asc);lab='RS '+y+' · Asc '+SIGNS[sg]+' · Senhor '+PT_NAME[SIGN_RULER[sg]];}
-        s+='<text x="'+x+'" y="'+412+'" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="'+IVO+'">'+lab+'</text>';}
-    }
+    const a=Date.UTC(+y,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate());
+    const b=a+365.2425*DAY;
+    if(b<t0||a>t1)return;
+    const on=+y===selY;
+    const x=clampX(XX(a)), x2=clampX(XX(b)), w=x2-x;
+    if(w<1.5)return;
+    const rs=RS_DATA[y]; let sg=null; if(rs&&rs.raw&&rs.raw.asc!=null)sg=signOf(rs.raw.asc);
+    const col=sg!=null?'#c9b78a':'#8a8f98';
+    s+='<rect data-rs="'+y+'" x="'+(x+.6)+'" y="'+(RY+3)+'" width="'+Math.max(1,w-1.2)+'" height="'+(RH-6)+'" rx="4" fill="'+col+'" fill-opacity="'+(on?'.34':'.12')+'" stroke="'+col+'" stroke-opacity="'+(on?'.7':'.3')+'" stroke-width="'+(on?1.2:.6)+'" style="cursor:pointer"><title>Revolução '+y+'</title></rect>';
+    if(w>78&&sg!=null)s+='<text data-rs="'+y+'" x="'+(x+w/2)+'" y="'+(RY+25)+'" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono" fill="'+IVO+'" style="cursor:pointer">'+y+' · '+SG[sg]+' '+PT_GLYPH[SIGN_RULER[sg]]+'</text>';
+    else if(w>46)s+='<text data-rs="'+y+'" x="'+(x+w/2)+'" y="'+(RY+25)+'" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono" fill="'+(on?IVO:DIM)+'" style="cursor:pointer">'+(''+y).slice(2)+(sg!=null?(' '+SG[sg]):'')+'</text>';
+    else if(w>22)s+='<text data-rs="'+y+'" x="'+(x+w/2)+'" y="'+(RY+25)+'" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono" fill="'+(on?IVO:DIM)+'" style="cursor:pointer">'+(''+y).slice(2)+'</text>';
+    else if(on&&sg!=null)s+='<text x="'+(x+w/2)+'" y="'+(RY+25)+'" text-anchor="middle" font-size="11" font-family="Cormorant Garamond" fill="'+IVO+'">'+SG[sg]+'</text>';
   });
   EVENTS.forEach(ev=>{const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
-    s+='<path d="M '+XX(t)+' 378 l 5 5 l -5 5 l -5 -5 z" fill="#c7bce0"><title>'+esc(ev.txt)+' ('+ev.d+')</title></path>';});
-  // ---- régua ----
+    s+='<path d="M '+clampX(XX(t))+' '+(RY+RH+2)+' l 5 5 l -5 5 l -5 -5 z" fill="#c7bce0"><title>'+esc(ev.txt)+' ('+ev.d+')</title></path>';});
+
+  // ===== régua (calendário) =====
   const tick=years>30?10:years>8?2:years>1.5?0.5:years>0.1?1/12:1/365;
   for(let yy=Math.ceil((t0-BIRTH)/DAY/365.2425/tick)*tick;;yy+=tick){
     const t=BIRTH+yy*365.2425*DAY;if(t>t1)break;
     const x=XX(t), d=new Date(t);
+    s+='<line x1="'+x+'" y1="292" x2="'+x+'" y2="297" stroke="'+LINE+'"/>';
     const lbl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
-    s+='<text x="'+x+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="'+DIM2+'">'+lbl+'</text>';
+    s+='<text x="'+x+'" y="308" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="'+DIM2+'">'+lbl+'</text>';
   }
-  // ---- pino A + cursor + chips de detalhe (profecção · revolução) ----
-  if(PINNED){const px=XX(PINNED.getTime());s+='<line x1="'+px+'" y1="28" x2="'+px+'" y2="'+(H-20)+'" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';}
-  const cx=Math.max(L,Math.min(W-R,XX(CURSOR.getTime())));
-  s+='<line x1="'+cx+'" y1="26" x2="'+cx+'" y2="'+(H-20)+'" stroke="'+IVO+'" stroke-width="1.5"/>'
-    +'<path d="M '+cx+' 16 l 6 9 l -6 9 l -6 -9 z" fill="'+IVO+'"/>';
-  // chip preto genérico
+
+  // ===== pino A + cursor + chips =====
+  if(PINNED){const px=clampX(XX(PINNED.getTime()));s+='<line x1="'+px+'" y1="'+FY+'" x2="'+px+'" y2="290" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';}
+  const cx=clampX(XX(CURSOR.getTime()));
+  s+='<line x1="'+cx+'" y1="'+(FY-10)+'" x2="'+cx+'" y2="290" stroke="'+IVO+'" stroke-width="1.4"/>'
+    +'<path d="M '+cx+' '+(FY-18)+' l 6 8 l -6 8 l -6 -8 z" fill="'+IVO+'"/>';
   const chip=(cxp,y,txt)=>{const pw=txt.length*6.1+18, px=Math.max(L,Math.min(W-R-pw,cxp-pw/2));
-    s+='<rect x="'+px+'" y="'+y+'" width="'+pw+'" height="20" rx="10" fill="url(#blkSel)" stroke="#fff" stroke-opacity=".3" filter="url(#soft)"/>'
+    s+='<rect x="'+px+'" y="'+y+'" width="'+pw+'" height="20" rx="10" fill="#14151b" stroke="#fff" stroke-opacity=".28" filter="url(#soft)"/>'
       +'<text x="'+(px+pw/2)+'" y="'+(y+13.5)+'" text-anchor="middle" font-size="10.5" font-family="Inter" font-weight="600" fill="'+IVO+'">'+txt+'</text>';};
-  // data
-  const dtxt=fdate(CURSOR); chip(cx,0,dtxt);
-  // profecção no cursor
+  chip(cx,0,fdate(CURSOR));
   const pc=profAt(cursAge);
-  chip(cx,300,'Profecção · casa '+pc.houseN+' · '+SIGNS[pc.signIdx]+' · Senhor '+PT_NAME[pc.lordKey]);
-  // revolução vigente no cursor
+  chip(cx,PY+PH+3,'Profecção · casa '+pc.houseN+' · '+SIGNS[pc.signIdx]+' · Senhor '+PT_NAME[pc.lordKey]);
   const ry=rsYearOf(CURSOR), rr=RS_DATA[ry];
   if(rr&&rr.raw&&rr.raw.asc!=null){const sg=signOf(rr.raw.asc);
-    chip(cx,422,'Revolução '+ry+' · Asc '+SIGNS[sg]+' · Senhor '+PT_NAME[SIGN_RULER[sg]]);}
+    chip(cx,RY+RH+6,'Revolução '+ry+' · Asc '+SIGNS[sg]+' · Senhor '+PT_NAME[SIGN_RULER[sg]]);}
   svg.innerHTML=s;
 }
 function cordDrag(){
