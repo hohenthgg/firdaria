@@ -278,10 +278,10 @@ function cordRange(){
    por pequenos traços; nomes quando há espaço; cursor único fino com a data acima.
    Detalhes por clique (data-layer / data-goto / data-rs) e tooltip (<title>). */
 function drawCord(){
-  const svg=$('cord'); const W=svg.clientWidth||1200,H=214;
+  const svg=$('cord'); const W=svg.clientWidth||1200,H=304;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   const [t0,t1]=cordRange();
-  const L=118, R=18;
+  const mob=W<620, L=mob?96:150, R=mob?12:18, FS=mob?12:14;
   const XX=t=>L+((t-t0)/(t1-t0))*(W-L-R);
   const clampX=x=>Math.max(L,Math.min(W-R,x));
   const IVO='#eef0f3', DIM='#9aa1ab', DIM2='#6c727b', LINE='rgba(255,255,255,.09)', AC='143,163,187';
@@ -290,93 +290,103 @@ function drawCord(){
   const years=(t1-t0)/DAY/365.25;
   const selY=rsYearOf(CURSOR);
   let s='';
-  const rows={fird:34, sub:74, prof:112, rev:150}, RH=28, SUBH=24;
-  // rótulo da faixa (caixa normal)
-  const lbl=(y,txt)=>{s+='<text x="0" y="'+(y+18)+'" font-size="12" font-family="Inter" fill="'+DIM+'">'+txt+'</text>';};
-  // banda de fundo de uma faixa
-  const band=(y,h)=>{s+='<rect x="'+L+'" y="'+y+'" width="'+(W-L-R)+'" height="'+h+'" rx="6" fill="rgba(255,255,255,.018)" stroke="'+LINE+'"/>';};
-  // segmento: só o ativo preenche; transição = traço no início
-  const seg=(x1,x2,y,h,active,label,minW,attrs)=>{
-    const w=x2-x1; if(w<0.6)return;
-    // traço de transição no início do segmento
-    s+='<line x1="'+x1+'" y1="'+(y-3)+'" x2="'+x1+'" y2="'+(y+h+3)+'" stroke="'+LINE+'"/>';
-    if(active) s+='<rect x="'+(x1+1)+'" y="'+(y+2)+'" width="'+Math.max(1,w-2)+'" height="'+(h-4)+'" rx="4" fill="rgba('+AC+',.2)" stroke="rgba('+AC+',.55)" stroke-width="1"/>';
-    // hit + tooltip
-    s+='<rect '+(attrs||'')+' x="'+x1+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="transparent" style="cursor:pointer"/>';
-    if(label&&w>minW) s+='<text '+(attrs||'')+' x="'+(x1+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" font-size="'+(h>26?12:11)+'" font-family="Inter" fill="'+(active?IVO:DIM)+'" style="pointer-events:none">'+label+'</text>';
-  };
+  const rows={fird:40, sub:100, prof:160, rev:220}, BH=44, RULE=280;
+  const CY=y=>y+BH/2;
+  const LINE2='rgba(255,255,255,.16)';
   // estimativa de largura do rótulo p/ evitar sobreposição
   const glyphish=ch=>{const c=ch.codePointAt(0);return c>=0x2200&&c<=0x27bf;};
   const estW=(t,fs)=>{let n=0;for(const ch of t){const c=ch.codePointAt(0);if(c===0xFE0E)continue;n+=glyphish(ch)?fs*0.86:(ch===' ')?fs*0.32:(ch==='·'||ch==='–'||ch==='ª')?fs*0.42:fs*0.56;}return n;};
-  const fit=(w,fs,cands)=>{for(const c of cands){if(c&&estW(c,fs)+12<=w)return c;}return '';};
+  const fit=(w,fs,cands)=>{for(const c of cands){if(c&&estW(c,fs)+14<=w)return c;}return '';};
   const sgl=i=>(SIGN_GLYPHS[i]||'')+'︎';   // glifo do signo, presentação texto
+  // rótulo da faixa + nó circular à esquerda (motivo do referencial)
+  const lbl=(y,txt)=>{
+    if(mob){s+='<text x="6" y="'+(CY(y)+4)+'" font-size="11" font-family="Inter" fill="'+DIM+'">'+txt+'</text>';return;}
+    s+='<circle cx="26" cy="'+CY(y)+'" r="14" fill="none" stroke="'+LINE2+'"/>'
+    +'<circle cx="26" cy="'+CY(y)+'" r="4.5" fill="none" stroke="'+DIM+'"/>'
+    +'<text x="52" y="'+(CY(y)+5)+'" font-size="14.5" font-family="Inter" fill="'+DIM+'">'+txt+'</text>';};
+  // banda de fundo
+  const band=y=>{s+='<rect x="'+L+'" y="'+y+'" width="'+(W-L-R)+'" height="'+BH+'" rx="11" fill="rgba(255,255,255,.022)" stroke="'+LINE+'"/>';};
+  // faixa Firdária — segmentos rotulados, ativo em caixa destacada
+  const segF=(x1,x2,active,label,attrs)=>{const w=x2-x1; if(w<0.6)return;
+    s+='<line x1="'+x1+'" y1="'+(rows.fird-3)+'" x2="'+x1+'" y2="'+(rows.fird+BH+3)+'" stroke="'+LINE+'"/>';
+    if(active) s+='<rect x="'+(x1+2)+'" y="'+(rows.fird+3)+'" width="'+Math.max(1,w-4)+'" height="'+(BH-6)+'" rx="9" fill="#0f1013" stroke="rgba(255,255,255,.85)" stroke-width="1.4"/>';
+    s+='<rect '+(attrs||'')+' x="'+x1+'" y="'+rows.fird+'" width="'+w+'" height="'+BH+'" fill="transparent" style="cursor:pointer"/>';
+    if(label) s+='<text '+(attrs||'')+' x="'+(x1+w/2)+'" y="'+(CY(rows.fird)+5)+'" text-anchor="middle" font-size="'+FS+'" font-family="Inter" fill="'+(active?IVO:DIM)+'" style="pointer-events:none">'+label+'</text>';};
+  // faixas inferiores — só marca de transição + área clicável (sem rótulo)
+  const tickHit=(x1,x2,y,attrs)=>{const w=x2-x1; if(w<0.4)return;
+    s+='<line x1="'+x1+'" y1="'+(y+7)+'" x2="'+x1+'" y2="'+(y+BH-7)+'" stroke="'+LINE+'"/>';
+    s+='<rect '+(attrs||'')+' x="'+x1+'" y="'+y+'" width="'+w+'" height="'+BH+'" fill="transparent" style="cursor:pointer"/>';};
+  // pastilha central com o planeta ativo da faixa (no cursor)
+  const badge=(y,txt,attrs)=>{const fsb=FS+0.5,bw=Math.min(W-L-R-8,estW(txt,fsb)+34),bh=mob?28:32,cxx=clampX(XX(CURSOR.getTime()));
+    const bx=Math.max(L+4,Math.min(W-R-bw-4,cxx-bw/2)),by=CY(y)-bh/2;
+    s+='<path d="M'+(cxx-6)+' '+by+' L'+(cxx+6)+' '+by+' L'+cxx+' '+(by+7)+' Z" fill="#0f1013" stroke="rgba(255,255,255,.55)"/>';
+    s+='<rect '+(attrs||'')+' x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+bh+'" rx="9" fill="#0e0f13" stroke="rgba(255,255,255,.85)" stroke-width="1.3" style="cursor:pointer"/>';
+    s+='<text '+(attrs||'')+' x="'+(bx+bw/2)+'" y="'+(by+bh/2+5)+'" text-anchor="middle" font-size="'+fsb+'" font-family="Inter" fill="'+IVO+'" style="pointer-events:none">'+txt+'</text>';};
 
   // ===== FIRDÁRIA =====
-  lbl(rows.fird,'Firdária'); band(rows.fird,RH);
+  lbl(rows.fird,'Firdária'); band(rows.fird);
   let age0=0;
   FIRD.forEach(([k,nm,len])=>{
     const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;const yA=byY+Math.round(age0);const now=cursAge>=age0&&cursAge<age0+len;const mid=age0+len/2;age0+=len;
     if(b<t0||a>t1)return;
     const x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1,g=PT_GLYPH[k]||'';
-    const label=fit(w,12,[g+' '+nm+' · '+yA+'–'+(yA+len), g+' '+nm, nm, g]);
-    seg(x1,x2,rows.fird,RH,now,label,0,'data-goto="'+mid+'" data-layer="firdaria"');
+    const label=fit(w,14,[g+' '+nm+' · '+yA+'–'+(yA+len), g+' '+nm, nm, g]);
+    segF(x1,x2,now,label,'data-goto="'+mid+'" data-layer="firdaria"');
   });
-  // ===== SUB-FIRDÁRIA =====
-  lbl(rows.sub,'Subfirdária'); band(rows.sub,SUBH);
+  // ===== SUB-FIRDÁRIA ===== (marcas + pastilha central)
+  lbl(rows.sub,'Subfirdária'); band(rows.sub);
   for(let a=0;a<75;){
     const f=firdAt(a); const st=f.subStart,en=f.subEnd;
     if(!st){a+=0.02;continue;}
     const enAge=(en-BIRTH)/DAY/365.2425, stAge=(st-BIRTH)/DAY/365.2425;
-    if(!(en<t0||st>t1)){
-      const x1=clampX(XX(st)),x2=clampX(XX(en)),w=x2-x1, now=cursAge>=stAge&&cursAge<enAge, mid=(stAge+enAge)/2, g=PT_GLYPH[f.subKey]||'';
-      const label=fit(w,11,[g+' '+(PT_NAME[f.subKey]||''), PT_NAME[f.subKey]||'', g]);
-      seg(x1,x2,rows.sub,SUBH,now,label,0,'data-goto="'+mid+'" data-layer="sub"');
-    }
+    if(!(en<t0||st>t1)){const x1=clampX(XX(st)),x2=clampX(XX(en)),mid=(stAge+enAge)/2;
+      tickHit(x1,x2,rows.sub,'data-goto="'+mid+'" data-layer="sub"');}
     a=enAge>a+1e-4?enAge:a+0.02;
   }
-  // ===== PROFECÇÃO =====
-  lbl(rows.prof,'Profecção'); band(rows.prof,SUBH);
+  // ===== PROFECÇÃO ===== (marcas + pastilha central)
+  lbl(rows.prof,'Profecção'); band(rows.prof);
   for(let yr=0;yr<75;yr++){
     const a=BIRTH+yr*365.2425*DAY,b=BIRTH+(yr+1)*365.2425*DAY;
     if(b<t0||a>t1)continue;
-    const p=profAt(yr), now=Math.floor(cursAge)===yr;
-    const x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1, lg=PT_GLYPH[p.lordKey]||'', sg=sgl(p.signIdx);
-    const label=fit(w,11,[sg+' Casa '+p.houseN+' · '+lg, 'Casa '+p.houseN+' '+lg, sg+' '+lg, lg, 'C'+p.houseN]);
-    seg(x1,x2,rows.prof,SUBH,now,label,0,'data-goto="'+(yr+0.5)+'" data-layer="profeccao"');
+    const x1=clampX(XX(a)),x2=clampX(XX(b));
+    tickHit(x1,x2,rows.prof,'data-goto="'+(yr+0.5)+'" data-layer="profeccao"');
   }
-  // ===== REVOLUÇÕES =====
-  lbl(rows.rev,'Revoluções'); band(rows.rev,SUBH);
+  // ===== REVOLUÇÕES ===== (marcas + pastilha central)
+  lbl(rows.rev,'Revoluções'); band(rows.rev);
   Object.keys(RS_DATA).forEach(y=>{
     const a=Date.UTC(+y,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate()), b=a+365.2425*DAY;
     if(b<t0||a>t1)return;
-    const on=+y===selY, x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1;
-    const rs=RS_DATA[y]; let sg=null; if(rs&&rs.raw&&rs.raw.asc!=null)sg=signOf(rs.raw.asc);
-    const yy=(''+y).slice(2), rg=sg!=null?(PT_GLYPH[SIGN_RULER[sg]]||''):'';
-    const label=sg!=null
-      ? fit(w,11,[y+' · '+sgl(sg)+' '+rg, yy+' '+sgl(sg)+' '+rg, sgl(sg)+' '+rg, sgl(sg), yy])
-      : fit(w,11,[''+y, yy]);
-    seg(x1,x2,rows.rev,SUBH,on,label,0,'data-rs="'+y+'" data-layer="revolucao"');
+    const x1=clampX(XX(a)),x2=clampX(XX(b));
+    tickHit(x1,x2,rows.rev,'data-rs="'+y+'" data-layer="revolucao"');
   });
   // eventos pessoais (traço)
   EVENTS.forEach(ev=>{const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
-    const x=clampX(XX(t)); s+='<line x1="'+x+'" y1="'+rows.rev+'" x2="'+x+'" y2="'+(rows.rev+SUBH)+'" stroke="#b9a6d6" stroke-width="1.4"><title>'+esc(ev.txt)+' ('+ev.d+')</title></line>';});
+    const x=clampX(XX(t)); s+='<line x1="'+x+'" y1="'+rows.rev+'" x2="'+x+'" y2="'+(rows.rev+BH)+'" stroke="#b9a6d6" stroke-width="1.4"><title>'+esc(ev.txt)+' ('+ev.d+')</title></line>';});
 
   // ===== régua (calendário) =====
   const tick=years>30?10:years>8?2:years>1.5?0.5:years>0.1?1/12:1/365;
+  s+='<line x1="'+L+'" y1="'+RULE+'" x2="'+(W-R)+'" y2="'+RULE+'" stroke="'+LINE+'"/>';
   for(let yy=Math.ceil((t0-BIRTH)/DAY/365.2425/tick)*tick;;yy+=tick){
     const t=BIRTH+yy*365.2425*DAY;if(t>t1)break;
     const x=XX(t), d=new Date(t);
-    s+='<line x1="'+x+'" y1="184" x2="'+x+'" y2="188" stroke="'+LINE+'"/>';
+    s+='<path d="M'+x+' '+(RULE-3.5)+' L'+(x+3.5)+' '+RULE+' L'+x+' '+(RULE+3.5)+' L'+(x-3.5)+' '+RULE+' Z" fill="'+DIM2+'"/>';
     const tl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
-    s+='<text x="'+x+'" y="199" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="'+DIM2+'">'+tl+'</text>';
+    s+='<text x="'+x+'" y="'+(RULE+16)+'" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono" fill="'+DIM2+'">'+tl+'</text>';
   }
-  // ===== pino A + cursor único + data acima =====
-  if(PINNED){const px=clampX(XX(PINNED.getTime()));s+='<line x1="'+px+'" y1="'+rows.fird+'" x2="'+px+'" y2="184" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';}
+  // ===== pino A + conector vertical + pastilhas ativas + data =====
   const cx=clampX(XX(CURSOR.getTime()));
-  s+='<line x1="'+cx+'" y1="24" x2="'+cx+'" y2="184" stroke="'+IVO+'" stroke-width="1"/>';
-  const dtxt=fdate(CURSOR), pw=dtxt.length*5.6+16, px=Math.max(L,Math.min(W-R-pw,cx-pw/2));
-  s+='<rect x="'+px+'" y="4" width="'+pw+'" height="16" rx="8" fill="#15161b" stroke="rgba(255,255,255,.16)"/>'
-    +'<text x="'+(px+pw/2)+'" y="15" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono" fill="'+IVO+'">'+dtxt+'</text>';
+  if(PINNED){const px=clampX(XX(PINNED.getTime()));s+='<line x1="'+px+'" y1="'+rows.fird+'" x2="'+px+'" y2="'+RULE+'" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';}
+  s+='<line x1="'+cx+'" y1="26" x2="'+cx+'" y2="'+RULE+'" stroke="'+IVO+'" stroke-width="1"/>';
+  // pastilhas: planeta ativo de cada faixa inferior
+  const fNow=firdAt(cursAge);
+  badge(rows.sub,(PT_GLYPH[fNow.subKey]||'')+' '+(PT_NAME[fNow.subKey]||fNow.sub||'—'),'data-layer="sub"');
+  const pNow=profAt(Math.floor(cursAge));
+  badge(rows.prof,(PT_GLYPH[pNow.lordKey]||'')+' '+(PT_NAME[pNow.lordKey]||'—')+' · Casa '+pNow.houseN,'data-layer="profeccao"');
+  badge(rows.rev,(PT_GLYPH.sun||'☉')+' RS '+selY,'data-rs="'+selY+'" data-layer="revolucao"');
+  // data acima do cursor
+  const dtxt=fdate(CURSOR), pw=estW(dtxt,11)+22, px=Math.max(L,Math.min(W-R-pw,cx-pw/2));
+  s+='<rect x="'+px+'" y="4" width="'+pw+'" height="20" rx="10" fill="#15161b" stroke="rgba(255,255,255,.18)"/>'
+    +'<text x="'+(px+pw/2)+'" y="18" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="'+IVO+'">'+dtxt+'</text>';
   svg.innerHTML=s;
 }
 function cordDrag(){
@@ -385,7 +395,7 @@ function cordDrag(){
     const r=svg.getBoundingClientRect();
     const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
     const vb=svg.viewBox.baseVal.width||r.width;
-    const L=118*(r.width/vb), R=18*(r.width/vb);
+    const mob=vb<620, L=(mob?96:150)*(r.width/vb), R=(mob?12:18)*(r.width/vb);
     const [t0,t1]=cordRange();
     const t=t0+((x-L)/(r.width-L-R))*(t1-t0);
     if(isFinite(t)){CURSOR=new Date(Math.max(BIRTH,Math.min(BIRTH+75*365.2425*DAY,t)));syncTempo();}
