@@ -305,6 +305,11 @@ function drawCord(){
     s+='<rect '+(attrs||'')+' x="'+x1+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="transparent" style="cursor:pointer"/>';
     if(label&&w>minW) s+='<text '+(attrs||'')+' x="'+(x1+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" font-size="'+(h>26?12:11)+'" font-family="Inter" fill="'+(active?IVO:DIM)+'" style="pointer-events:none">'+label+'</text>';
   };
+  // estimativa de largura do rótulo p/ evitar sobreposição
+  const glyphish=ch=>{const c=ch.codePointAt(0);return c>=0x2200&&c<=0x27bf;};
+  const estW=(t,fs)=>{let n=0;for(const ch of t){const c=ch.codePointAt(0);if(c===0xFE0E)continue;n+=glyphish(ch)?fs*0.86:(ch===' ')?fs*0.32:(ch==='·'||ch==='–'||ch==='ª')?fs*0.42:fs*0.56;}return n;};
+  const fit=(w,fs,cands)=>{for(const c of cands){if(c&&estW(c,fs)+12<=w)return c;}return '';};
+  const sgl=i=>(SIGN_GLYPHS[i]||'')+'︎';   // glifo do signo, presentação texto
 
   // ===== FIRDÁRIA =====
   lbl(rows.fird,'Firdária'); band(rows.fird,RH);
@@ -312,9 +317,9 @@ function drawCord(){
   FIRD.forEach(([k,nm,len])=>{
     const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;const yA=byY+Math.round(age0);const now=cursAge>=age0&&cursAge<age0+len;const mid=age0+len/2;age0+=len;
     if(b<t0||a>t1)return;
-    const x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1;
-    const label=w>90?((PT_GLYPH[k]||'')+' '+nm+' · '+yA+'–'+(yA+len)):(w>30?nm:(PT_GLYPH[k]||''));
-    seg(x1,x2,rows.fird,RH,now,label,16,'data-goto="'+mid+'" data-layer="firdaria"');
+    const x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1,g=PT_GLYPH[k]||'';
+    const label=fit(w,12,[g+' '+nm+' · '+yA+'–'+(yA+len), g+' '+nm, nm, g]);
+    seg(x1,x2,rows.fird,RH,now,label,0,'data-goto="'+mid+'" data-layer="firdaria"');
   });
   // ===== SUB-FIRDÁRIA =====
   lbl(rows.sub,'Subfirdária'); band(rows.sub,SUBH);
@@ -323,9 +328,9 @@ function drawCord(){
     if(!st){a+=0.02;continue;}
     const enAge=(en-BIRTH)/DAY/365.2425, stAge=(st-BIRTH)/DAY/365.2425;
     if(!(en<t0||st>t1)){
-      const x1=clampX(XX(st)),x2=clampX(XX(en)),w=x2-x1, now=cursAge>=stAge&&cursAge<enAge, mid=(stAge+enAge)/2;
-      const label=w>66?((PT_GLYPH[f.subKey]||'')+' '+(PT_NAME[f.subKey]||'')):(PT_GLYPH[f.subKey]||'');
-      seg(x1,x2,rows.sub,SUBH,now,label,14,'data-goto="'+mid+'" data-layer="sub"');
+      const x1=clampX(XX(st)),x2=clampX(XX(en)),w=x2-x1, now=cursAge>=stAge&&cursAge<enAge, mid=(stAge+enAge)/2, g=PT_GLYPH[f.subKey]||'';
+      const label=fit(w,11,[g+' '+(PT_NAME[f.subKey]||''), PT_NAME[f.subKey]||'', g]);
+      seg(x1,x2,rows.sub,SUBH,now,label,0,'data-goto="'+mid+'" data-layer="sub"');
     }
     a=enAge>a+1e-4?enAge:a+0.02;
   }
@@ -335,9 +340,9 @@ function drawCord(){
     const a=BIRTH+yr*365.2425*DAY,b=BIRTH+(yr+1)*365.2425*DAY;
     if(b<t0||a>t1)continue;
     const p=profAt(yr), now=Math.floor(cursAge)===yr;
-    const x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1;
-    const label=w>62?('Casa '+p.houseN+' · '+SG[p.signIdx]):(w>16?('C'+p.houseN):'');
-    seg(x1,x2,rows.prof,SUBH,now,label,14,'data-goto="'+(yr+0.5)+'" data-layer="profeccao"');
+    const x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1, lg=PT_GLYPH[p.lordKey]||'', sg=sgl(p.signIdx);
+    const label=fit(w,11,[sg+' Casa '+p.houseN+' · '+lg, 'Casa '+p.houseN+' '+lg, sg+' '+lg, lg, 'C'+p.houseN]);
+    seg(x1,x2,rows.prof,SUBH,now,label,0,'data-goto="'+(yr+0.5)+'" data-layer="profeccao"');
   }
   // ===== REVOLUÇÕES =====
   lbl(rows.rev,'Revoluções'); band(rows.rev,SUBH);
@@ -346,8 +351,11 @@ function drawCord(){
     if(b<t0||a>t1)return;
     const on=+y===selY, x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1;
     const rs=RS_DATA[y]; let sg=null; if(rs&&rs.raw&&rs.raw.asc!=null)sg=signOf(rs.raw.asc);
-    const label=w>74&&sg!=null?(y+' · '+SG[sg]+' '+PT_GLYPH[SIGN_RULER[sg]]):(w>40?((''+y).slice(2)+(sg!=null?(' '+SG[sg]):'')):(w>18?(''+y).slice(2):''));
-    seg(x1,x2,rows.rev,SUBH,on,label,14,'data-rs="'+y+'" data-layer="revolucao"');
+    const yy=(''+y).slice(2), rg=sg!=null?(PT_GLYPH[SIGN_RULER[sg]]||''):'';
+    const label=sg!=null
+      ? fit(w,11,[y+' · '+sgl(sg)+' '+rg, yy+' '+sgl(sg)+' '+rg, sgl(sg)+' '+rg, sgl(sg), yy])
+      : fit(w,11,[''+y, yy]);
+    seg(x1,x2,rows.rev,SUBH,on,label,0,'data-rs="'+y+'" data-layer="revolucao"');
   });
   // eventos pessoais (traço)
   EVENTS.forEach(ev=>{const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;

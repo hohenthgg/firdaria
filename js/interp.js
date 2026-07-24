@@ -382,7 +382,7 @@ function tarotCard(k,role,pos){
   return '<div class="tarot" data-arche="'+role+'">'
     +'<div class="t-num">'+a.num+'</div>'
     +'<div class="t-role">'+role+'</div>'
-    +'<div class="t-sym">'+a.sym+'</div>'
+    +'<div class="t-sym">'+(PT_GLYPH[k]||a.sym)+'︎</div>'
     +'<div class="t-card">'+a.card+'</div>'
     +'<div class="t-arq">'+a.arq+' · '+PT_NAME[k]+'</div>'
     +'<div class="t-kw">'+a.kw.map(w=>'<span>'+w+'</span>').join('')+'</div>'
