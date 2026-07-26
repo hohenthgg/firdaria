@@ -8,6 +8,8 @@ document.getElementById('nav').addEventListener('click',e=>{
   if(b.dataset.p==='tempo') syncTempo();
   if(b.dataset.p==='rs') renderRS();
   if(b.dataset.p==='config') renderConfig();
+  if(b.dataset.p==='perfil'){try{renderTemp();renderPers();}catch(e){console.error(e);}}
+  if(b.dataset.p==='natal'){try{renderNatal();}catch(e){console.error(e);}}
 });
 /* Tempo */
 document.getElementById('tempo-pick').addEventListener('change',function(){
