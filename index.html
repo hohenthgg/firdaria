@@ -1174,6 +1174,97 @@ body.is-mobile .tpbar-f{border-left:none;padding:0}
 body.is-mobile .tpbar-a{margin-left:0}
 body.is-mobile .tpcas,body.is-mobile .tppls,body.is-mobile .ass{grid-template-columns:1fr}
 body.is-mobile .tpl-row{flex-wrap:wrap}body.is-mobile .tpl-i{flex:1 1 100%}body.is-mobile .tpl-s{display:none}
+
+/* ============ Mapa natal minimalista ============ */
+.nsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:22px}
+.nsc{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.014));
+  border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh1), var(--inlite);min-height:120px}
+.nsc-g{width:42px;height:42px;flex:0 0 42px;border-radius:50%;border:1px solid rgba(220,184,119,.35);
+  display:flex;align-items:center;justify-content:center;font-size:1.15rem;color:var(--gold);
+  background:rgba(220,184,119,.05)}
+.nsc-b{flex:1;min-width:0}
+.nsc-b b{font-family:var(--serif);font-size:1.35rem;color:var(--ivory);font-weight:400}
+.nsc-b em{display:block;font-style:normal;font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;color:var(--gold2);margin:3px 0 8px}
+.nsc-b p{font-size:.84rem;color:var(--dim);line-height:1.55;margin:0}
+.ns-h{margin-top:40px}
+.nsproms{display:flex;flex-direction:column;gap:8px}
+.nsp{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.025);border:1px solid var(--line);
+  border-radius:12px;padding:11px 16px}
+.nsp-t{flex:1;min-width:0;font-size:.86rem;color:var(--ivory);font-weight:500}
+.nsp-m{font-family:var(--mono);font-size:.58rem;color:var(--dim2);white-space:nowrap}
+/* ============ Timeline (nova) ============ */
+.tl2{display:grid;grid-template-columns:minmax(250px,300px) minmax(0,1fr);gap:var(--gap);align-items:start}
+.tl2-side{display:flex;flex-direction:column;gap:12px}
+.tl2-main{display:flex;flex-direction:column;gap:var(--gap)}
+.tl2-orb{display:flex;justify-content:center}
+.tl2-orb #cord{width:100%;max-width:560px;display:block}
+.tl2-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.tli{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));border:1px solid var(--line);
+  border-radius:14px;padding:14px 16px;box-shadow:var(--sh1)}
+.tli-k{display:block;font-family:var(--mono);font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);margin-bottom:9px}
+.tli-r{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px dotted var(--line);font-size:.76rem}
+.tli-r:first-of-type{border-top:none}
+.tli-r span{color:var(--dim2)}
+.tli-r b{color:var(--ivory);font-weight:500;text-align:right}
+.tli-b{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;padding:4px 0;font-size:.74rem;color:var(--dim)}
+.tli-b i{display:block;height:4px;border-radius:999px;background:rgba(255,255,255,.07)}
+.tli-b em{display:block;height:100%;border-radius:999px;background:var(--gold)}
+.tli-b u{text-decoration:none;font-family:var(--mono);font-size:.6rem;color:var(--dim2)}
+.tl2-ia{display:flex;flex-direction:column;gap:12px}
+.ia-btn{align-self:flex-start;display:flex;align-items:center;gap:9px;padding:12px 24px;border-radius:999px;cursor:pointer;
+  background:linear-gradient(180deg,rgba(220,184,119,.2),rgba(220,184,119,.06));border:1px solid rgba(220,184,119,.45);
+  color:var(--gold);font-family:var(--sans);font-size:.9rem;box-shadow:0 0 34px -12px rgba(220,184,119,.7);transition:.18s}
+.ia-btn:hover{background:linear-gradient(180deg,rgba(220,184,119,.28),rgba(220,184,119,.1))}
+.ia-out{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(220,184,119,.25);
+  border-radius:var(--r);padding:20px 24px;box-shadow:var(--sh1)}
+.ia-sec{margin-bottom:12px}
+.ia-sec span{display:block;font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.ia-sec p{font-size:.86rem;color:var(--dim);line-height:1.6;margin:0}
+/* ============ select de data legível ============ */
+input[type=date]{color-scheme:dark;background:#0d1322;color:var(--ivory);border:1px solid rgba(220,184,119,.3);
+  border-radius:10px;padding:9px 12px;font-family:var(--mono);font-size:.8rem;letter-spacing:.04em;min-width:150px}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.75) sepia(.4) saturate(2);cursor:pointer}
+select{color-scheme:dark}
+select option{background:#0d1322;color:var(--ivory)}
+.tpf-in{min-width:150px!important;font-size:.8rem!important;padding:8px 12px!important}
+/* ============ Ajustes ============ */
+.cfg{max-width:820px}
+.cfg-r{display:grid;grid-template-columns:minmax(190px,240px) 1fr 42px auto;gap:14px;align-items:center;
+  padding:9px 0;border-top:1px dotted var(--line);font-size:.8rem;color:var(--dim)}
+.cfg-r:first-of-type{border-top:none}
+.cfg-r b{font-family:var(--mono);font-size:.78rem;color:var(--gold);text-align:right}
+.cfg-r i{font-style:normal;font-family:var(--mono);font-size:.56rem;color:var(--dim2);white-space:nowrap}
+.cfg-r input[type=range]{width:100%;accent-color:#dcb877;background:transparent;border:none;box-shadow:none;padding:0}
+/* ============ Revoluções (comparativa) ============ */
+.rv2{display:grid;grid-template-columns:minmax(180px,205px) minmax(380px,1fr) minmax(280px,340px);gap:20px;align-items:start}
+.rv2-wheel{min-width:0}
+.rv2-sticky{position:sticky;top:16px}
+.rv2-sticky #rs-wheel{width:100%;max-width:600px;margin:0 auto;display:block}
+.rv2-cmp{display:flex;flex-direction:column;gap:14px}
+.rv2-cmp .rsbox{margin:0}
+.rvc-big{font-family:var(--serif);font-size:2rem;color:var(--ivory);line-height:1}
+.rvc-big i{font-style:normal;font-size:1.1rem;color:var(--dim2)}
+.rvc-sub{font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim2);margin:4px 0 10px}
+.rv2-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:var(--gap);align-items:start}
+.rvel{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));border:1px solid var(--line);
+  border-radius:var(--r);box-shadow:var(--sh1);overflow:hidden}
+.rvel>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;padding:16px 18px}
+.rvel>summary::-webkit-details-marker{display:none}
+.rvel>summary b{font-size:.92rem;color:var(--ivory);font-weight:500}
+.rvel>summary em{font-style:normal;font-family:var(--mono);font-size:.58rem;color:var(--dim2);flex:1;text-align:right}
+.rvel>summary span{color:var(--gr,#7fc9a0)}
+.rvel[open]>summary span{transform:rotate(90deg)}
+.rvel[open]{border-color:rgba(127,201,160,.35)}
+.rvel-b{padding:0 18px 16px}
+.rvel-s{margin-bottom:10px}
+.rvel-s span{display:block;font-family:var(--mono);font-size:.52rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gr,#7fc9a0);margin-bottom:3px}
+.rvel-s p{font-size:.78rem;color:var(--dim);line-height:1.55;margin:0}
+@media(max-width:1280px){.tl2{grid-template-columns:1fr}.tl2-side{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .rv2{grid-template-columns:1fr}.rv2-sticky{position:static}}
+@media(max-width:820px){.tl2-side{grid-template-columns:1fr}.nsgrid{grid-template-columns:1fr}}
+body.is-mobile .tl2,body.is-mobile .rv2,body.is-mobile .nsgrid{grid-template-columns:1fr}
+body.is-mobile .tl2-side{grid-template-columns:1fr}
+body.is-mobile .rv2-sticky{position:static}
 </style>
 </head>
 <body>
@@ -1191,13 +1282,11 @@ body.is-mobile .tpl-row{flex-wrap:wrap}body.is-mobile .tpl-i{flex:1 1 100%}body.
     </div>
     <nav id="nav">
       <button data-p="dados" class="on">Dados</button>
-      <button data-p="agora">Visão geral</button>
       <button data-p="natal">Mapa natal</button>
-      <button data-p="tempo">Tempo</button>
+      <button data-p="tempo">Timeline</button>
       <button data-p="rs">Revoluções</button>
-      <button data-p="trans">Trânsitos</button>
-      <button data-p="eletiva">Eletiva</button>
       <button data-p="perfil">Perfil</button>
+      <button data-p="config">Ajustes</button>
     </nav>
     <div class="foot">
       <div class="viewswitch" id="view-switch" title="Layout: escolha entre PC e mobile, ou Auto (pelo tamanho da tela)">
@@ -1244,54 +1333,39 @@ body.is-mobile .tpl-row{flex-wrap:wrap}body.is-mobile .tpl-i{flex:1 1 100%}body.
       </div>
     </section>
 
-    <section class="panel" id="p-agora">
-      <div class="kicker">estado vigente</div>
-      <h2>Agora <span id="agora-sub"></span></h2>
-      <div id="agora-body"></div>
-    </section>
+    
 
     <section class="panel" id="p-natal">
-      <div class="kicker">radix · planetas · casas · promessas</div>
-      <h2>Mapa natal <span>tudo do radix numa sala só</span></h2>
-      <div id="natal-body"></div>
-      <h3>Planeta a planeta</h3>
-      <div id="pl-sel" class="plsel"></div>
-      <div id="planetas-body"></div>
-      <h3>As doze casas</h3>
-      <div id="casas-body"></div>
-      <h3>Promessas do mapa</h3>
-      <div id="prom-body"></div>
+      <div class="kicker">regências · minimalismo</div>
+      <h2>Mapa natal <span>quem rege o quê, e onde atua</span></h2>
+      <div id="natal-simple" class="nsgrid"></div>
+      <h3 class="ns-h">Promessas do mapa</h3>
+      <div id="natal-proms" class="nsproms"></div>
     </section>
 
     <section class="panel" id="p-tempo">
       <div class="tpbar">
-        <div class="tpbar-t"><h2 class="tph2">Tempo</h2><span>o que se move agora, guia a próxima escolha</span></div>
-        <div class="tpbar-f"><span class="tpf-k">Data atual</span><b id="tempo-date">—</b>
+        <div class="tpbar-t"><h2 class="tph2">Timeline</h2><span>o que se move agora, guia a próxima escolha</span></div>
+        <div class="tpbar-f"><span class="tpf-k">Data</span>
           <input type="date" id="tempo-pick" class="tpf-in"></div>
         <div class="tpbar-f"><span class="tpf-k">Idade</span><b id="tempo-age">—</b></div>
         <div class="tpbar-f"><span class="tpf-k">Retorno</span>
           <select id="tempo-revsel2" class="tpf-sel"></select></div>
-        <div class="tpbar-f tpbar-z"><span class="tpf-k">Filtros rápidos</span>
-          <span class="tpseg" id="tempo-zoom">
-            <button class="btn on" data-z="vida">Vida</button><button class="btn" data-z="decada">Década</button><button class="btn" data-z="ano">Ano</button><button class="btn" data-z="mes">Mês</button>
-          </span></div>
-        <div class="tpbar-f tpbar-a"><button class="tp-ghost" id="tempo-today">Hoje</button>
-          <button class="tp-ghost" id="tempo-pin" title="comparar A/B">A/B</button></div>
+        <div class="tpbar-a"><button class="tp-ghost" id="tempo-today">Hoje</button></div>
       </div>
-      <div class="orb3">
-        <div class="orb-left">
-          <div class="orb-k">Caminho ativo</div>
-          <p class="orb-lede">Camadas do tempo que se movem juntas, revelando o que está vivo agora.</p>
-          <div id="tempo-exec" class="tpexec"></div>
+      <div class="tl2">
+        <aside class="tl2-side" id="tempo-exec"></aside>
+        <div class="tl2-main">
+          <div class="tl2-orb"><svg id="cord"></svg></div>
+          <div class="tl2-info" id="tl-info"></div>
+          <div class="tl2-ia">
+            <button class="ia-btn" id="tl-ia">✦ Sintetizar com IA</button>
+            <div id="tl-ia-out"></div>
+          </div>
         </div>
-        <div class="orb-mid"><svg id="cord"></svg></div>
-        <div class="orb-right" id="tempo-rev"></div>
       </div>
-      <div class="tplayers" id="tempo-layers"></div>
-      <div class="tplit" id="tempo-synth"></div>
-      <div id="tempo-compare"></div>
-      <div id="tempo-proms"></div>
       <div id="tempo-detail" class="tdetail"></div>
+      <span id="tempo-date" hidden></span>
       <details id="tempo-more">
         <summary class="kicker" style="cursor:pointer">eventos, retrospectiva e linha do tempo ano a ano</summary>
         <div class="toolrow" style="margin-top:12px">
@@ -1310,79 +1384,24 @@ body.is-mobile .tpl-row{flex-wrap:wrap}body.is-mobile .tpl-i{flex:1 1 100%}body.
         <div class="rvbrand"><span class="rvorb"></span><h2 class="rvh">Revoluções</h2></div>
         <div class="rvctl">
           <label class="rvyear"><span>Ano</span><select id="rs-year"></select></label>
-          <button class="rvswap" id="rs-cmp-chk-btn"><i>⇄</i> Comparar com o retorno seguinte</button>
         </div>
-        <div class="rvicons"><button class="rvic" id="rs-info" title="sobre revoluções">i</button></div>
+        <div class="rvicons"><button class="rvic" id="rs-prev">‹</button><button class="rvic" id="rs-next">›</button></div>
       </div>
-      <div class="rvgrid">
+      <div class="rv2">
         <aside class="rvtypes">
           <div class="rvt-k">tipo de retorno</div>
           <div id="rs-kinds"></div>
-          <div class="rvt-about"><b>Sobre revoluções</b><span>Entenda o ciclo e o significado do retorno.</span></div>
         </aside>
-        <div class="rvleft">
-          <div id="rs-resumo"></div>
-          <div id="rs-aspectos"></div>
-        </div>
-        <div class="rvmid"><svg id="rs-wheel"></svg></div>
-        <div class="rvright">
-          <div id="rs-casas"></div>
-          <div id="rs-angulos"></div>
-          <div id="rs-leitura"></div>
-        </div>
+        <div class="rv2-wheel"><div class="rv2-sticky"><svg id="rs-wheel"></svg></div></div>
+        <div class="rv2-cmp" id="rs-cmp"></div>
       </div>
-      <div class="rvtl" id="rs-timeline"></div>
+      <div class="rv2-cards" id="rs-cards"></div>
       <div id="rs-body"></div>
     </section>
 
-    <section class="panel" id="p-trans">
-      <div class="kicker">céu corrente sobre o radix</div>
-      <h2>Trânsitos <span id="trans-eph"></span></h2>
-      <div class="toolrow">
-        <span class="zoombar" id="trans-modes">
-          <button class="btn on" data-m="hoje">Hoje</button><button class="btn" data-m="30d">Próximos 30 dias</button><button class="btn" data-m="planeta">Por planeta</button><button class="btn" data-m="area">Por área da vida</button>
-        </span>
-        <input type="date" id="trans-pick">
-      </div>
-      <div id="trans-body"></div>
-      <p class="note">A pontuação de relevância é uma medida interna de repetição entre técnicas (firdária, profecção, revolução, orbe) — não é probabilidade científica de evento. Clique em "fundamento" para auditar cada nota.</p>
-    </section>
-
-    <section class="panel" id="p-eletiva">
-      <div class="kicker">astrologia eletiva</div>
-      <h2>Eletiva <span>buscar a melhor janela para agir</span></h2>
-      <div class="card">
-        <div class="grid3">
-          <div><label class="f">atividade</label><select id="el-act"></select></div>
-          <div><label class="f">cidade (referência)</label><input type="text" id="el-city" placeholder="ex.: São Paulo"></div>
-          <div><label class="f">duração estimada</label><select id="el-dur"><option>até 1h</option><option>algumas horas</option><option>o dia</option></select></div>
-          <div><label class="f">data inicial</label><input type="date" id="el-d0"></div>
-          <div><label class="f">data final</label><input type="date" id="el-d1"></div>
-          <div><label class="f">horário (UTC, início–fim)</label><div style="display:flex;gap:6px"><input type="number" id="el-h0" min="0" max="23" value="9" style="width:70px"><input type="number" id="el-h1" min="0" max="23" value="21" style="width:70px"></div></div>
-          <div><label class="f">prioridade</label><select id="el-pri"><option>segurança (evitar tensão)</option><option>velocidade (aproveitar impulso)</option></select></div>
-          <div><label class="f">evitar</label><select id="el-avoid"><option value="">nada específico</option><option value="retro">significador retrógrado</option><option value="voc">Lua sem curso</option></select></div>
-          <div style="display:flex;align-items:flex-end"><button class="btn primary" id="el-run">buscar janelas</button></div>
-        </div>
-      </div>
-      <div id="el-body"></div>
-      <p class="note">Limitação real: sem hora e coordenadas locais, o Ascendente eletivo não é computado — a avaliação usa condição da Lua, aplicações, significador (retrogradação/combustão), trânsitos ao natal, Senhor do Ano e firdária, em UTC. Informe a cidade apenas como referência do fuso ao interpretar os horários.</p>
     
-      <h3>Consulta aos livros</h3>
-      <div class="card orc">
-        <p class="note" style="margin-top:0">Pergunte em português. A resposta é montada por <b>recuperação local</b> nos corpora do projeto (Abū Ma'shar, corpus egípcio, Planetas nas Casas) somada às regras internas — não é um modelo generativo e não inventa fontes.</p>
-        <div class="orc-in">
-          <textarea id="orc-q" rows="2" placeholder="ex.: o que Saturno na casa 6 indica? · como se julga o Senhor do Ano? · o que a Lua em quadratura a Vênus significa?"></textarea>
-          <button class="btn primary" id="orc-run">Consultar</button>
-        </div>
-        <div class="orc-sug">
-          <button class="btn" data-orcq="O que Saturno na casa 6 indica?">Saturno na casa 6</button>
-          <button class="btn" data-orcq="Como se julga o Senhor do Ano na profecção?">Senhor do Ano</button>
-          <button class="btn" data-orcq="O que significa a Lua em quadratura a Vênus?">Lua quadratura Vênus</button>
-          <button class="btn" data-orcq="Como se lê o Ascendente da revolução solar?">Ascendente da revolução</button>
-        </div>
-        <div id="orc-out"></div>
-      </div>
-    </section>
+
+    
 
     <section class="panel" id="p-perfil">
       <div class="kicker">compleição · caracterologia</div>
@@ -1394,6 +1413,12 @@ body.is-mobile .tpl-row{flex-wrap:wrap}body.is-mobile .tpl-i{flex:1 1 100%}body.
         <select id="ax-sort"><option value="dom">ordem padrão</option><option value="val">maior desvio</option><option value="conf">maior confiança</option><option value="tens">maior tensão</option></select>
       </div>
       <div id="pers-body"></div>
+    </section>
+
+    <section class="panel" id="p-config">
+      <div class="kicker">pesos · classificação</div>
+      <h2>Ajustes <span>administre manualmente os pesos das tipologias</span></h2>
+      <div id="config-body"></div>
     </section>
 
   </main>

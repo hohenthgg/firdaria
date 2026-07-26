@@ -6,24 +6,14 @@ document.getElementById('nav').addEventListener('click',e=>{
   document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x===b));
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+b.dataset.p));
   if(b.dataset.p==='tempo') syncTempo();
-  if(b.dataset.p==='trans') renderTrans();
   if(b.dataset.p==='rs') renderRS();
+  if(b.dataset.p==='config') renderConfig();
 });
 /* Tempo */
 document.getElementById('tempo-pick').addEventListener('change',function(){
   if(this.value){CURSOR=new Date(this.value+'T12:00:00Z');syncTempo();}
 });
 document.getElementById('tempo-today').onclick=()=>{CURSOR=new Date();syncTempo();};
-document.getElementById('tempo-zoom').addEventListener('click',e=>{
-  const b=e.target.closest('button'); if(!b)return;
-  document.querySelectorAll('#tempo-zoom .btn').forEach(x=>x.classList.toggle('on',x===b));
-  ZOOM=b.dataset.z; drawCord();
-});
-document.getElementById('tempo-pin').onclick=function(){
-  if(PINNED){PINNED=null;this.textContent='fixar A/B';}
-  else{PINNED=new Date(CURSOR);this.textContent='soltar A';}
-  syncTempo();
-};
 document.getElementById('ev-add').onclick=()=>{
   const d=document.getElementById('ev-date').value, t=document.getElementById('ev-txt').value.trim();
   if(!d||!t)return;
@@ -46,13 +36,6 @@ document.addEventListener('click',e=>{
         b.scrollIntoView({behavior:'smooth',block:'start'}); } }catch(x){console.error(x);}
   }
 });
-/* Trânsitos */
-document.getElementById('trans-modes').addEventListener('click',e=>{
-  const b=e.target.closest('button'); if(!b)return;
-  document.querySelectorAll('#trans-modes .btn').forEach(x=>x.classList.toggle('on',x===b));
-  TMODE=b.dataset.m; renderTrans();
-});
-document.getElementById('trans-pick').addEventListener('change',renderTrans);
 /* Perfil filtros */
 ['ax-search','ax-sort'].forEach(id=>{
   const el=document.getElementById(id); if(!el)return;
@@ -81,8 +64,8 @@ function bindView(){
 }
 /* boot */
 function renderAll(){
-  const steps=[renderAgora,renderNatal,renderPlanetas,renderCasas,renderTemp,renderPers,renderRS,
-    ()=>{CURSOR=new Date();refreshNPTS();syncTempo();},renderLedger,renderTrans];
+  const steps=[renderNatal,renderTemp,renderPers,renderRS,
+    ()=>{CURSOR=new Date();refreshNPTS();syncTempo();},renderLedger];
   steps.forEach(fn=>{try{fn();}catch(err){console.error('render falhou:',fn.name||'anon',err);}});
   document.getElementById('brand-sub').textContent=NATAL?(NATAL.meta.name+' · '+NATAL.sect+' · '+new Date(BIRTH).toISOString().slice(0,10)):'motor interpretativo tradicional';
 }
@@ -170,8 +153,6 @@ function boot(){
   try{bindView();}catch(e){console.error(e);}
   try{bindImport();}catch(e){console.error(e);}
   try{bindDados();}catch(e){console.error(e);}
-  try{renderEletivaInit();}catch(e){console.error(e);}
-  try{bindOracle();}catch(e){console.error(e);}
   try{cordDrag();}catch(e){console.error(e);}
   window.addEventListener('resize',()=>{try{drawCord();}catch(e){}});
   if(loadFromState()){
@@ -185,4 +166,4 @@ function boot(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,220));
 else setTimeout(boot,220);
-window.addEventListener('load',()=>{renderAgora();syncTempo();renderTrans();});
+window.addEventListener('load',()=>{try{syncTempo();}catch(e){}});

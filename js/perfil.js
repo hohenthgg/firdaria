@@ -67,33 +67,33 @@ function temperEngine(){
   };
   // 1 · Ascendente — peso 3
   const asgn=signOf(NATAL.asc);
-  add(ELEMQ[SIGN_ELEM[asgn]],3,'Ascendente','em '+SIGNS[asgn]+' ('+SIGN_ELEM[asgn]+')');
+  add(ELEMQ[SIGN_ELEM[asgn]],CFG.tw.asc,'Ascendente','em '+SIGNS[asgn]+' ('+SIGN_ELEM[asgn]+')');
   // 2 · planeta na cúspide da 1 — peso 3 (exclui-o da contagem "dentro da casa 1")
   const cusp=onAscCusp();
   cusp.forEach(k=>{const p=NATAL.pts[k];
-    add(PQUAL[k],3*condMod(k),'Planeta na cúspide da 1',
+    add(PQUAL[k],CFG.tw.cusp*condMod(k),'Planeta na cúspide da 1',
       PT_NAME[k]+' a '+fmtOrb(adiff(p.lon,NATAL.asc))+' do Ascendente, em '+SIGNS[signOf(p.lon)]+' · '+p.dig);});
   // 3 · demais planetas dentro da casa 1 — peso 2
   planetsInH1().filter(k=>!cusp.includes(k)).forEach(k=>{const p=NATAL.pts[k];
-    add(PQUAL[k],2*condMod(k),'Planeta na casa 1',PT_NAME[k]+' em '+SIGNS[signOf(p.lon)]+' · '+p.dig);});
+    add(PQUAL[k],CFG.tw.h1*condMod(k),'Planeta na casa 1',PT_NAME[k]+' em '+SIGNS[signOf(p.lon)]+' · '+p.dig);});
   // 4 · regente do Ascendente — peso 3, sobretudo pelo SIGNO que ocupa
   const ru=NATAL.meta.ascRuler, rp=NATAL.pts[ru];
   if(rp){const rs=signOf(rp.lon);
-    add(ELEMQ[SIGN_ELEM[rs]],3*condMod(ru),'Regente do Ascendente',
+    add(ELEMQ[SIGN_ELEM[rs]],CFG.tw.ruler*condMod(ru),'Regente do Ascendente',
       PT_NAME[ru]+' em '+SIGNS[rs]+' ('+SIGN_ELEM[rs]+'), casa '+rp.h+' · '+rp.dig);}
   // 5 · Lua — peso 2 (pelo signo que ocupa)
   const mp=NATAL.pts.moon;
   if(mp){const ms=signOf(mp.lon);
-    add(ELEMQ[SIGN_ELEM[ms]],2*condMod('moon'),'Lua','em '+SIGNS[ms]+' ('+SIGN_ELEM[ms]+'), casa '+mp.h);}
+    add(ELEMQ[SIGN_ELEM[ms]],CFG.tw.moon*condMod('moon'),'Lua','em '+SIGNS[ms]+' ('+SIGN_ELEM[ms]+'), casa '+mp.h);}
   // 6 · fase lunar — peso 1
   if(mp&&NATAL.pts.sun){
     const el=n360(mp.lon-NATAL.pts.sun.lon);
     const ph=el<90?['quente','úmido']:el<180?['quente','seco']:el<270?['frio','seco']:['frio','úmido'];
     const nm=el<90?'crescente côncava':el<180?'crescente convexa':el<270?'minguante convexa':'minguante côncava';
-    add(ph,1,'Fase da Lua',nm+' ('+Math.round(el)+'° do Sol)');}
+    add(ph,CFG.tw.phase,'Fase da Lua',nm+' ('+Math.round(el)+'° do Sol)');}
   // 7 · Senhor da Genitura — peso 1
   const lord=lordOfGeniture();
-  add(PQUAL[lord],1,'Senhor da Genitura',PT_NAME[lord]+' · força '+(STR[lord]||4)+'/8');
+  add(PQUAL[lord],CFG.tw.lord,'Senhor da Genitura',PT_NAME[lord]+' · força '+(STR[lord]||4)+'/8');
 
   // normalização por pares opostos
   const hc=Q.quente+Q.frio||1, dm=Q.seco+Q['úmido']||1;
