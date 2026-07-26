@@ -768,12 +768,12 @@ h3{margin:38px 0 14px}
 /* ---------- TEMPO: mandala como protagonista ---------- */
 .tphead{margin:10px 0 26px;padding-bottom:18px;gap:12px}
 .tphead-date{font-size:1.5rem}
-.orb3{grid-template-columns:minmax(280px,320px) minmax(560px,1fr) minmax(280px,340px);
+.orb3{grid-template-columns:minmax(270px,300px) minmax(600px,1fr) minmax(280px,330px);
   gap:var(--gap);margin:8px 0 var(--gap);align-items:stretch}
 .orb-left,.orb-right{display:flex;flex-direction:column;gap:12px}
-.orb-mid{min-height:600px;padding:8px 0;display:block}
-.orb-mid #cord{width:100%;max-width:760px;margin:0 auto;display:block}
-.orb-left .tpcard{min-height:104px;display:flex;flex-direction:column;justify-content:center;padding:16px 40px 16px 18px}
+.orb-mid{min-height:640px;padding:0;display:block;position:sticky;top:18px}
+.orb-mid #cord{width:100%;max-width:820px;margin:0 auto;display:block}
+
 .orb-lede{font-size:.86rem;margin-bottom:4px}
 .orb-right .rvcard{flex:1}
 .orbfoot{padding:18px 24px;border-radius:var(--r);margin-bottom:var(--gap)}
@@ -1035,6 +1035,145 @@ body.is-mobile #p-rs .rvgrid{grid-template-columns:1fr}
 body.is-mobile #p-rs .rvmid{order:-1;position:static}
 body.is-mobile .rsang{grid-template-columns:1fr}
 body.is-mobile .gat{grid-template-columns:1fr 1fr}
+
+/* ============================================================
+   TEMPO — barra de cabeçalho, caminho ativo, camadas e síntese
+   ============================================================ */
+.tpbar{display:flex;align-items:center;gap:0;flex-wrap:wrap;
+  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));
+  border:1px solid var(--line);border-radius:var(--r);padding:16px 22px;margin-bottom:var(--gap);box-shadow:var(--sh1), var(--inlite)}
+.tpbar-t{padding-right:26px;margin-right:4px}
+.tph2{font-family:var(--serif);font-size:2.4rem;font-weight:400;margin:0;color:var(--ivory)}
+.tph2::after{display:none}
+.tpbar-t span{display:block;font-family:var(--mono);font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim2);margin-top:2px}
+.tpbar-f{display:flex;flex-direction:column;gap:3px;padding:2px 24px;border-left:1px solid var(--line);min-width:0}
+.tpf-k{font-family:var(--mono);font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim2)}
+.tpbar-f>b{font-family:var(--serif);font-size:1.2rem;color:var(--ivory);font-weight:400;white-space:nowrap}
+.tpf-in{margin-top:2px;padding:4px 8px!important;font-size:.7rem!important;border-radius:8px!important}
+.tpf-sel{background:none!important;border:none!important;box-shadow:none!important;color:var(--ivory)!important;
+  font-family:var(--serif)!important;font-size:1.15rem!important;padding:0!important;cursor:pointer}
+.tpbar-z{flex:1}
+.tpbar-a{margin-left:auto;flex-direction:row;align-items:center;gap:8px;border-left:none}
+.orb-k{font-family:var(--mono);font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold2)}
+.orb-left .tpcard{display:flex!important;flex-direction:row!important;gap:12px;align-items:flex-start;padding:16px 18px;min-height:0}
+.tpc-b{flex:1;min-width:0}
+.tpc-k{font-family:var(--mono);font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);margin-bottom:5px}
+.orb-left .tpc-t{font-family:var(--serif);font-size:1.5rem;color:var(--ivory);line-height:1.1;margin-bottom:6px;font-weight:400}
+.tpc-d{font-size:.78rem;color:var(--dim);line-height:1.5;margin:0 0 12px}
+.tpc-f{display:flex;flex-direction:column;gap:2px;padding-top:9px;border-top:1px solid var(--line)}
+.tpc-f span{font-family:var(--mono);font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim2)}
+.tpc-f b{font-family:var(--mono);font-size:.7rem;color:var(--ivory);font-weight:400}
+.tpc-g{width:38px;height:38px;flex:0 0 38px;border-radius:50%;border:1px solid rgba(220,184,119,.35);
+  display:flex;align-items:center;justify-content:center;font-size:1.05rem;color:var(--gold);
+  background:rgba(220,184,119,.06);box-shadow:0 0 20px -8px rgba(220,184,119,.6)}
+.orb-left .tpcard::after{display:none}
+.tpr{margin:0 0 14px;padding:16px 18px}
+.tpr-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.tpr-a{font-size:.7rem;color:var(--gold2);text-decoration:none}
+.tpr-a:hover{color:var(--gold)}
+.tpr-p{font-size:.78rem;color:var(--dim);margin:0 0 10px}
+.tpr-p b{color:var(--ivory);font-weight:500}
+.tpcas{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tpca-h{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.tpca-h b{font-family:var(--serif);font-size:1.1rem;color:var(--ivory);font-weight:400}
+.tpca-b{font-family:var(--mono);font-size:.48rem;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;
+  border-radius:999px;border:1px solid rgba(220,184,119,.4);color:var(--gold)}
+.tpca-b.secundária{border-color:var(--line2);color:var(--dim2)}
+.tpca em{font-style:normal;font-family:var(--mono);font-size:.56rem;color:var(--dim2)}
+.tpca p{font-size:.75rem;color:var(--dim);line-height:1.5;margin:4px 0 0}
+.tppls{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.tppl{display:flex;flex-direction:column;gap:5px}
+.tppl>div{display:flex;flex-direction:column}
+.tppl-g{width:30px;height:30px;border-radius:50%;border:1px solid rgba(220,184,119,.3);display:flex;
+  align-items:center;justify-content:center;color:var(--gold);font-size:.9rem}
+.tppl b{font-size:.82rem;color:var(--ivory);font-weight:500}
+.tppl em{font-style:normal;font-size:.64rem;color:var(--dim2)}
+.tppl-kw{font-size:.62rem;color:var(--dim2);line-height:1.4}
+.tpsyn-b{display:flex;gap:13px;align-items:flex-start}
+.tpsyn-i{width:38px;height:38px;flex:0 0 38px;border-radius:50%;border:1px solid rgba(220,184,119,.3);
+  display:flex;align-items:center;justify-content:center;color:var(--gold);
+  box-shadow:0 0 22px -8px rgba(220,184,119,.6)}
+.tpsyn-b p{font-size:.8rem;color:var(--dim);line-height:1.6;margin:0}
+.tplayers{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));
+  border:1px solid var(--line);border-radius:var(--r);padding:18px 22px;margin-bottom:var(--gap);box-shadow:var(--sh1)}
+.tpl-k0{font-family:var(--mono);font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim2);margin-bottom:14px}
+.tpl-row{display:flex;align-items:center;gap:6px}
+.tpl-i{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.025);
+  border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.tpl-g{width:34px;height:34px;flex:0 0 34px;border-radius:50%;border:1px solid rgba(220,184,119,.3);
+  display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:.95rem}
+.tpl-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.tpl-k{font-family:var(--mono);font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim2)}
+.tpl-b b{font-size:.92rem;color:var(--ivory);font-weight:500}
+.tpl-b em{font-style:normal;font-family:var(--mono);font-size:.56rem;color:var(--dim2)}
+.tpl-bar{height:3px;border-radius:999px;background:rgba(255,255,255,.07);margin-top:6px;overflow:hidden}
+.tpl-bar i{display:block;height:100%;border-radius:999px;background:var(--gold)}
+.tpl-p{font-family:var(--mono);font-size:.66rem;color:var(--dim2)}
+.tpl-s{color:var(--dim2);opacity:.5;flex:0 0 auto}
+.tplit{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008));
+  border:1px solid var(--line);border-radius:var(--r);padding:20px 24px;margin-bottom:var(--gap);box-shadow:var(--sh1)}
+.tplit-k{font-family:var(--mono);font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);margin-bottom:10px}
+.tplit span{display:block;font-size:.9rem;color:var(--dim);line-height:1.7;margin-bottom:3px}
+.tplit-orn{position:absolute!important;right:26px;bottom:18px;font-size:1.5rem;color:rgba(220,184,119,.28)}
+/* ============ TRÂNSITOS — refino conforme referência ============ */
+.trx-k{font-family:var(--mono);font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);padding:2px 8px 12px}
+.trx-i .ti-g{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);display:flex;
+  align-items:center;justify-content:center;font-size:.82rem;flex:0 0 26px}
+.trx-i.on .ti-g{border-color:rgba(220,184,119,.5);color:var(--gold)}
+.trx-tot{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:14px;
+  padding-top:12px;border-top:1px solid var(--line)}
+.trx-tot span{font-family:var(--mono);font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim2)}
+.trx-tot b{font-family:var(--serif);font-size:1.2rem;color:var(--gold)}
+.trx-row{grid-template-columns:auto 1fr auto auto auto;gap:12px;border-left:3px solid var(--line2)}
+.trx-row.tens{border-left-color:var(--red)}
+.trx-row.harm{border-left-color:var(--blue)}
+.trx-row.conj{border-left-color:var(--gold)}
+.tr-g{font-size:1rem;color:var(--gold)}
+.tr-s{font-family:var(--mono);font-size:.54rem;letter-spacing:.14em;color:var(--dim2)}
+.tr-x{color:var(--dim2);font-size:.8rem}
+.trx-chips{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 12px}
+.trx-chips span{font-family:var(--mono);font-size:.58rem;padding:4px 11px;border-radius:8px;
+  background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--dim)}
+.trx-sec{margin:0 0 12px}
+.trx-sec>span{display:block;font-family:var(--mono);font-size:.52rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px}
+.trx-sec p{font-size:.8rem;color:var(--dim);line-height:1.55;margin:0}
+.trb{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--line)}
+.trb:first-of-type{border-top:none}
+.trb-n{width:22px;height:22px;flex:0 0 22px;border-radius:50%;border:1px solid rgba(220,184,119,.4);
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.6rem;color:var(--gold)}
+.trb b{flex:1;min-width:0;font-size:.82rem;color:var(--ivory);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trb-d{font-family:var(--mono);font-size:.58rem;color:var(--dim2);white-space:nowrap}
+.trb-t{font-style:normal;font-family:var(--mono);font-size:.5rem;letter-spacing:.12em;color:var(--gold);white-space:nowrap}
+.ass{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.ass-i{display:flex;flex-direction:column;gap:6px;padding:11px 12px;border-radius:12px;
+  background:rgba(255,255,255,.025);border:1px solid var(--line)}
+.ass-i.on{border-color:rgba(220,184,119,.35);background:rgba(220,184,119,.05)}
+.ass-g{font-size:.95rem;color:var(--dim2)}
+.ass-i.on .ass-g{color:var(--gold)}
+.ass-i b{font-size:.72rem;color:var(--dim);font-weight:500}
+.ass-i.on b{color:var(--ivory)}
+.ass-d{display:flex;gap:3px}
+.ass-d i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.12)}
+.ass-d i.on{background:var(--gold)}
+.agd{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--line)}
+.agd:first-of-type{border-top:none}
+.agd-d{font-family:var(--mono);font-size:.58rem;color:var(--dim2);white-space:nowrap;min-width:52px}
+.agd b{flex:1;min-width:0;font-size:.82rem;color:var(--ivory);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agd-t{font-style:normal;font-family:var(--mono);font-size:.5rem;letter-spacing:.12em;color:var(--gold)}
+.agd-t.tens{color:var(--red)}
+.trx-more{width:100%;margin-top:12px;padding:9px;border-radius:10px;background:rgba(255,255,255,.03);
+  border:1px solid var(--line);color:var(--dim);font-family:var(--mono);font-size:.54rem;
+  letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.trx-more:hover{color:var(--gold);border-color:rgba(220,184,119,.35)}
+.trx-foot{text-align:center;margin-top:var(--gap)}
+@media(max-width:1280px){.tpbar{gap:10px}.tpbar-f{border-left:none;padding:2px 0}.tpbar-t{padding-right:0}
+  .tpcas,.tppls,.ass{grid-template-columns:1fr 1fr}.tpl-row{flex-wrap:wrap}.tpl-i{flex:1 1 44%}.tpl-s{display:none}}
+@media(max-width:820px){.tpcas,.tppls,.ass{grid-template-columns:1fr}.tpl-i{flex:1 1 100%}}
+body.is-mobile .tpbar{flex-direction:column;align-items:flex-start;gap:12px}
+body.is-mobile .tpbar-f{border-left:none;padding:0}
+body.is-mobile .tpbar-a{margin-left:0}
+body.is-mobile .tpcas,body.is-mobile .tppls,body.is-mobile .ass{grid-template-columns:1fr}
+body.is-mobile .tpl-row{flex-wrap:wrap}body.is-mobile .tpl-i{flex:1 1 100%}body.is-mobile .tpl-s{display:none}
 </style>
 </head>
 <body>
@@ -1125,47 +1264,41 @@ body.is-mobile .gat{grid-template-columns:1fr 1fr}
     </section>
 
     <section class="panel" id="p-tempo">
-      <h2>Tempo <span>o que está ativo na data selecionada</span></h2>
-      <!-- 1 · cabeçalho compacto -->
-      <div class="tphead">
-        <b id="tempo-date" class="tphead-date">—</b>
-        <input type="date" id="tempo-pick" class="tphead-pick">
-        <button class="tp-ghost" id="tempo-today">Hoje</button>
-        <span class="tpseg" id="tempo-zoom">
-          <button class="btn on" data-z="vida">Vida</button><button class="btn" data-z="decada">Década</button><button class="btn" data-z="ano">Ano</button><button class="btn" data-z="mes">Mês</button>
-        </span>
-        <button class="tp-ghost" id="tempo-pin" title="comparar A/B">A/B</button>
+      <div class="tpbar">
+        <div class="tpbar-t"><h2 class="tph2">Tempo</h2><span>o que se move agora, guia a próxima escolha</span></div>
+        <div class="tpbar-f"><span class="tpf-k">Data atual</span><b id="tempo-date">—</b>
+          <input type="date" id="tempo-pick" class="tpf-in"></div>
+        <div class="tpbar-f"><span class="tpf-k">Idade</span><b id="tempo-age">—</b></div>
+        <div class="tpbar-f"><span class="tpf-k">Retorno</span>
+          <select id="tempo-revsel2" class="tpf-sel"></select></div>
+        <div class="tpbar-f tpbar-z"><span class="tpf-k">Filtros rápidos</span>
+          <span class="tpseg" id="tempo-zoom">
+            <button class="btn on" data-z="vida">Vida</button><button class="btn" data-z="decada">Década</button><button class="btn" data-z="ano">Ano</button><button class="btn" data-z="mes">Mês</button>
+          </span></div>
+        <div class="tpbar-f tpbar-a"><button class="tp-ghost" id="tempo-today">Hoje</button>
+          <button class="tp-ghost" id="tempo-pin" title="comparar A/B">A/B</button></div>
       </div>
-      <!-- 2·3·4 — cartões das camadas · órbita concêntrica · revolução selecionada -->
       <div class="orb3">
         <div class="orb-left">
-          <p class="orb-lede">Camadas do tempo que se movem juntas, revelando o que está ativo agora.</p>
+          <div class="orb-k">Caminho ativo</div>
+          <p class="orb-lede">Camadas do tempo que se movem juntas, revelando o que está vivo agora.</p>
           <div id="tempo-exec" class="tpexec"></div>
         </div>
         <div class="orb-mid"><svg id="cord"></svg></div>
         <div class="orb-right" id="tempo-rev"></div>
       </div>
-      <div class="orbfoot">
-        <div class="orbfoot-how"><span class="ofi">i</span><div><b>Como funciona</b>
-          Selecione o tipo de revolução para trocar o mapa de retorno contextual da síntese.</div></div>
-        <div class="revlegend" id="tempo-revsel"></div>
-        <div class="orbfoot-key"><span><i class="k-on"></i>Selecionado</span><span><i class="k-off"></i>Não selecionado</span></div>
-      </div>
-      <!-- 5 · síntese literal -->
-      <div id="tempo-synth" class="tpsynth"></div>
+      <div class="tplayers" id="tempo-layers"></div>
+      <div class="tplit" id="tempo-synth"></div>
       <div id="tempo-compare"></div>
-      <!-- 5 · promessas do mapa -->
       <div id="tempo-proms"></div>
-      <!-- painel de detalhes (abre ao clicar num cartão) -->
       <div id="tempo-detail" class="tdetail"></div>
-      <!-- secundário: eventos, retrospectiva e linha do tempo ano a ano -->
-      <details class="rep-det" id="tempo-more">
-        <summary>Eventos, retrospectiva e linha do tempo ano a ano</summary>
-        <div class="toolrow" style="margin-top:8px">
-          <label class="f" style="margin:0">evento pessoal</label>
-          <input type="date" id="ev-date"><input type="text" id="ev-txt" placeholder="descrição do evento" style="min-width:180px">
-          <button class="btn" id="ev-add">registrar</button>
-          <button class="btn" id="retro-open">O que estava ativo?</button>
+      <details id="tempo-more">
+        <summary class="kicker" style="cursor:pointer">eventos, retrospectiva e linha do tempo ano a ano</summary>
+        <div class="toolrow" style="margin-top:12px">
+          <input type="date" id="ev-date">
+          <input type="text" id="ev-txt" placeholder="evento (ex.: mudança de emprego)" style="min-width:240px">
+          <button class="btn" id="ev-add">marcar evento</button>
+          <button class="btn" id="retro-open">retrospectiva da data</button>
         </div>
         <div id="retro-body"></div>
         <div id="fird-ledger"></div>
