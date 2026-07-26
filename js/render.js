@@ -288,10 +288,10 @@ function cordRange(){
 function drawCord(){
   const svg=$('cord'); if(!svg)return;
   const W=svg.clientWidth||900, mob=W<620;
-  const H=mob?Math.min(W,430):Math.min(W,560);
+  const H=mob?Math.min(W,440):Math.min(W,720);
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   if(typeof NATAL==='undefined'||!NATAL){svg.innerHTML='';return;}
-  const CX=W/2, CY=H/2+ (mob?4:6), R=Math.min(W,H)/2-(mob?14:22);
+  const CX=W/2, CY=H/2, R=Math.min(W,H)/2-(mob?16:26);
   const TAU=Math.PI*2;
   const C_INK='#eaf0fa', C_DIM='#98a5bd', C_DIM2='#6b7793', C_LINE='rgba(255,255,255,.10)', C_SOFT='rgba(255,255,255,.022)';
   const AU='220,184,119';
@@ -307,7 +307,7 @@ function drawCord(){
     +'<feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
     +'<radialGradient id="corefill"><stop offset="0%" stop-color="#0d1424"/><stop offset="100%" stop-color="#06090f"/></radialGradient></defs>';
   // anéis: [nome, raio externo, raio interno]
-  const w1=mob?28:40, gap=mob?11:15;
+  const w1=mob?30:46, gap=mob?11:16;
   const rF=[R, R-w1], rS=[R-w1-gap, R-2*w1-gap], rP=[R-2*w1-2*gap, R-3*w1-2*gap];
   const rCore=rP[1]-gap;
   // trilhos
@@ -343,8 +343,8 @@ function drawCord(){
     s+=setor(a0,a1,rF,ativo,'data-layer="firdaria" data-goto="'+(acc+len/2)+'"');
     const arcLen=(a1-a0)*((rF[0]+rF[1])/2), g=PT_GLYPH[k]||'';
     const nome=(PT_NAME[k]||nm);
-    const txt=estW(g+' '+nome,12)+8<arcLen?(g+' '+nome):(estW(nome,12)+6<arcLen?nome:g);
-    s+=meioTexto(mid,(rF[0]+rF[1])/2,txt,ativo);
+    const txt=ativo?((estW(g+' '+nome,13)+10<arcLen)?(g+' '+nome):nome):g;
+    s+=meioTexto(mid,(rF[0]+rF[1])/2,txt,ativo,ativo?(mob?11:14):(mob?11:13));
     acc+=len;
   });
   s+=label('FIRDÁRIA',rF[0]+(mob?8:11));
@@ -359,8 +359,8 @@ function drawCord(){
     const ativo=(S.age>=base+i*part&&S.age<base+(i+1)*part);
     s+=setor(a0,a1,rS,ativo,'data-layer="sub" data-goto="'+(base+i*part+part/2)+'"');
     const arcLen=(a1-a0)*((rS[0]+rS[1])/2), g=PT_GLYPH[sk]||'', nome=PT_NAME[sk]||'';
-    const txt=estW(g+' '+nome,11)+8<arcLen?(g+' '+nome):g;
-    s+=meioTexto(mid,(rS[0]+rS[1])/2,txt,ativo,mob?9:11);
+    const txt=ativo?((estW(g+' '+nome,12)+10<arcLen)?(g+' '+nome):nome):g;
+    s+=meioTexto(mid,(rS[0]+rS[1])/2,txt,ativo,ativo?(mob?10:13):(mob?10:12));
   }
   s+=label('SUBFIRDÁRIA',(rF[1]+rS[0])/2);
 
@@ -372,9 +372,9 @@ function drawCord(){
     s+=setor(a0,a1,rP,ativo,'data-layer="profeccao" data-goto="'+(anoBase+i+0.5)+'"');
     const lord=NATAL.rulers[casa];
     const arcLen=(a1-a0)*((rP[0]+rP[1])/2);
-    const txt=estW('Casa '+casa+' '+(PT_GLYPH[lord]||''),11)+6<arcLen
-      ?('Casa '+casa+' '+(PT_GLYPH[lord]||'')):(''+casa);
-    s+=meioTexto(mid,(rP[0]+rP[1])/2,txt,ativo,mob?9:11);
+    const txt=ativo?(estW('Casa '+casa+' '+(PT_GLYPH[lord]||''),12)+8<arcLen
+      ?('Casa '+casa+' '+(PT_GLYPH[lord]||'')):('Casa '+casa)):(''+casa);
+    s+=meioTexto(mid,(rP[0]+rP[1])/2,txt,ativo,ativo?(mob?10:13):(mob?9:11));
   }
   s+=label('PROFECÇÃO',(rS[1]+rP[0])/2);
 
@@ -388,10 +388,10 @@ function drawCord(){
       +'stroke="'+(on?'rgba('+AU+',.85)':'rgba(255,255,255,.07)')+'" stroke-width="'+(on?1.5:1)+'"'
       +(on?' filter="url(#auglow)"':'')+' style="cursor:pointer"><title>'+K.o+'</title></path>';
     const rl=(rIn+rCore)/2, [lx,ly]=P(mid,rl);
-    s+='<text x="'+lx+'" y="'+(ly-3)+'" text-anchor="middle" font-size="'+(mob?11:14)+'" font-family="Inter" '
-      +'fill="'+(on?'#e9eef8':C_DIM2)+'" style="pointer-events:none">'+(PT_GLYPH[K.key]||'')+'︎</text>'
-      +'<text x="'+lx+'" y="'+(ly+(mob?10:13))+'" text-anchor="middle" font-size="'+(mob?8:10)+'" font-family="Inter" '
-      +'fill="'+(on?'var(--gold)':C_DIM2)+'" style="pointer-events:none">'+K.label+'</text>';
+    s+='<text x="'+lx+'" y="'+(ly+(on?-3:5))+'" text-anchor="middle" font-size="'+(mob?12:15)+'" font-family="Inter" '
+      +'fill="'+(on?'#e9eef8':C_DIM2)+'" style="pointer-events:none">'+(PT_GLYPH[K.key]||'')+'︎</text>';
+    if(on)s+='<text x="'+lx+'" y="'+(ly+(mob?11:14))+'" text-anchor="middle" font-size="'+(mob?8.5:10)+'" font-family="Inter" '
+      +'fill="var(--gold)" style="pointer-events:none">'+K.label+'</text>';
   });
   s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rIn+'" fill="#05080f" stroke="rgba('+AU+',.35)" data-layer="revolucao" style="cursor:pointer"/>';
   const fsT=mob?12:16, fsS=mob?8.5:10.5;
@@ -736,9 +736,9 @@ function rsStep(dir){
 /* roda de quatro camadas: período · ascendente e regente · casas ativadas · síntese */
 function rsWheelSVG(R,S){
   const svg=$('rs-wheel'); const W=(svg&&svg.clientWidth)||620, mob=W<560;
-  const H=W, CX=W/2, CY=H/2, R0=W/2-(mob?12:18);
+  const H=W, CX=W/2, CY=H/2, R0=W/2-(mob?12:16);
   const AU='220,184,119', BL='111,159,216', CN='127,210,230';
-  const rings=[R0, R0*0.78, R0*0.57, R0*0.36];
+  const rings=[R0, R0*0.79, R0*0.58, R0*0.37];
   const k=R0/300;                                   // escala das distâncias
   let s='<defs><filter id="rsglow" x="-60%" y="-60%" width="220%" height="220%">'
     +'<feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
@@ -757,21 +757,21 @@ function rsWheelSVG(R,S){
       +'<text x="'+x+'" y="'+(y-9*k)+'" text-anchor="middle" font-size="'+FS(13)+'" font-family="Inter" fill="#c9d4e8">'+(PT_GLYPH[pk]||'')+'︎</text>';});
   // camada 1 — período do retorno
   let y1=CY-rings[0];
-  s+=txt(y1+18*k,'ANO DA REVOLUÇÃO '+R.label.toUpperCase(),FS(9.5),'#8c7c5c','IBM Plex Mono',2.2*k);
-  s+=txt(y1+46*k,String(R.start.getUTCFullYear()),FS(30),'#dcb877','Cormorant Garamond');
-  s+=txt(y1+63*k,'de '+fdate(R.start)+(R.end?(' a '+fdate(R.end)):''),FS(10.5),'#9aa6bd');
+  s+=txt(y1+17*k,'ANO DA REVOLUÇÃO '+R.label.toUpperCase(),FS(9.5),'#8c7c5c','IBM Plex Mono',2.2*k);
+  s+=txt(y1+43*k,String(R.start.getUTCFullYear()),FS(28),'#dcb877','Cormorant Garamond');
+  s+=txt(y1+57*k,'de '+fdate(R.start)+(R.end?(' a '+fdate(R.end)):''),FS(10.5),'#9aa6bd');
   // camada 2 — ascendente e regente
   let y2=CY-rings[1];
-  s+=txt(y2+18*k,'ASCENDENTE DO RETORNO',FS(9.5),'#5b7fa8','IBM Plex Mono',2*k);
-  s+=txt(y2+44*k,R.ascSignNm+' <tspan font-size="'+FS(14)+'" fill="#9aa6bd">'+(zfmt(R.ascLon).match(/\d+°\d*/)||[''])[0]+'</tspan>',FS(22),'#8fc0ee','Cormorant Garamond');
-  s+=txt(y2+62*k,'Regente: '+PT_NAME[R.ascRuler],FS(11.5),'#9aa6bd');
+  s+=txt(y2+16*k,'ASCENDENTE DO RETORNO',FS(9.5),'#5b7fa8','IBM Plex Mono',2*k);
+  s+=txt(y2+41*k,R.ascSignNm+' <tspan font-size="'+FS(14)+'" fill="#9aa6bd">'+(zfmt(R.ascLon).match(/\d+°\d*/)||[''])[0]+'</tspan>',FS(22),'#8fc0ee','Cormorant Garamond');
+  s+=txt(y2+56*k,'Regente: '+PT_NAME[R.ascRuler],FS(11.5),'#9aa6bd');
   // camada 3 — ênfases e casas ativadas
   let y3=CY-rings[2];
-  s+=txt(y3+16*k,'ÊNFASES DO PERÍODO',FS(9.5),'#4f8fa0','IBM Plex Mono',2*k);
-  s+=txt(y3+30*k,'Casas ativadas',FS(11),'#9aa6bd');
+  s+=txt(y3+15*k,'ÊNFASES DO PERÍODO',FS(9.5),'#4f8fa0','IBM Plex Mono',2*k);
+  s+=txt(y3+28*k,'Casas ativadas',FS(11),'#9aa6bd');
   const casas=S?[...new Set([R.ascNatalHouse,S.profHouse,R.ascRulerNatalHouse,(NATAL.pts[R.planetKey]||{}).h].filter(Boolean))].slice(0,4)
                :[R.ascNatalHouse].filter(Boolean);
-  const cr=15*k, cyy=y3+52*k, x0=CX-((casas.length-1)*cr*2.6)/2;
+  const cr=15*k, cyy=y3+50*k, x0=CX-((casas.length-1)*cr*2.6)/2;
   casas.forEach((h,i)=>{const x=x0+i*cr*2.6, on=S&&h===S.profHouse;
     s+='<circle cx="'+x+'" cy="'+cyy+'" r="'+cr+'" fill="'+(on?'rgba('+AU+',.14)':'rgba(255,255,255,.03)')+'" '
       +'stroke="rgba('+(on?AU+',.85':'255,255,255,.16')+')"'+(on?' filter="url(#rsglow)"':'')+'/>'
@@ -837,7 +837,8 @@ function renderRS(){
      +'<div class="rvi"><b>Aspectos repetidos</b>'+(R.repeats.slice(0,3).map(r=>PT_NAME[r.a]+' '+r.gl+' '+PT_NAME[r.b]).join(' · ')||'nenhum')+'</div>'
     +'</div>'
     +'<div class="card rvbox"><div class="kicker">síntese literal</div><p class="rv-s">'+rsSynth(R,S)+'</p>'
-     +(typeof fundamentoHTML==='function'?fundamentoHTML(['revolucao','ascendente','dois-tempos','aspecto']):'')+'</div>';
+     +(typeof fundamentoHTML==='function'?fundamentoHTML(['revolucao','ascendente','dois-tempos','aspecto']):'')+'</div>'
+    +'<button class="rvcta" data-rvcta>Ver interpretação completa <i>→</i></button>';
   // comparação com o retorno seguinte
   let html='';
   if(RS_CMP&&R.end){
@@ -979,15 +980,24 @@ function renderTransHoje(d){
   const crit=rel.filter(h=>h.cls==='tens').slice(0,3).map(h=>{const T=transitoTexto(h,d,S);
     return '<div class="evrow tens"><span class="d">'+fdate(T.janela.start)+' → '+fdate(T.janela.end)+'</span>'
       +'<span class="t">'+T.titulo+'</span></div>';}).join('')||'<p class="note">sem janelas tensas relevantes.</p>';
+  // três blocos inferiores
+  const relev=rel.slice(0,3).map(h=>{const T=transitoTexto(h,d,S);
+    return '<div class="trx-bl"><b>'+(PT_GLYPH[h.tKey]||'')+'︎ '+PT_NAME[h.tKey]+' '+h.gl+' '+h.np.nm+'</b>'
+      +'<span>'+h.orb.toFixed(1)+'° · pico '+fdate(T.janela.peak).replace(/ \d{4}$/,'')+'</span></div>';}).join('')
+    ||'<p class="note">—</p>';
+  const rapidos=rel.filter(h=>!h.pri.lento).slice(0,3).map(h=>{const T=transitoTexto(h,d,S);
+    return '<div class="trx-bl"><b>'+PT_NAME[h.tKey]+' '+h.gl+' '+h.np.nm+'</b>'
+      +'<span>'+fdate(T.janela.start).replace(/ \d{4}$/,'')+'–'+fdate(T.janela.end).replace(/ \d{4}$/,'')+'</span></div>';}).join('')
+    ||'<p class="note">nenhum disparador rápido relevante agora.</p>';
   return '<div class="trx">'
     +'<aside class="trx-side">'+transSideHTML(d,all.filter(h=>h.pri.score>=3))+'</aside>'
     +'<div class="trx-mid">'+transWheelSVG(d,rel)+'<div class="trx-list">'+lista+'</div></div>'
     +'<div class="trx-det">'+transDetailHTML(sel,d,S)+'</div>'
     +'</div>'
     +'<div class="trx-bottom">'
-      +'<div class="card"><div class="kicker">o que sustenta a leitura</div>'
-        +'<p style="font-size:.85rem">'+(S?synthLiteral(d):'')+'</p></div>'
-      +'<div class="card"><div class="kicker">janelas críticas</div>'+crit+'</div>'
+      +'<div class="card trx-blk"><div class="kicker">trânsitos mais relevantes</div>'+relev+'</div>'
+      +'<div class="card trx-blk"><div class="kicker">gatilhos rápidos</div>'+rapidos+'</div>'
+      +'<div class="card trx-blk"><div class="kicker">janelas críticas</div>'+crit+'</div>'
     +'</div>';
 }
 function renderTrans(){
@@ -1101,52 +1111,104 @@ function profileData(force){
   return {T:TEMPER_CACHE,A:AXES_CACHE};
 }
 function temperament(){return TEMPER_CACHE||(TEMPER_CACHE=temperEngine());}
-/* 1 · síntese · 2 · quadrante · 3 · qualidades · 4 · leitura rápida */
+/* 1 · painel executivo do temperamento (síntese · diagrama · qualidades) */
+const QICON={quente:'🜂',frio:'🜄',seco:'🜃','úmido':'🜁'};
+function temperDiagram(T,size){
+  const W=size||460, C=W/2, R=W/2-76, TAU=Math.PI*2;
+  const AU='220,184,119', BL='111,159,216';
+  // eixos: quente(topo) · seco(direita) · frio(baixo) · úmido(esquerda)
+  const v={quente:T.quente,seco:T.seco,frio:T.frio,'úmido':T.umido};
+  const ordem=['quente','seco','frio','úmido'];
+  const P=(i,r)=>[C+r*Math.sin(i/4*TAU), C-r*Math.cos(i/4*TAU)];
+  let s='<defs><filter id="tdglow" x="-60%" y="-60%" width="220%" height="220%">'
+    +'<feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    +'<linearGradient id="tdfill" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0%" stop-color="rgba('+AU+',.55)"/><stop offset="100%" stop-color="rgba('+AU+',.20)"/></linearGradient></defs>';
+  // anéis concêntricos discretos
+  [1,.78,.56,.34].forEach((f,i)=>{s+='<circle cx="'+C+'" cy="'+C+'" r="'+(R*f)+'" fill="none" '
+    +'stroke="rgba(255,255,255,'+(i===0?'.14':'.05')+')"'+(i===0?'':' stroke-dasharray="2 6"')+'/>';});
+  // arco dourado externo (assinatura visual)
+  s+='<circle cx="'+C+'" cy="'+C+'" r="'+(R+16)+'" fill="none" stroke="rgba('+AU+',.30)" stroke-width="1.2" '
+    +'stroke-dasharray="'+(TAU*(R+16)*.62)+' '+(TAU*(R+16))+'" transform="rotate(-118 '+C+' '+C+')"/>';
+  // cruz dos eixos
+  s+='<line x1="'+C+'" y1="'+(C-R)+'" x2="'+C+'" y2="'+(C+R)+'" stroke="rgba(255,255,255,.07)"/>'
+    +'<line x1="'+(C-R)+'" y1="'+C+'" x2="'+(C+R)+'" y2="'+C+'" stroke="rgba(255,255,255,.07)"/>';
+  // polígono das quatro qualidades
+  const pts=ordem.map((q,i)=>P(i,R*Math.max(.08,v[q]/100)).join(',')).join(' ');
+  s+='<polygon points="'+pts+'" fill="url(#tdfill)" stroke="rgba('+AU+',.9)" stroke-width="1.4" filter="url(#tdglow)"/>';
+  ordem.forEach((q,i)=>{const [x,y]=P(i,R*Math.max(.08,v[q]/100));
+    s+='<circle cx="'+x+'" cy="'+y+'" r="3.6" fill="rgba('+AU+',.95)"/>';});
+  // nós rotulados
+  ordem.forEach((q,i)=>{
+    const [x,y]=P(i,R), quente=(q==='quente'||q==='seco');
+    const col=q==='quente'?'#d98a6a':q==='frio'?'#7fa8d8':q==='seco'?'#dcb877':'#7fc8d8';
+    s+='<circle cx="'+x+'" cy="'+y+'" r="19" fill="#0a0f1c" stroke="rgba(255,255,255,.16)"/>'
+      +'<text x="'+x+'" y="'+(y+6)+'" text-anchor="middle" font-size="16" fill="'+col+'">'+QICON[q]+'</text>';
+    const [lx,ly]=P(i,R+(i%2?52:42));
+    s+='<text x="'+lx+'" y="'+(ly+4)+'" text-anchor="middle" font-size="11" font-family="Inter" '
+      +'letter-spacing="2.2" fill="'+col+'">'+q.toUpperCase()+'</text>';
+  });
+  return '<svg class="tdiag" viewBox="0 0 '+W+' '+W+'">'+s+'</svg>';
+}
 function renderTemp(){
   if(typeof NATAL==='undefined'||!NATAL){$('temp-body').innerHTML=emptyState();return;}
   const {T,A}=profileData(true);
   if(!T){$('temp-body').innerHTML=emptyState();return;}
-  const x=T.seco, y=100-T.quente;                       // quadrante seco→ · quente↑
-  const bar=(rot,v,cor)=>'<div class="qbar"><div class="qb-h"><span>'+rot+'</span><b>'+v+'%</b></div>'
-    +'<div class="qb-t"><i style="width:'+v+'%;background:'+cor+'"></i></div></div>';
-  // leitura rápida: 3 frases curtas e literais
+  const qcard=(q,v,cor)=>'<div class="qcd"><div class="qcd-h"><span class="qcd-i" style="color:'+cor+'">'+QICON[q]+'</span>'
+    +'<span class="qcd-n">'+q.toUpperCase()+'</span></div>'
+    +'<b>'+v+'%</b><div class="qcd-t"><i style="width:'+v+'%;background:'+cor+'"></i></div></div>';
+  const donut=(v)=>{const r=26,c=2*Math.PI*r;
+    return '<svg class="vdonut" viewBox="0 0 64 64"><circle cx="32" cy="32" r="'+r+'" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/>'
+      +'<circle cx="32" cy="32" r="'+r+'" fill="none" stroke="var(--gold)" stroke-width="3" stroke-linecap="round" '
+      +'stroke-dasharray="'+(c*v/100)+' '+c+'" transform="rotate(-90 32 32)"/>'
+      +'<text x="32" y="36" text-anchor="middle" font-size="14" font-family="Inter" fill="var(--gold)">'+v+'%</text></svg>';};
+  $('temp-body').innerHTML=
+   '<div class="pfhero">'
+    // coluna 1 — diagnóstico
+    +'<div class="pfh-l">'
+      +'<div class="pfh-mark">✦</div>'
+      +'<div class="pfh-k">Predomínio</div>'
+      +'<h3 class="pfh-h">'+T.humor+'</h3>'
+      +'<p class="pfh-p">Seu temperamento é predominantemente <b>'+T.humor+'</b>, com ênfase nas qualidades '
+        +'<b>'+T.poloH+'</b> e <b>'+T.poloD+'</b>. '+cap1(HUMOR_TXT[T.humor])+'.</p>'
+      +'<div class="pfh-cf"><span>Confiança do veredito</span>'
+        +'<div class="pfh-pill"><b>'+T.conf+'%</b><i>'+T.confLabel+'</i></div></div>'
+      +'<div class="pfh-sec">Quadrante vizinho: <b>'+T.secundario+'</b></div>'
+    +'</div>'
+    // coluna 2 — diagrama
+    +'<div class="pfh-c">'+temperDiagram(T)+'</div>'
+    // coluna 3 — qualidades + veredito
+    +'<div class="pfh-r">'
+      +'<div class="qcds">'+qcard('quente',T.quente,'#d98a6a')+qcard('seco',T.seco,'#dcb877')
+        +qcard('frio',T.frio,'#7fa8d8')+qcard('úmido',T.umido,'#7fc8d8')+'</div>'
+      +'<div class="vcard"><div class="vc-h"><span class="pf-k" style="margin:0">veredito</span><span class="vc-s">⚖</span></div>'
+        +'<div class="vc-b"><div><b>Predomínio '+T.humor+'</b>'
+          +'<em>'+cap1(T.poloH)+' e '+T.poloD+' (quente '+T.quente+'% · seco '+T.seco+'%)</em></div>'
+          +donut(T.conf)+'</div></div>'
+    +'</div>'
+   +'</div>'
+   // leitura rápida (recolhida)
+   +quickReadHTML(T,A);
+}
+function quickReadHTML(T,A){
   const fortes=A.slice().sort((a,b)=>Math.abs(b.pos-50)-Math.abs(a.pos-50)).slice(0,3);
   const rapida=[
     'Compleição '+T.humor+': '+HUMOR_TXT[T.humor]+'.',
     'Traço mais marcado: '+fortes[0].frase.replace(/^Inclina-se\s+/,'').replace(/^\w/,c=>c.toUpperCase()),
     'Em seguida vêm '+fortes[1].name.split('–')[fortes[1].pos>=50?0:1].toLowerCase()
       +' e '+fortes[2].name.split('–')[fortes[2].pos>=50?0:1].toLowerCase()+'.'];
-  $('temp-body').innerHTML=
-    // 1 · síntese principal
-    '<div class="pf-sint">'
-     +'<div class="pf-humor"><span class="pf-k">temperamento</span><b>'+cap1(T.humor)+'</b>'
-      +'<em>'+T.poloH+' e '+T.poloD+'</em></div>'
-     +'<div class="pf-conf"><span class="pf-k">confiança</span><b>'+T.conf+'%</b>'
-      +'<em>concordância '+T.confLabel+' entre '+T.fx.length+' testemunhos</em></div>'
-     +'<div class="pf-sec"><span class="pf-k">secundário</span><b>'+cap1(T.secundario)+'</b>'
-      +'<em>quadrante vizinho mais próximo</em></div>'
-    +'</div>'
-    // 2 · mapa dos temperamentos
-    +'<div class="pf-grid2">'
-     +'<div class="card pf-map"><div class="kicker">mapa dos temperamentos</div>'
-      +'<div class="qmap"><div class="ax axh"></div><div class="ax axv"></div>'
-      +'<div class="lb q2">sanguíneo<i>quente · úmido</i></div><div class="lb q1">colérico<i>quente · seco</i></div>'
-      +'<div class="lb q4">fleumático<i>frio · úmido</i></div><div class="lb q3">melancólico<i>frio · seco</i></div>'
-      +'<div class="marker" style="left:'+x+'%;top:'+y+'%"></div></div></div>'
-    // 3 · qualidades fundamentais
-     +'<div class="card pf-qual"><div class="kicker">qualidades fundamentais</div>'
-      +bar('quente',T.quente,'var(--red)')+bar('frio',T.frio,'var(--blue)')
-      +bar('seco',T.seco,'var(--gold)')+bar('úmido',T.umido,'var(--cyan)')
-      +'<p class="note">Pares opostos normalizados a 100% cada.</p></div>'
-    +'</div>'
-    // 4 · leitura rápida
-    +'<div class="card pf-quick"><div class="kicker">leitura rápida</div>'
-     +rapida.map(f=>'<p>'+f+'</p>').join('')+'</div>';
+  return '<details class="card pf-quick" open><summary><span class="kicker" style="margin:0">leitura rápida</span>'
+    +'<b>três frases literais</b></summary><div class="pf-cb">'
+    +rapida.map(f=>'<p>'+f+'</p>').join('')+'</div></details>';
 }
-/* 5 · os 48 eixos, agrupados em famílias */
-const FAM_ORDEM=['físico','afetivo','cognitivo','volitivo','social','comportamental'];
-const FAM_TIT={'físico':'Físico e vital','afetivo':'Afetivo','cognitivo':'Cognitivo',
-  'volitivo':'Volitivo','social':'Social','comportamental':'Comportamental'};
+/* 5 · os 48 eixos — cartões de família + trilhos ao abrir */
+const FAM_ORDEM=['físico','emocional','mental','comportamental'];
+const FAM_INFO={
+ 'físico':{t:'Físico',i:'🜂',d:'Força, energia, resistência, vitalidade e estrutura corporal.',c:'#8fbf9a'},
+ 'emocional':{t:'Emocional',i:'♡',d:'Sensibilidade, reatividade, equilíbrio e expressividade.',c:'#d98a8a'},
+ 'mental':{t:'Mental',i:'◈',d:'Raciocínio, clareza, foco, aprendizado e memória.',c:'#8fa8d8'},
+ 'comportamental':{t:'Comportamental',i:'✦',d:'Ações, hábitos, disciplina, adaptação e decisões.',c:'#dcb877'}};
+let AX_FAM=null;
 function axisCardHTML(a){
   const esq=a.pos>=50, polo=esq?a.poloA:a.poloB, v=esq?a.pos:100-a.pos;
   return '<div class="axc">'
@@ -1162,26 +1224,28 @@ function axisCardHTML(a){
       +'</ul></details>'
     +'</div>';
 }
+function famCardsHTML(A){
+  return '<div class="famgrid">'+FAM_ORDEM.map(f=>{const I=FAM_INFO[f], n=A.filter(a=>a.fam===f).length;
+    return '<button class="famc'+(AX_FAM===f?' on':'')+'" data-fam="'+f+'">'
+      +'<span class="famc-i" style="color:'+I.c+'">'+I.i+'</span>'
+      +'<span class="famc-b"><b>'+I.t+'</b><em>'+I.d+'</em><i style="color:'+I.c+'">'+n+' eixos</i></span>'
+      +'<span class="famc-x">›</span></button>';}).join('')+'</div>';
+}
 function renderPers(){
   if(typeof NATAL==='undefined'||!NATAL){$('pers-body').innerHTML=emptyState();return;}
   const {T,A}=profileData();
   const q=($('ax-search')&&$('ax-search').value||'').toLowerCase();
-  const dom=($('ax-dom')&&$('ax-dom').value)||'';
   const sort=($('ax-sort')&&$('ax-sort').value)||'dom';
-  // preenche o seletor de domínios uma vez
-  const selDom=$('ax-dom');
-  if(selDom&&selDom.options.length<=1)
-    FAM_ORDEM.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=FAM_TIT[f];selDom.appendChild(o);});
-  let L=A.filter(a=>(!q||a.name.toLowerCase().includes(q))&&(!dom||a.fam===dom));
+  let html='<div class="secth"><span class="secth-i">✦</span><h3>48 eixos</h3>'
+    +'<span class="secth-l">'+(AX_FAM?FAM_INFO[AX_FAM].t:'quatro famílias de doze')+'</span></div>'
+    +famCardsHTML(A);
+  // trilhos da família aberta (ou da busca)
+  let L=A.filter(a=>(!q||a.name.toLowerCase().includes(q))&&(!AX_FAM||a.fam===AX_FAM));
   if(sort==='val')L=L.slice().sort((a,b)=>Math.abs(b.pos-50)-Math.abs(a.pos-50));
   if(sort==='conf')L=L.slice().sort((a,b)=>b.conf-a.conf);
   if(sort==='tens')L=L.slice().sort((a,b)=>Math.abs(a.pos-50)-Math.abs(b.pos-50));
-  let html='';
-  if(sort==='dom'&&!dom){
-    FAM_ORDEM.forEach(f=>{const g=L.filter(a=>a.fam===f); if(!g.length)return;
-      html+='<h4 class="axfam">'+FAM_TIT[f]+' <span>'+g.length+' eixos</span></h4><div class="axgrid">'
-        +g.map(axisCardHTML).join('')+'</div>';});
-  } else html='<div class="axgrid">'+L.map(axisCardHTML).join('')+'</div>';
+  if(AX_FAM||q) html+='<div class="axgrid">'+L.map(axisCardHTML).join('')+'</div>';
+  else html+='<p class="note axhint">Escolha uma família acima para abrir os doze eixos, ou use a busca.</p>';
   // 6 · constituição tradicional (recolhida)
   const C=constitution(T);
   if(C)html+='<details class="card pf-const"><summary><span class="kicker" style="margin:0">constituição e suscetibilidades tradicionais</span>'
@@ -1210,8 +1274,7 @@ function renderPers(){
     +'<div class="pf-cr"><span>Eixos que sustentam a aproximação</span>'+(Y.sust.join(' · ')||'—')+'</div>'
     +'<div class="pf-cr"><span>Divergências que impedem certeza</span>'
       +(Y.diverg.length?Y.diverg.join('; ')+'.':'as quatro dicotomias estão suficientemente definidas, mas a correspondência segue sendo aproximação.')+'</div>'
-    +'<p class="note">Dimensões agregadas: E '+Y.dims.E+'% · N '+Y.dims.N+'% · F '+Y.dims.F+'% · J '+Y.dims.J+'%. '
-     +'A sociônica usa as descrições funcionais de Gulenko apenas como material de comparação — nenhum mapa corresponde automaticamente a um sociotipo.</p>'
+    +'<p class="note">Dimensões agregadas: E '+Y.dims.E+'% · N '+Y.dims.N+'% · F '+Y.dims.F+'% · J '+Y.dims.J+'%.</p>'
     +'</div>';
   // 8 · fundamento técnico geral
   html+='<details class="card pf-fund"><summary><span class="kicker" style="margin:0">fundamento técnico</span><b>pesos, testemunhos e regras usados</b></summary>'
@@ -1226,6 +1289,10 @@ function renderPers(){
     +'</div></details>';
   $('pers-body').innerHTML=html;
 }
+document.addEventListener('click',e=>{
+  const f=e.target.closest&&e.target.closest('[data-fam]');
+  if(f){AX_FAM=(AX_FAM===f.dataset.fam)?null:f.dataset.fam;renderPers();}
+});
 
 
 /* ================= FONTES E MÉTODO ================= */
