@@ -63,7 +63,7 @@ function qualidade(k){
 }
 
 /* ---------- pesos da convergência (internos) ---------- */
-const W={promessa:3, firdaria:3, sub:2, casaProf:3, senhorAno:3, revAlta:2.5, revMedia:1.5, repete:1.5, bonus:1.5};
+const W=new Proxy({},{get:(_,k)=>((typeof CFG!=='undefined'&&CFG.cw&&CFG.cw[k]!=null)?CFG.cw[k]:({promessa:3,firdaria:3,sub:2,casaProf:3,senhorAno:3,revAlta:2.5,revMedia:1.5,repete:1.5,bonus:1.5})[k])});
 
 /* Testemunhos de um planeta+casa numa data. Devolve {score, itens:[[peso,texto]], papeis}. */
 function testemunhos(k, houseN, d, S){

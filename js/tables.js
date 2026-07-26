@@ -289,3 +289,15 @@ const AXES_CONFIG=[
   ['Coesão identitária–Multiplicidade',[['pl','sun',3,1],['mo','fixo',2,0.7],['mo','mutável',2,-0.8],['pl','mercury',1,-0.5]]],
   ['Transparência–Reserva estratégica',[['el','fogo',2,0.8],['pl','sun',1,0.5],['el','água',2,-0.8],['pl','saturn',2,-0.7]]]]]
 ];
+
+/* ---------- CFG: pesos ajustáveis pelo usuário (aba Ajustes) ---------- */
+const CFG_DEF={
+  tw:{asc:3,cusp:3,h1:2,ruler:3,moon:2,phase:1,lord:1},        // temperamento
+  cw:{promessa:3,firdaria:3,sub:2,casaProf:3,senhorAno:3,revAlta:2.5,revMedia:1.5,repete:1.5,bonus:1.5} // convergência
+};
+let CFG=(function(){
+  try{const j=JSON.parse(localStorage.getItem('agx_cfg')||'null');
+    if(j&&j.tw&&j.cw)return {tw:Object.assign({},CFG_DEF.tw,j.tw),cw:Object.assign({},CFG_DEF.cw,j.cw)};}catch(e){}
+  return JSON.parse(JSON.stringify(CFG_DEF));
+})();
+function cfgSave(){try{localStorage.setItem('agx_cfg',JSON.stringify(CFG));}catch(e){}}

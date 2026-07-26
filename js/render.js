@@ -111,44 +111,34 @@ function renderHit(h,d,withOrient){
 /* ================= MAPA NATAL + camadas + promessas ================= */
 let ACTIVE_PROM=null;
 function renderNatal(){
-  if(!NATAL){$('natal-body').innerHTML=emptyState();$('prom-body').innerHTML='';return;}
-  const P=NATAL.pts;
-  let rows=Object.entries(P).map(([k,p])=>'<tr><td class="g">'+p.g+' '+p.nm+'</td><td class="m">'+zfmt(p.lon)+' · casa '+p.h+'</td><td>'+p.dig+'</td><td>'+(p.star||'—')+'</td></tr>').join('');
-  const stars=NATAL.angStars.map(([a,s])=>'<tr><td class="g">'+a+'</td><td colspan="3">'+s+'</td></tr>').join('');
-  const M=NATAL.meta;
-  let html='<p class="lede">Mapa '+NATAL.sect+' — '+M.name+'. Regente do Ascendente: '+PT_NAME[M.ascRuler]+' ('+NATAL.pts[M.ascRuler].dig+', casa '+NATAL.pts[M.ascRuler].h+').'
-    +(M.receptions.length?(' Recepções detectadas: '+M.receptions.join('; ')+'.'):' Sem recepções detectadas entre os aspectos informados.')
-    +(M.finals.length?(' Dispositor(es) final(is): '+M.finals.map(f=>PT_NAME[f]).join(', ')+'.'):'')
-    +(M.loops.length?(' Anel fechado de dispositores: '+M.loops[0].map(k=>PT_GLYPH[k]).join('→')+'→'+PT_GLYPH[M.loops[0][0]]+'.'):'')+'</p>';
-  html+=archetypeCards();
-  html+='<h3>Posições, dignidades, termos e estrelas</h3><table><tr><th>Ponto</th><th>Posição</th><th>Estado</th><th>Estrela (conjunções ≤ 1°)</th></tr>'+rows+stars+'</table>';
-  html+='<div class="card"><div class="kicker">Lote do Espírito — o daimon</div><p style="font-size:.86rem">'+CONTEUDO.daimon+'</p></div>';
-  html+='<div class="card"><div class="kicker">Sol e Lua — o eixo</div><p style="font-size:.86rem">'+CONTEUDO.solLua+'</p></div>';
-  $('natal-body').innerHTML=html;
-  // promessas — potenciais natais por múltiplos testemunhos
-  const now=new Date();
-  $('prom-body').innerHTML=(PROMESSAS.length?PROMESSAS:[]).map(pr=>{
-    const st=(typeof promiseState==='function')?promiseState(pr,now):{estado:'latente',itens:[]};
-    const q=(typeof qualidade==='function')?qualidade(pr.pl):{txt:pr.cond};
-    return '<div class="prom" data-id="'+pr.id+'">'
-    +'<div class="p-t">'+pr.t
-      +' <span class="prom-cond '+pr.cond+'">'+st.estado+'</span>'
-      +' <span class="mono" style="color:var(--dim2)">· '+(PT_GLYPH[pr.pl]||'')+' '+PT_NAME[pr.pl]
-      +' · casas '+pr.casas.map(h=>h+'ª').join(', ')+' · '+q.txt+'</span></div>'
-    +'<div class="p-b"><b>Administra:</b> '+((pr.ruled||[]).map(h=>HOUSE_TAG[h]).join(' e ')||'—')
-      +' · <b>executa por:</b> '+(HOUSE_TAG[pr.occ]||'—')+'.'
-    +(st.itens&&st.itens.length?('<br><b>Convergência agora:</b> '+st.itens.map(f=>f[1]).join('; ')+'.'):'')
-    +(typeof fundamentoHTML==='function'?fundamentoHTML(['promessa','convergencia','testemunho'],
-        [pr.fat,'Condição: '+pr.cond_manif,'Ativação: '+pr.tec]):'')
-    +'</div></div>';
-  }).join('')||'<p class="mono">Nenhuma promessa com dois ou mais testemunhos convergentes foi detectada.</p>';
-  $('prom-body').onclick=e=>{
-    const el=e.target.closest('.prom'); if(!el)return;
-    const id=el.dataset.id;
-    document.querySelectorAll('.prom').forEach(x=>x.classList.toggle('on',x===el&&ACTIVE_PROM!==id));
-    ACTIVE_PROM=ACTIVE_PROM===id?null:id;
-    renderLedger(); drawCord();
+  const el=$('natal-simple'); if(!el)return;
+  if(typeof NATAL==='undefined'||!NATAL){el.innerHTML=emptyState();if($('natal-proms'))$('natal-proms').innerHTML='';return;}
+  const frase=(k,ru,occ)=>{
+    if(!ru.length)return 'Sem regência de casa neste mapa.';
+    if(ru.length===1&&ru[0]===occ)
+      return 'O nativo tende a fazer de '+casaTag(occ)+' o campo central da própria vida.';
+    if(ru.includes(occ))
+      return 'O nativo tende a viver '+casasTag(ru)+' como um mesmo campo, realizado em '+casaTag(occ)+'.';
+    return 'O nativo tende a realizar '+casasTag(ru)+' por meio de '+casaTag(occ)+'.';
   };
+  el.innerHTML=Object.keys(PT_NAME).map(k=>{
+    const p=NATAL.pts[k]; if(!p)return '';
+    const ru=ruledHouses(k);
+    return '<div class="nsc"><span class="nsc-g">'+(PT_GLYPH[k]||'')+'︎</span>'
+      +'<div class="nsc-b"><b>'+PT_NAME[k]+'</b>'
+      +'<em>rege a '+(ru.map(h=>h+'ª').join(' e a ')||'—')+' · está na casa '+p.h+'</em>'
+      +'<p>'+frase(k,ru,p.h)+'</p></div></div>';
+  }).join('');
+  // promessas — muito resumidas
+  const pel=$('natal-proms'); if(!pel)return;
+  const now=new Date();
+  pel.innerHTML=(typeof PROMESSAS!=='undefined'?PROMESSAS:[]).map(pr=>{
+    const st=(typeof promiseState==='function')?promiseState(pr,now):{estado:'latente'};
+    const cls={ativada:'alta','disponível':'moderada',latente:'latente'}[st.estado]||'latente';
+    return '<div class="nsp"><span class="nsp-t">'+pr.t+'</span>'
+      +'<span class="nsp-m">'+(PT_GLYPH[pr.pl]||'')+'︎ '+PT_NAME[pr.pl]+' · casas '+(pr.casas||[]).map(h=>h+'ª').join(', ')+'</span>'
+      +'<span class="pp-lv '+cls+'">'+st.estado+'</span></div>';
+  }).join('')||'<p class="note">nenhuma promessa detectada.</p>';
 }
 function manifestFor(k){
   const M={sun:'cargos de frente, autoria assinada, avaliação pública do próprio nome; saúde ligada a coração e vitalidade',
@@ -288,7 +278,7 @@ function cordRange(){
 function drawCord(){
   const svg=$('cord'); if(!svg)return;
   const W=svg.clientWidth||900, mob=W<620;
-  const H=mob?Math.min(W,440):Math.min(W,780);
+  const H=mob?Math.min(W,400):Math.min(W,540);
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   if(typeof NATAL==='undefined'||!NATAL){svg.innerHTML='';return;}
   const CX=W/2, CY=H/2, R=Math.min(W,H)/2-(mob?16:26);
@@ -622,29 +612,91 @@ function tempoDetailHTML(layer,d){
   if(typeof fundamentoHTML==='function')body+=fundamentoHTML(tags);
   return '<div class="tdcard"><button class="td-close" data-tpclose>✕</button><div class="td-h">'+head+'</div><div class="td-sub">'+sub+'</div>'+body+'</div>';
 }
+/* ranking de planetas acionados (%) — pelo motor de convergência */
+function planetRanking(d,S){
+  S=S||tempoState(d); if(!S)return [];
+  const rows=Object.keys(PT_NAME).map(k=>({k,sc:testemunhos(k,null,d,S).score}));
+  const max=Math.max(1,...rows.map(r=>r.sc));
+  return rows.map(r=>({k:r.k,p:Math.round(r.sc/max*100)})).sort((a,b)=>b.p-a.p);
+}
+/* painel horizontal sob o círculo */
+function tlInfoHTML(d){
+  const S=tempoState(d); if(!S)return '';
+  const R=S.rev;
+  const box=(k,rows)=>'<div class="tli"><span class="tli-k">'+k+'</span>'+rows+'</div>';
+  const kv=(k,v)=>'<div class="tli-r"><span>'+k+'</span><b>'+v+'</b></div>';
+  let out='';
+  out+=box('Vigência temporal',
+    kv('Firdária',(PT_NAME[S.mk]||S.f.major)+(S.sk?(' / '+PT_NAME[S.sk]):''))
+    +kv('Período',(new Date(BIRTH+(S.f.from||0)*365.2425*DAY)).getUTCFullYear()+' – '
+        +(new Date(BIRTH+((S.f.from||0)+(S.f.len||0))*365.2425*DAY)).getUTCFullYear())
+    +(R?kv('Retorno',fdate(R.start)+(R.end?(' → '+fdate(R.end)):'')):''));
+  if(R) out+=box('Revolução '+R.label,
+    kv('Asc do retorno',R.ascSignNm+' '+Math.floor(n360(R.ascLon)%30)+'°')
+    +kv('No natal','cai na '+ordinal(R.ascNatalHouse)+' — '+casaTag(R.ascNatalHouse))
+    +kv('Regente do Asc',PT_NAME[R.ascRuler])
+    +kv('Planeta do retorno',PT_NAME[R.planetKey]+(R.planetRevHouse?(' · casa '+R.planetRevHouse+' do retorno'):'')));
+  out+=box('Profecção',
+    kv('Casa do ano',ordinal(S.profHouse)+' — '+casaTag(S.profHouse))
+    +kv('Senhor do Ano',PT_NAME[S.lord])
+    +(S.occLord?kv('Atua por',casaTag(S.occLord)):''));
+  const rank=planetRanking(d,S).slice(0,5);
+  out+=box('Planetas acionados',
+    rank.map(r=>'<div class="tli-b"><span>'+(PT_GLYPH[r.k]||'')+'︎ '+PT_NAME[r.k]+'</span>'
+      +'<i><em style="width:'+r.p+'%"></em></i><u>'+r.p+'%</u></div>').join(''));
+  return out;
+}
+/* síntese de IA — hierárquica e literal, gerada pelo motor local */
+function tlIaHTML(d){
+  const S=tempoState(d); if(!S)return '';
+  const R=S.rev, F=[];
+  F.push(['1 · Agenda do ciclo (firdária)',
+    PT_NAME[S.mk]?('Período de '+PT_NAME[S.mk]+': '+cap1(casasTag(S.rulesMk))+' em primeiro plano'
+      +(S.occMk?(', executado por '+casaTag(S.occMk)):'')+'. '+cap1(condDelivery(S.mk))+'.')
+      :'Passagem de nodo: capítulo curto, sem casa administrada.']);
+  if(S.sk)F.push(['2 · Fase (subfirdária)',
+    'A fase de '+PT_NAME[S.sk]+' introduz '+casasTag(S.rulesSk)+' como assunto imediato. '
+    +relBetween(S.mk,S.sk).txt+'.']);
+  F.push(['3 · Matéria do ano (profecção)',
+    'O ano ativa a '+ordinal(S.profHouse)+' — '+casaTag(S.profHouse)+' — administrada por '
+    +PT_NAME[S.lord]+(S.occLord?(', que atua por '+casaTag(S.occLord)):'')+'. '
+    +crossFirdProf(S.mk,S.sk,S.p)]);
+  if(R)F.push(['4 · Ambiente (Revolução '+R.label+')',
+    'O Ascendente do retorno em '+R.ascSignNm+' cai na '+ordinal(R.ascNatalHouse)
+    +' natal: o período tende a se manifestar por '+casaTag(R.ascNatalHouse)
+    +', sob administração de '+PT_NAME[R.ascRuler]+'.'
+    +(R.repeats&&R.repeats.length?(' O retorno repete o aspecto natal '+PT_NAME[R.repeats[0].a]+' '+R.repeats[0].gl+' '+PT_NAME[R.repeats[0].b]+': essa promessa tende a ficar mais visível.'):'')]);
+  const ativas=(typeof PROMESSAS!=='undefined'?PROMESSAS:[]).map(pr=>({pr,st:promiseState(pr,d,S)}))
+    .filter(x=>x.st.estado==='ativada').slice(0,2);
+  if(ativas.length)F.push(['5 · Promessas em convergência',
+    ativas.map(x=>x.pr.t).join('; ')+'. A repetição entre técnicas as coloca em primeiro plano — não é probabilidade de evento.']);
+  return '<div class="ia-out">'+F.map(([k,v])=>'<div class="ia-sec"><span>'+k+'</span><p>'+v+'</p></div>').join('')
+    +'<p class="note">Síntese gerada pelo motor interpretativo local, em ordem hierárquica (firdária → fase → profecção → revolução → promessas).</p></div>';
+}
 function syncTempo(){
   if(typeof NATAL==='undefined'||!NATAL){
-    ['tempo-exec','tempo-synth','tempo-proms','tempo-detail','tempo-rev','tempo-layers','fird-ledger'].forEach(id=>{if($(id))$(id).innerHTML='';});
-    if($('tempo-synth'))$('tempo-synth').innerHTML=emptyState();return;}
-  $('tempo-date').textContent=fdate(CURSOR);
+    ['tempo-exec','tl-info','tl-ia-out','tempo-detail','fird-ledger'].forEach(id=>{if($(id))$(id).innerHTML='';});
+    if($('tl-info'))$('tl-info').innerHTML=emptyState();return;}
+  if($('tempo-date'))$('tempo-date').textContent=fdate(CURSOR);
   if($('tempo-age'))$('tempo-age').textContent=Math.floor(ageAt(CURSOR))+' anos';
-  $('tempo-pick').value=CURSOR.toISOString().slice(0,10);
+  if($('tempo-pick'))$('tempo-pick').value=CURSOR.toISOString().slice(0,10);
   const sel=$('tempo-revsel2');
   if(sel){ if(sel.dataset.built!=='1'){
       sel.innerHTML=revKinds().map(k=>'<option value="'+k.id+'">'+k.label+'</option>').join('');
       sel.dataset.built='1'; sel.onchange=()=>{revSetKind(sel.value);syncTempo();}; }
     sel.value=REV_SEL; }
   drawCord();
-  $('tempo-exec').innerHTML=tempoExecCards(CURSOR);
-  if(TP_LAYER){const c=$('tempo-exec').querySelector('[data-layer="'+TP_LAYER+'"]');if(c)c.classList.add('on');}
-  if($('tempo-rev'))$('tempo-rev').innerHTML=revCardHTML(CURSOR);
-  if($('tempo-layers'))$('tempo-layers').innerHTML=tempoLayersHTML(CURSOR);
-  $('tempo-synth').innerHTML='<div class="tplit-k">Síntese literal</div>'+synthLiteral(CURSOR)
-    +'<span class="tplit-orn">✦</span>';
-  $('tempo-proms').innerHTML=tempoPromsHTML(CURSOR);
-  $('tempo-detail').innerHTML=TP_LAYER?tempoDetailHTML(TP_LAYER,CURSOR):'';
-  renderCompare();
+  if($('tempo-exec')){$('tempo-exec').innerHTML=tempoExecCards(CURSOR);
+    if(TP_LAYER){const c=$('tempo-exec').querySelector('[data-layer="'+TP_LAYER+'"]');if(c)c.classList.add('on');}}
+  if($('tl-info'))$('tl-info').innerHTML=tlInfoHTML(CURSOR);
+  if($('tl-ia-out'))$('tl-ia-out').innerHTML='';
+  if($('tempo-detail'))$('tempo-detail').innerHTML=TP_LAYER?tempoDetailHTML(TP_LAYER,CURSOR):'';
 }
+document.addEventListener('click',e=>{
+  if(e.target.closest&&e.target.closest('#tl-ia')){
+    const out=$('tl-ia-out'); if(out)out.innerHTML=tlIaHTML(CURSOR);
+  }
+});
 function renderCompare(){
   if(!PINNED){$('tempo-compare').innerHTML='';return;}
   const A=PINNED,B=CURSOR;
@@ -857,7 +909,6 @@ const RS_ANG_TXT={ASC:'como o período se apresenta',MC:'onde ele é visto e cob
   DSC:'com quem ele é negociado',IC:'de onde ele se sustenta'};
 function renderRS(){
   if(typeof NATAL==='undefined'||!NATAL){if($('rs-body'))$('rs-body').innerHTML=emptyState();return;}
-  // sidebar de tipos
   if($('rs-kinds'))$('rs-kinds').innerHTML=REV_KINDS.map(k=>{
     const per=k.per<40?'Mensal':k.per<400?'Anual':(Math.round(k.per/365.25)+' anos');
     return '<button class="rvty'+(k.id===RS_KIND?' on':'')+'" data-rsk="'+k.id+'">'
@@ -865,69 +916,66 @@ function renderRS(){
       +'<span class="rvty-b"><b>'+k.label+'</b><em>'+per+'</em></span>'
       +(k.id===RS_KIND?'<span class="rvty-d"></span>':'')+'</button>';}).join('');
   const d=rsCursor(), R=revolutionFor(RS_KIND,d), S=tempoState(d), K=REV_BY_ID[RS_KIND];
-  const ids=['rs-resumo','rs-aspectos','rs-casas','rs-angulos','rs-leitura','rs-timeline'];
-  if(!R){ ids.forEach(i=>{if($(i))$(i).innerHTML='';}); if($('rs-wheel'))$('rs-wheel').innerHTML='';
+  if(!R){ ['rs-cmp','rs-cards'].forEach(i2=>{if($(i2))$(i2).innerHTML='';});
+    if($('rs-wheel'))$('rs-wheel').innerHTML='';
     $('rs-body').innerHTML='<div class="card"><p>Não foi possível calcular a Revolução '+K.label+'. Importe o mapa pelo link do Aspectarian.</p></div>';return;}
-  // seletor de ano
   const nb=rsNeighbors(R,3), sel=$('rs-year');
   if(sel){sel.innerHTML=nb.map(x=>'<option value="'+x.R.start.getTime()+'"'+(x.rel==='atual'?' selected':'')+'>'
       +x.R.start.getUTCFullYear()+(x.R.end&&x.R.end.getUTCFullYear()!==x.R.start.getUTCFullYear()?(' – '+x.R.end.getUTCFullYear()):'')+'</option>').join('');
     sel.onchange=()=>{RS_CURSOR=new Date(+sel.value+DAY);renderRS();};}
   $('rs-wheel').innerHTML=rsWheelSVG(R,S);
-  // resumo do retorno
-  const el=SIGN_ELEM[R.ascSign], mo=SIGN_MODE[R.ascSign];
-  const row=(ic,k,v)=>'<div class="rsr"><span class="rsr-i">'+ic+'</span><div><span>'+k+'</span><b>'+v.toUpperCase()+'</b></div></div>';
-  $('rs-resumo').innerHTML='<div class="card rsbox"><div class="kicker">resumo do retorno</div>'
-    +'<h3 class="rs-h">Revolução '+K.label+'</h3>'
-    +'<div class="rs-per">'+fdate(R.start).toUpperCase()+(R.end?(' – '+fdate(R.end).toUpperCase()):'')+'</div>'
-    +'<p class="rs-d">'+cap1(K.foco)+'.</p>'
-    +row('◇','Elemento dominante',el)+row('△','Qualidade dominante',mo)
-    +row('☉','Regente do retorno',PT_NAME[R.ascRuler])
-    +row('✦','Foco principal',casaTag(R.ascNatalHouse))
-    +'</div>';
-  // aspectos-chave
-  const ka=rsKeyAspects(R);
-  $('rs-aspectos').innerHTML='<div class="card rsbox"><div class="kicker">aspectos-chave</div>'
-    +(ka.map(a=>'<div class="rsa"><b>'+(PT_GLYPH[R.planetKey]||'')+'︎ '+PT_NAME[R.planetKey]+' '+a.gl+' '+PT_NAME[a.k]+'</b>'
-      +'<span>'+a.orb.toFixed(1)+'° · '+ASP_TXT[a.cls]+'</span></div>').join('')||'<p class="note">nenhum aspecto em orbe.</p>')
-    +'</div>';
-  // casas mais ativadas
-  const rank=rsHousesRank(R);
-  $('rs-casas').innerHTML='<div class="card rsbox"><div class="kicker">casas mais ativadas</div>'
-    +rank.map(x=>'<div class="rsc"><b>'+x.h+'</b><div class="rsc-b"><span>'+cap1(HOUSE_TAG[x.h])+'</span>'
-      +'<i><em style="width:'+x.p+'%"></em></i></div><u>'+x.p+'%</u></div>').join('')
-    +'</div>';
-  // ângulos do retorno
-  const angs=[['ASC',R.ascLon],['MC',R.chart.mc],['DSC',n360(R.ascLon+180)],['IC',n360(R.chart.mc+180)]];
-  $('rs-angulos').innerHTML='<div class="card rsbox"><div class="kicker">ângulos do retorno</div><div class="rsang">'
-    +angs.map(([nm,L])=>'<div class="rsg-i"><span class="rsg-c">'+nm+'</span>'
-      +'<b>'+Math.floor(n360(L)%30)+'° '+SG[signOf(L)]+'</b><em>'+RS_ANG_TXT[nm]+'</em></div>').join('')
-    +'</div></div>';
-  // leitura rápida
-  $('rs-leitura').innerHTML='<div class="card rsbox rsread"><div class="kicker">leitura rápida</div>'
-    +'<div class="rsread-b"><span class="rsread-i">⚡</span><p>'+rsSynth(R,S)+'</p></div>'
-    +'<div class="rsread-f"><span>palavra-chave do ciclo</span><b>'+String(casaTag(R.ascNatalHouse)).split(/[ ,;]/)[0].toUpperCase()+'</b></div>'
-    +(typeof fundamentoHTML==='function'?fundamentoHTML(['revolucao','ascendente','dois-tempos']):'')
-    +'</div>';
-  // timeline dos retornos
-  const PLUR={Solar:'solares',Lunar:'lunares',Mercurial:'mercuriais',Venusiana:'venusianas',
-    Marcial:'marciais',Jupiteriana:'jupiterianas',Saturnina:'saturninas'};
-  $('rs-timeline').innerHTML='<div class="rvtl-h"><b>Retornos '+(PLUR[K.label]||K.label.toLowerCase())+'</b>'
-    +'<span class="rvtl-nav"><button id="rs-prev">‹</button><button id="rs-next">›</button></span></div>'
-    +'<div class="rvtl-track">'+nb.map(x=>{const pp=x.R.chart.pts[x.R.planetKey];
-      return '<div class="rvtl-i'+(x.rel==='atual'?' on':'')+'" data-rsjump="'+x.R.start.getTime()+'">'
-        +'<i></i><b>'+fdate(x.R.start).toUpperCase()+'</b>'
-        +'<span>'+(pp?zfmt(pp.lon):'')+'</span><em>'+x.rel.toUpperCase()+'</em></div>';}).join('')+'</div>';
-  const pv=$('rs-prev'), nx=$('rs-next');
+  const pv=$('rs-prev'),nx=$('rs-next');
   if(pv)pv.onclick=()=>rsStep(-1); if(nx)nx.onclick=()=>rsStep(1);
-  // comparação opcional
-  let html='';
-  if(RS_CMP&&R.end){ const R2=revolutionFor(RS_KIND,new Date(R.end.getTime()+DAY));
-    if(R2)html='<div class="card"><div class="kicker">retorno seguinte · '+fdate(R2.start)+'</div>'
-      +'<p style="font-size:.85rem">Ascendente passa de '+R.ascSignNm+' (regido por '+PT_NAME[R.ascRuler]+') para '
-      +R2.ascSignNm+' (regido por '+PT_NAME[R2.ascRuler]+'); o ambiente natal muda da casa '+R.ascNatalHouse
-      +' ('+casaTag(R.ascNatalHouse)+') para a casa '+R2.ascNatalHouse+' ('+casaTag(R2.ascNatalHouse)+').</p></div>';}
-  $('rs-body').innerHTML=html;
+  // painel comparativo: revolução × natal
+  const rulerNat=NATAL.pts[R.ascRuler];
+  $('rs-cmp').innerHTML=
+    '<div class="card rsbox"><div class="kicker">mapa da revolução</div>'
+     +'<div class="rvc-big">'+R.ascSignNm+' <i>'+Math.floor(n360(R.ascLon)%30)+'°</i></div>'
+     +'<div class="rvc-sub">Ascendente do retorno</div>'
+     +'<div class="rsr"><span class="rsr-i">☉</span><div><span>Regente do Ascendente</span><b>'+PT_NAME[R.ascRuler].toUpperCase()+'</b></div></div>'
+     +'<div class="rsr"><span class="rsr-i">✦</span><div><span>Planeta do retorno</span><b>'+PT_NAME[R.planetKey].toUpperCase()
+       +(R.planetRevHouse?(' · CASA '+R.planetRevHouse):'')+'</b></div></div>'
+     +'<div class="rsr"><span class="rsr-i">◷</span><div><span>Vigência</span><b>'+fdate(R.start).toUpperCase()+(R.end?(' – '+fdate(R.end).toUpperCase()):'')+'</b></div></div>'
+    +'</div>'
+    +'<div class="card rsbox"><div class="kicker">onde isso vai no natal</div>'
+     +'<div class="rsr"><span class="rsr-i">↳</span><div><span>Ascendente do retorno</span><b>CAI NA '+R.ascNatalHouse+'ª NATAL</b></div></div>'
+     +'<p class="rs-d">'+cap1(HOUSE_THEME[R.ascNatalHouse])+'.</p>'
+     +'<div class="rsr"><span class="rsr-i">↳</span><div><span>Regente do Asc no natal</span><b>'
+       +(rulerNat?('CASA '+rulerNat.h+' · '+(rulerNat.dig||'').toUpperCase()):'—')+'</b></div></div>'
+     +(S?('<div class="rsr"><span class="rsr-i">↳</span><div><span>Profecção vigente</span><b>CASA '+S.profHouse+' · SENHOR '+PT_NAME[S.lord].toUpperCase()+'</b></div></div>'):'')
+    +'</div>';
+  // cards clicáveis: cada elemento do retorno
+  const escopo=S?(' Dentro da firdária de '+(PT_NAME[S.mk]||'—')+(S.sk?(' / '+PT_NAME[S.sk]):'')
+    +' e da profecção da '+ordinal(S.profHouse)+', ') : ' ';
+  const temas=(hs)=>casasTag([...new Set(hs.filter(Boolean))].slice(0,3));
+  const cardEl=(tit,sub,natal,rev,tem)=>'<details class="rvel"><summary><b>'+tit+'</b><em>'+sub+'</em><span>›</span></summary>'
+    +'<div class="rvel-b">'
+    +'<div class="rvel-s"><span>No natal</span><p>'+natal+'</p></div>'
+    +'<div class="rvel-s"><span>Na revolução</span><p>'+rev+'</p></div>'
+    +'<div class="rvel-s"><span>Temas ativáveis</span><p>'+tem+'</p></div>'
+    +'</div></details>';
+  let cards='';
+  cards+=cardEl('Ascendente do retorno',R.ascSignNm+' · cai na '+R.ascNatalHouse+'ª natal',
+    'A '+ordinal(R.ascNatalHouse)+' natal trata de '+HOUSE_THEME[R.ascNatalHouse]+'.',
+    'O Ascendente define como o período se apresenta: em '+R.ascSignNm+', regido por '+PT_NAME[R.ascRuler]+'.',
+    escopo+'a ativação tende a passar por '+temas([R.ascNatalHouse,S&&S.profHouse])+'.');
+  if(rulerNat)cards+=cardEl('Regente do Ascendente',PT_NAME[R.ascRuler]+' · casa '+rulerNat.h+' natal',
+    PT_NAME[R.ascRuler]+' rege a '+(ruledHouses(R.ascRuler).map(h=>h+'ª').join(' e a ')||'—')
+      +' e está na casa '+rulerNat.h+' ('+(rulerNat.dig||'—')+').',
+    'Administra o retorno'+(R.ascRulerRevHouse?(' a partir da casa '+R.ascRulerRevHouse+' do próprio retorno'):'')+'.',
+    escopo+'ele conduz '+temas(ruledHouses(R.ascRuler).concat([rulerNat.h]))+'.');
+  const pp=NATAL.pts[R.planetKey];
+  if(pp)cards+=cardEl('Planeta do retorno',PT_NAME[R.planetKey]+' · '+K.label,
+    PT_NAME[R.planetKey]+' rege a '+(ruledHouses(R.planetKey).map(h=>h+'ª').join(' e a ')||'—')
+      +' e está na casa '+pp.h+' natal ('+(pp.dig||'—')+').',
+    'É o planeta que retorna ao grau natal'+(R.planetRevHouse?(', posicionado na casa '+R.planetRevHouse+' do retorno'):'')+'. '+cap1(K.campo)+'.',
+    escopo+'o retorno reativa '+temas(ruledHouses(R.planetKey).concat([pp.h]))+'.');
+  cards+=cardEl('Casa ativada','Casa '+R.ascNatalHouse+' natal',
+    cap1(HOUSE_THEME[R.ascNatalHouse])+'.',
+    'É o ambiente onde o período tende a se manifestar (Ascendente do retorno).',
+    escopo+'esses assuntos convergem com '+temas([S&&S.profHouse,S&&S.occLord])+'.');
+  $('rs-cards').innerHTML=cards;
+  $('rs-body').innerHTML='';
 }
 function rsSynth(R,S){
   const F=[];
@@ -1389,3 +1437,39 @@ document.addEventListener('click',e=>{
 
 
 /* ================= FONTES E MÉTODO ================= */
+
+/* ================= AJUSTES — pesos manuais das tipologias ================= */
+const CFG_LBL={
+  tw:{asc:'Ascendente',cusp:'Planeta na cúspide da 1',h1:'Planeta na casa 1',ruler:'Regente do Ascendente',
+      moon:'Lua',phase:'Fase da Lua',lord:'Senhor da Genitura'},
+  cw:{promessa:'Promessa natal explícita',firdaria:'Senhor da firdária',sub:'Sub-regente',
+      casaProf:'Casa da promessa = profectada',senhorAno:'Senhor do Ano',revAlta:'Reforço alto da revolução',
+      revMedia:'Reforço médio da revolução',repete:'Aspecto repetido no retorno',bonus:'Bônus de convergência'}};
+function renderConfig(){
+  const el=$('config-body'); if(!el)return;
+  const grp=(tit,sub,obj,lbls,defs)=>'<div class="card cfg"><div class="kicker">'+tit+'</div>'
+    +'<p class="note" style="margin-top:0">'+sub+'</p>'
+    +Object.keys(lbls).map(k=>'<div class="cfg-r"><span>'+lbls[k]+'</span>'
+      +'<input type="range" min="0" max="5" step="0.5" value="'+obj[k]+'" data-cfg="'+tit+':'+k+'">'
+      +'<b>'+obj[k]+'</b><i>padrão '+defs[k]+'</i></div>').join('')
+    +'</div>';
+  el.innerHTML=grp('tw','Pesos do temperamento — hierarquia dos testemunhos (quente/frio × seco/úmido).',CFG.tw,CFG_LBL.tw,CFG_DEF.tw)
+    +grp('cw','Pesos da convergência — ordenam promessas e o ranking de planetas acionados.',CFG.cw,CFG_LBL.cw,CFG_DEF.cw)
+    +'<div class="toolrow"><button class="btn" id="cfg-reset">Restaurar padrões</button>'
+    +'<span class="note">As mudanças aplicam na hora e ficam salvas neste navegador.</span></div>';
+  el.querySelectorAll('[data-cfg]').forEach(inp=>{
+    inp.oninput=function(){
+      const [g,k]=this.dataset.cfg.split(':');
+      CFG[g][k]=+this.value; this.nextElementSibling.textContent=this.value;
+      cfgSave(); cfgApply();
+    };});
+  const rb=$('cfg-reset');
+  if(rb)rb.onclick=()=>{CFG=JSON.parse(JSON.stringify(CFG_DEF));cfgSave();cfgApply();renderConfig();};
+}
+function cfgApply(){
+  try{ if(typeof NATAL!=='undefined'&&NATAL){
+    CHARTMETA.temper=temperEngine();
+    if(typeof profileData==='function')profileData(true);
+    renderTemp(); renderPers(); renderNatal(); syncTempo();
+  }}catch(e){console.error(e);}
+}
