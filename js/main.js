@@ -44,6 +44,13 @@ document.getElementById('retro-open').onclick=()=>{
   const t=document.getElementById('ev-txt').value.trim();
   renderRetro(d||CURSOR.toISOString().slice(0,10),t);
 };
+/* Revoluções — navegação entre retornos e comparação */
+(function(){
+  const prev=document.getElementById('rs-prev'), next=document.getElementById('rs-next'), cmp=document.getElementById('rs-cmp-chk');
+  if(prev)prev.onclick=()=>{try{rsStep(-1);}catch(e){console.error(e);}};
+  if(next)next.onclick=()=>{try{rsStep(1);}catch(e){console.error(e);}};
+  if(cmp)cmp.onchange=function(){RS_CMP=this.checked;try{renderRS();}catch(e){console.error(e);}};
+})();
 /* Trânsitos */
 document.getElementById('trans-modes').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b)return;
