@@ -167,7 +167,7 @@ function buildChart(parsed, birthISO, sectMode, name){
     loop:loops[0]||[], meta:{receptions,finals,loops,name:name||'mapa',ascRuler:rulers[1]}};
   // textos derivados
   buildEraTexts(); buildAspLabels(); buildOlavoFallback(); buildPromises(); buildConteudoDyn();
-  CHARTMETA.temper=temperTestimonies();
+  CHARTMETA.temper=(typeof temperEngine==='function')?temperEngine():null;
   return NATAL;
 }
 function fmtOrb(o){return Math.floor(o)+'°'+String(Math.round((o%1)*60)).padStart(2,'0')+'′';}
@@ -294,43 +294,7 @@ function buildConteudoDyn(){
   const su=NATAL.pts.sun, mo=NATAL.pts.moon;
   CONTEUDO.solLua='O <b>Sol</b> ('+zfmt(su.lon)+', casa '+su.h+', '+su.dig+') é a fonte de direção; a <b>Lua</b> ('+zfmt(mo.lon)+', casa '+mo.h+', '+mo.dig+') é a receptora que encarna. Mapa '+NATAL.sect+': '+(NATAL.sect==='diurno'?'o Sol preside — a identidade manda e o sentir serve.':'a Lua preside — o sentir conduz e a identidade amadurece ao longo da vida.')+(NATAL.meta.receptions.length?(' Recepções ativas: '+NATAL.meta.receptions.join('; ')+'.'):'');
 }
-function temperTestimonies(){
-  const fx=[]; const Q={quente:0,frio:0,seco:0,'úmido':0};
-  const add=(qs,w,label)=>{qs.forEach(q=>Q[q]+=w);fx.push([label,qs.join('-'),w]);};
-  const sq=L=>SIGN_ELEM[signOf(L)];
-  /* pesos fixos da técnica:
-     planeta na cúspide da 1 = 3 (assume a casa; ≥ Ascendente)
-     Ascendente = 2 · regente do Ascendente = 3 · planetas dentro da 1 = 2
-     Lua = 3 · fase da Lua = 1 · senhor da genitura = 1,5 · estação do Sol = 0,5.
-     O planeta contribui a PRÓPRIA natureza, sustentada no signo em que está. */
-  const PQUAL={sun:['quente','seco'],moon:['frio','úmido'],mercury:['frio','seco'],venus:['quente','úmido'],mars:['quente','seco'],jupiter:['quente','úmido'],saturn:['frio','seco']};
-  add(ELEMQ[sq(NATAL.asc)],2,'Ascendente em '+SIGNS[signOf(NATAL.asc)]+' · peso 2');
-  const ru=NATAL.meta.ascRuler;
-  add(ELEMQ[sq(NATAL.pts[ru].lon)],3,'Regente do Ascendente ('+PT_NAME[ru]+') em '+SIGNS[signOf(NATAL.pts[ru].lon)]+' · peso 3');
-  Object.keys(PT_NAME).forEach(k=>{const p=NATAL.pts[k];if(!p)return;
-    const dAsc=adiff(p.lon,NATAL.asc);
-    let w1=0,lbl='';
-    if(dAsc<=5){w1=3;lbl='na cúspide da casa 1 ('+fmtOrb(dAsc)+' do Ascendente): assume a casa · peso 3';}
-    else if(p.h===1){w1=2;lbl='dentro da casa 1 · peso 2';}
-    else if(p.hBack===1){w1=1;lbl='casa 1 ao fundo (regra dos 5°) · peso 1';}
-    if(w1>0){
-      add(PQUAL[k],w1,PT_NAME[k]+' '+lbl+' — imprime a própria natureza');
-      add(ELEMQ[sq(p.lon)],w1/3,PT_NAME[k]+' sustentado pelo signo de '+SIGNS[signOf(p.lon)]);
-    }});
-  add(ELEMQ[sq(NATAL.pts.moon.lon)],3,'Lua em '+SIGNS[signOf(NATAL.pts.moon.lon)]+' · peso 3');
-  const elong=n360(NATAL.pts.moon.lon-NATAL.pts.sun.lon);
-  const ph=elong<90?['quente','úmido']:elong<180?['quente','seco']:elong<270?['frio','seco']:['frio','úmido'];
-  add(ph,1,'Fase da Lua ('+Math.round(elong)+'° do Sol) · peso 1');
-  const season=[['quente','úmido'],['quente','seco'],['frio','seco'],['frio','úmido']][Math.floor(signOf(NATAL.pts.sun.lon)/3)];
-  add(season,0.5,'Estação do Sol · peso 0,5');
-  const lord=Object.keys(STR).sort((a,b)=>STR[b]-STR[a])[0];
-  add(PQUAL[lord],1.5,'Senhor da genitura: '+PT_NAME[lord]+' · peso 1,5');
-  const hot=Q.quente-Q.frio,dry=Q.seco-Q['úmido'];
-  const humor=hot>=0?(dry>=0?'colérico':'sanguíneo'):(dry>=0?'melancólico':'fleumático');
-  const total=Q.quente+Q.frio+Q.seco+Q['úmido'];
-  return {Q,fx,hot,dry,humor,conf:Math.round(((Math.abs(hot)+Math.abs(dry))/total)*100),
-    contra:fx.filter(f=>{const [h2,d2]=humor==='colérico'?['frio','úmido']:humor==='sanguíneo'?['frio','seco']:humor==='melancólico'?['quente','úmido']:['quente','seco'];return f[1].includes(h2)||f[1].includes(d2);})};
-}
+/* temperTestimonies foi substituída por temperEngine() em perfil.js */
 /* ---------- Revolução Solar: interpretação automática ---------- */
 function addRS(parsed, year){
   const by=new Date(BIRTH).getUTCFullYear(), age=year-by;

@@ -175,6 +175,7 @@ function boot(){
   try{bindImport();}catch(e){console.error(e);}
   try{bindDados();}catch(e){console.error(e);}
   try{renderEletivaInit();}catch(e){console.error(e);}
+  try{bindOracle();}catch(e){console.error(e);}
   try{cordDrag();}catch(e){console.error(e);}
   window.addEventListener('resize',()=>{try{drawCord();}catch(e){}});
   if(loadFromState()){
