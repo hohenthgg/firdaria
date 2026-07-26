@@ -278,51 +278,73 @@ function cordRange(){
 function drawCord(){
   const svg=$('cord'); if(!svg)return;
   const W=svg.clientWidth||900, mob=W<620;
-  const H=mob?Math.min(W,400):Math.min(W,540);
+  const H=Math.min(W,mob?520:700);           // quadrado: o círculo ocupa toda a caixa e fica centrado
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   if(typeof NATAL==='undefined'||!NATAL){svg.innerHTML='';return;}
-  const CX=W/2, CY=H/2, R=Math.min(W,H)/2-(mob?16:26);
+  const CX=W/2, CY=H/2, R=Math.min(W,H)/2-(mob?17:26);
   const TAU=Math.PI*2;
-  const C_INK='#eaf0fa', C_DIM='#98a5bd', C_DIM2='#6b7793', C_LINE='rgba(255,255,255,.10)', C_SOFT='rgba(255,255,255,.022)';
+  const C_INK='#eaf0fa', C_DIM='#98a5bd', C_DIM2='#6b7793', C_LINE='rgba(255,255,255,.09)', C_SOFT='rgba(255,255,255,.020)';
   const AU='220,184,119';
   const S=tempoState(CURSOR); if(!S){svg.innerHTML='';return;}
   const P=(ang,r)=>[CX+r*Math.sin(ang), CY-r*Math.cos(ang)];
-  const arc=(a0,a1,r0,r1)=>{                 // setor anelar
+  const u=R/320;                                          // escala tipográfica única
+  const fs=(v,min)=>Math.max(min==null?6.5:min,Math.round(v*u*10)/10);
+  const arcSharp=(a0,a1,r0,r1)=>{
     const [x0,y0]=P(a0,r1),[x1,y1]=P(a1,r1),[x2,y2]=P(a1,r0),[x3,y3]=P(a0,r0);
     const big=(a1-a0)>Math.PI?1:0;
     return 'M'+x0+' '+y0+' A'+r1+' '+r1+' 0 '+big+' 1 '+x1+' '+y1
          +' L'+x2+' '+y2+' A'+r0+' '+r0+' 0 '+big+' 0 '+x3+' '+y3+' Z';
   };
+  // setor anelar de cantos arredondados
+  const arc=(a0,a1,r0,r1,cr)=>{
+    const span=a1-a0;
+    let rr=Math.min(cr==null?Math.max(5,10*u):cr,(r1-r0)/2.4,span*r0/2.6);
+    if(!(rr>0.8))return arcSharp(a0,a1,r0,r1);
+    const d1=rr/r1, d0=rr/r0;
+    if(d1*2>=span*0.92||d0*2>=span*0.92)return arcSharp(a0,a1,r0,r1);
+    const [x1,y1]=P(a0+d1,r1), [x2,y2]=P(a1-d1,r1), [x3,y3]=P(a1,r1-rr), [x4,y4]=P(a1,r0+rr),
+          [x5,y5]=P(a1-d0,r0), [x6,y6]=P(a0+d0,r0), [x7,y7]=P(a0,r0+rr), [x8,y8]=P(a0,r1-rr);
+    const bo=(span-2*d1)>Math.PI?1:0, bi=(span-2*d0)>Math.PI?1:0;
+    return 'M'+x1+' '+y1
+      +'A'+r1+' '+r1+' 0 '+bo+' 1 '+x2+' '+y2
+      +'A'+rr+' '+rr+' 0 0 1 '+x3+' '+y3
+      +'L'+x4+' '+y4
+      +'A'+rr+' '+rr+' 0 0 1 '+x5+' '+y5
+      +'A'+r0+' '+r0+' 0 '+bi+' 0 '+x6+' '+y6
+      +'A'+rr+' '+rr+' 0 0 1 '+x7+' '+y7
+      +'L'+x8+' '+y8
+      +'A'+rr+' '+rr+' 0 0 1 '+x1+' '+y1+'Z';
+  };
   let s='<defs><filter id="auglow" x="-40%" y="-40%" width="180%" height="180%">'
     +'<feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
     +'<radialGradient id="corefill"><stop offset="0%" stop-color="#0d1424"/><stop offset="100%" stop-color="#06090f"/></radialGradient></defs>';
-  // anéis: [nome, raio externo, raio interno]
-  const w1=mob?30:46, gap=mob?11:16;
+  // anéis proporcionais ao raio: [externo, interno]
+  const w1=R*0.162, gap=R*0.050;
   const rF=[R, R-w1], rS=[R-w1-gap, R-2*w1-gap], rP=[R-2*w1-2*gap, R-3*w1-2*gap];
   const rCore=rP[1]-gap;
-  // trilhos
+  // trilhos discretos
   [rF,rS,rP].forEach(rr=>{
     s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rr[0]+'" fill="none" stroke="'+C_LINE+'"/>';
     s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rr[1]+'" fill="none" stroke="'+C_LINE+'"/>';
   });
-  // rótulo da camada: fica na folga entre anéis, sobre um recorte branco
+  // rótulo da camada: pequeno, na periferia da faixa, sobre recorte do fundo
   const label=(txt,r)=>{
-    const [x,y]=P(0,r), fs=mob?8:9.5, w=txt.length*(fs*0.78)+14, h=fs+7;
-    return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="'+(h/2)+'" fill="#05070e"/>'
-      +'<text x="'+x+'" y="'+(y+fs*0.36)+'" text-anchor="middle" font-size="'+fs+'" '
-      +'font-family="IBM Plex Mono" letter-spacing="2.2" fill="'+C_DIM2+'">'+txt+'</text>';
+    const [x,y]=P(0,r), f=fs(8,6.5), ls=Math.max(1.4,1.9*u), w=txt.length*(f*0.62+ls)+f*1.5, h=f+5*u+3;
+    return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="'+(h/2)+'" fill="#04060d"/>'
+      +'<text x="'+(x+ls/2)+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" '
+      +'font-family="IBM Plex Mono" letter-spacing="'+ls+'" fill="'+C_DIM2+'">'+txt+'</text>';
   };
   const setor=(a0,a1,rr,ativo,attrs)=>
     '<path '+(attrs||'')+' d="'+arc(a0,a1,rr[1],rr[0])+'" fill="'+(ativo?'rgba('+AU+',.13)':C_SOFT)+'" '
-    +'stroke="'+(ativo?'rgba('+AU+',.85)':C_LINE)+'" stroke-width="'+(ativo?1.5:1)+'" '
+    +'stroke="'+(ativo?'rgba('+AU+',.85)':C_LINE)+'" stroke-width="'+(ativo?1.5:1)+'" stroke-linejoin="round" '
     +(ativo?'filter="url(#auglow)" ':'')+'style="cursor:pointer"/>';
-  const meioTexto=(a,r,txt,ativo,fs)=>{
-    const [x,y]=P(a,r);
-    return '<text x="'+x+'" y="'+(y+4)+'" text-anchor="middle" font-size="'+(fs||(mob?9.5:12))+'" font-family="Inter" '
+  const meioTexto=(a,r,txt,ativo,f)=>{
+    const [x,y]=P(a,r), ff=f||fs(12);
+    return '<text x="'+x+'" y="'+(y+ff*0.34)+'" text-anchor="middle" font-size="'+ff+'" font-family="Inter" '
       +'fill="'+(ativo?C_INK:C_DIM)+'" style="pointer-events:none">'+txt+'</text>';
   };
-  const estW=(t,fs)=>{let n=0;for(const ch of t){const c=ch.codePointAt(0);if(c===0xFE0E)continue;
-    n+=(c>=0x2200&&c<=0x27bf)?fs*.86:(ch===' ')?fs*.32:fs*.55;}return n;};
+  const estW=(t,f)=>{let n=0;for(const ch of t){const c=ch.codePointAt(0);if(c===0xFE0E)continue;
+    n+=(c>=0x2200&&c<=0x27bf)?f*.86:(ch===' ')?f*.32:f*.55;}return n;};
 
   /* ---------- anel 1 · FIRDÁRIA (proporcional aos anos de cada período) ---------- */
   const TOT=FIRD.reduce((a,f)=>a+f[2],0);
@@ -332,12 +354,12 @@ function drawCord(){
     const ativo=(S.age>=acc&&S.age<acc+len);
     s+=setor(a0,a1,rF,ativo,'data-layer="firdaria" data-goto="'+(acc+len/2)+'"');
     const arcLen=(a1-a0)*((rF[0]+rF[1])/2), g=PT_GLYPH[k]||'';
-    const nome=(PT_NAME[k]||nm);
-    const txt=ativo?((estW(g+' '+nome,13)+10<arcLen)?(g+' '+nome):nome):g;
-    s+=meioTexto(mid,(rF[0]+rF[1])/2,txt,ativo,ativo?(mob?11:14):(mob?11:13));
+    const nome=(PT_NAME[k]||nm), fA=fs(13.5), fI=fs(12.5);
+    const txt=ativo?((estW(g+' '+nome,fA)+10<arcLen)?(g+' '+nome):nome):g;
+    s+=meioTexto(mid,(rF[0]+rF[1])/2,txt,ativo,ativo?fA:fI);
     acc+=len;
   });
-  s+=label('FIRDÁRIA',rF[0]+(mob?8:11));
+  s+=label('FIRDÁRIA',rF[0]+Math.max(8,12*u));
 
   /* ---------- anel 2 · SUBFIRDÁRIA (7 fases do período vigente) ---------- */
   const fNow=firdAt(S.age), base=fNow.from||0, len=fNow.len||1, part=len/7;
@@ -348,9 +370,9 @@ function drawCord(){
     const sk=subs[(si+i)%7];
     const ativo=(S.age>=base+i*part&&S.age<base+(i+1)*part);
     s+=setor(a0,a1,rS,ativo,'data-layer="sub" data-goto="'+(base+i*part+part/2)+'"');
-    const arcLen=(a1-a0)*((rS[0]+rS[1])/2), g=PT_GLYPH[sk]||'', nome=PT_NAME[sk]||'';
-    const txt=ativo?((estW(g+' '+nome,12)+10<arcLen)?(g+' '+nome):nome):g;
-    s+=meioTexto(mid,(rS[0]+rS[1])/2,txt,ativo,ativo?(mob?10:13):(mob?10:12));
+    const arcLen=(a1-a0)*((rS[0]+rS[1])/2), g=PT_GLYPH[sk]||'', nome=PT_NAME[sk]||'', fA=fs(12.5), fI=fs(11.5);
+    const txt=ativo?((estW(g+' '+nome,fA)+10<arcLen)?(g+' '+nome):nome):g;
+    s+=meioTexto(mid,(rS[0]+rS[1])/2,txt,ativo,ativo?fA:fI);
   }
   s+=label('SUBFIRDÁRIA',(rF[1]+rS[0])/2);
 
@@ -361,40 +383,41 @@ function drawCord(){
     const casa=i+1, ativo=(S.profHouse===casa);
     s+=setor(a0,a1,rP,ativo,'data-layer="profeccao" data-goto="'+(anoBase+i+0.5)+'"');
     const lord=NATAL.rulers[casa];
-    const arcLen=(a1-a0)*((rP[0]+rP[1])/2);
-    const txt=ativo?(estW('Casa '+casa+' '+(PT_GLYPH[lord]||''),12)+8<arcLen
+    const arcLen=(a1-a0)*((rP[0]+rP[1])/2), fA=fs(12), fI=fs(10.5);
+    const txt=ativo?(estW('Casa '+casa+' '+(PT_GLYPH[lord]||''),fA)+8<arcLen
       ?('Casa '+casa+' '+(PT_GLYPH[lord]||'')):('Casa '+casa)):(''+casa);
-    s+=meioTexto(mid,(rP[0]+rP[1])/2,txt,ativo,ativo?(mob?10:13):(mob?9:11));
+    s+=meioTexto(mid,(rP[0]+rP[1])/2,txt,ativo,ativo?fA:fI);
   }
   s+=label('PROFECÇÃO',(rS[1]+rP[0])/2);
 
   /* ---------- núcleo · TIPOS DE REVOLUÇÃO + retorno vigente ---------- */
-  const REV=S.rev, KINDS=revKinds(), rIn=rCore*0.56;
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="url(#corefill)" stroke="rgba(255,255,255,.10)"/>';
+  const REV=S.rev, KINDS=revKinds(), rIn=rCore*0.63;
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="url(#corefill)" stroke="rgba(255,255,255,.09)"/>';
   KINDS.forEach((K,i)=>{
     const a0=(i/KINDS.length)*TAU-Math.PI/KINDS.length, a1=a0+TAU/KINDS.length, mid=(a0+a1)/2;
     const on=K.id===REV_SEL;
-    s+='<path data-rev="'+K.id+'" d="'+arc(a0,a1,rIn,rCore)+'" fill="'+(on?'rgba('+AU+',.13)':'rgba(255,255,255,.016)')+'" '
-      +'stroke="'+(on?'rgba('+AU+',.85)':'rgba(255,255,255,.07)')+'" stroke-width="'+(on?1.5:1)+'"'
+    s+='<path data-rev="'+K.id+'" d="'+arc(a0,a1,rIn,rCore,Math.max(3.5,6*u))+'" fill="'+(on?'rgba('+AU+',.13)':'rgba(255,255,255,.016)')+'" '
+      +'stroke="'+(on?'rgba('+AU+',.85)':'rgba(255,255,255,.07)')+'" stroke-width="'+(on?1.5:1)+'" stroke-linejoin="round"'
       +(on?' filter="url(#auglow)"':'')+' style="cursor:pointer"><title>'+K.o+'</title></path>';
-    const rl=(rIn+rCore)/2, [lx,ly]=P(mid,rl);
-    s+='<text x="'+lx+'" y="'+(ly+(on?-3:5))+'" text-anchor="middle" font-size="'+(mob?12:15)+'" font-family="Inter" '
+    const rl=(rIn+rCore)/2, [lx,ly]=P(mid,rl), fg=fs(14);
+    s+='<text x="'+lx+'" y="'+(ly+(on?-fg*0.18:fg*0.35))+'" text-anchor="middle" font-size="'+fg+'" font-family="Inter" '
       +'fill="'+(on?'#e9eef8':C_DIM2)+'" style="pointer-events:none">'+(PT_GLYPH[K.key]||'')+'︎</text>';
-    if(on)s+='<text x="'+lx+'" y="'+(ly+(mob?11:14))+'" text-anchor="middle" font-size="'+(mob?8.5:10)+'" font-family="Inter" '
+    if(on)s+='<text x="'+lx+'" y="'+(ly+fg*0.92)+'" text-anchor="middle" font-size="'+fs(9)+'" font-family="Inter" '
       +'fill="var(--gold)" style="pointer-events:none">'+K.label+'</text>';
   });
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rIn+'" fill="#05080f" stroke="rgba('+AU+',.35)" data-layer="revolucao" style="cursor:pointer"/>';
-  const fsS=mob?8.5:10.5;
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rIn+'" fill="#05080f" stroke="rgba('+AU+',.30)" data-layer="revolucao" style="cursor:pointer"/>';
   const idade=Math.floor(S.age), frac=(S.age-idade);
-  s+='<text x="'+CX+'" y="'+(CY-(mob?6:8))+'" text-anchor="middle" font-size="'+(mob?18:26)+'" font-family="Cormorant Garamond" fill="'+C_INK+'" style="pointer-events:none">'
-    +idade+','+Math.floor(frac*10)+' anos</text>';
-  s+='<text x="'+CX+'" y="'+(CY+(mob?9:13))+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM+'" style="pointer-events:none">Ano de vida</text>';
-  s+='<text x="'+CX+'" y="'+(CY+(mob?21:28))+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM2+'" style="pointer-events:none">'
+  const fAge=fs(38,15), fKick=fs(7.5,6), fRev=fs(9.5,7);
+  s+='<text x="'+CX+'" y="'+(CY+fAge*0.10)+'" text-anchor="middle" font-size="'+fAge+'" font-family="Cormorant Garamond" fill="'+C_INK+'" style="pointer-events:none">'
+    +idade+','+Math.floor(frac*10)+'</text>';
+  s+='<text x="'+(CX+1.1)+'" y="'+(CY-fAge*0.62)+'" text-anchor="middle" font-size="'+fKick+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(1.3,2.2*u)+'" fill="'+C_DIM2+'" style="pointer-events:none">ANO DE VIDA</text>';
+  s+='<text x="'+CX+'" y="'+(CY+fAge*0.10+fRev*1.9)+'" text-anchor="middle" font-size="'+fRev+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(.6,1*u)+'" fill="'+C_DIM+'" style="pointer-events:none">'
     +(REV?(REV.sigla+' '+REV.start.getUTCFullYear()):'sem retorno')+'</text>';
   // marcador do instante: raio fino do núcleo à borda, no ângulo do ano vigente
   const angNow=((S.age%12)/12)*TAU;
-  const [mx0,my0]=P(angNow,rCore+2), [mx1,my1]=P(angNow,R+ (mob?5:7));
-  s+='<line x1="'+mx0+'" y1="'+my0+'" x2="'+mx1+'" y2="'+my1+'" stroke="rgba('+AU+',.4)" stroke-width="1" stroke-dasharray="2 4"/>';
+  const [mx0,my0]=P(angNow,rCore+2), [mx1,my1]=P(angNow,R+Math.max(4,7*u));
+  s+='<line x1="'+mx0+'" y1="'+my0+'" x2="'+mx1+'" y2="'+my1+'" stroke="rgba('+AU+',.4)" stroke-width="1" stroke-dasharray="2 4" stroke-linecap="round"/>';
+  s+='<circle cx="'+mx1+'" cy="'+my1+'" r="'+Math.max(1.8,2.6*u)+'" fill="rgba('+AU+',.75)"/>';
   svg.innerHTML=s;
 }
 function cordDrag(){
@@ -851,57 +874,54 @@ const ASP_TXT={conj:'fusão direta dos temas',harm:'facilidade e fluxo entre os 
 function rsWheelSVG(R,S){
   const svg=$('rs-wheel'); const W=(svg&&svg.clientWidth)||620, mob=W<520;
   const H=W, CX=W/2, CY=H/2, RAD=Math.PI/180;
-  const rZod=W/2-(mob?26:34), rZin=rZod-(mob?22:30), rHou=rZin-(mob?16:22),
-        rPl=rHou-(mob?20:26), rHin=rHou-(mob?44:60), rCore=rHin-(mob?4:6);
+  const M=W/2, u=M/300;                                // escala única
+  const fs=(v,min)=>Math.max(min==null?6.5:min,Math.round(v*u*10)/10);
+  const rZod=M-fs(26,16), rZin=rZod-fs(24,16), rPl=rZin-fs(26,18),
+        rHou=rPl-fs(26,18), rHin=Math.round(M*0.31), rCore=rHin;
   const GR='127,201,160';                              // verde do retorno
   const ang=L=>180+(L-R.ascLon);                       // ASC à esquerda
   const P=(L,r)=>{const a=ang(L)*RAD;return [CX+r*Math.cos(a), CY-r*Math.sin(a)];};
   let s='<defs><filter id="rsg" x="-50%" y="-50%" width="200%" height="200%">'
     +'<feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
-    +'<radialGradient id="rsc"><stop offset="0%" stop-color="#0c1512"/><stop offset="100%" stop-color="#05080a"/></radialGradient></defs>';
-  const circ=(r,st,w,dash)=>'<circle cx="'+CX+'" cy="'+CY+'" r="'+r+'" fill="none" stroke="'+st+'" stroke-width="'+(w||1)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';
-  s+=circ(rZod,'rgba(255,255,255,.14)')+circ(rZin,'rgba(255,255,255,.10)')
-    +circ(rHou,'rgba(255,255,255,.08)')+circ(rHin,'rgba(255,255,255,.07)');
-  // ticks de grau no anel zodiacal
-  for(let d=0;d<360;d+=1){const L=R.ascLon+d, [x1,y1]=P(L,rZod), r2=rZod-((d%30===0)?(mob?10:14):(d%5===0?(mob?6:8):(mob?3:4)));
-    const [x2,y2]=P(L,r2);
-    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(255,255,255,'+(d%30===0?'.22':d%5===0?'.13':'.07')+')"/>';}
-  // glifos dos signos no meio do anel
-  for(let i=0;i<12;i++){const L=i*30+15, [x,y]=P(L,(rZod+rZin)/2);
-    s+='<text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" font-size="'+(mob?12:15)+'" fill="rgba(226,236,232,.72)">'+(SIGN_GLYPHS[i]||'')+'︎</text>';}
-  // cúspides + números das casas
+    +'<radialGradient id="rsc"><stop offset="0%" stop-color="#0a1310"/><stop offset="100%" stop-color="#05080b"/></radialGradient></defs>';
+  const circ=(r,st,w)=>'<circle cx="'+CX+'" cy="'+CY+'" r="'+r+'" fill="none" stroke="'+st+'" stroke-width="'+(w||1)+'"/>';
+  // apenas dois trilhos: a faixa zodiacal e o limite interno das casas
+  s+=circ(rZod,'rgba(255,255,255,.13)')+circ(rZin,'rgba(255,255,255,.09)');
+  // divisões dos signos (só as 12 fronteiras, sem ticks de grau)
+  for(let i=0;i<12;i++){const L=i*30, [x1,y1]=P(L,rZod), [x2,y2]=P(L,rZin);
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(255,255,255,.10)"/>';}
+  // glifos dos signos no meio da faixa
+  for(let i=0;i<12;i++){const L=i*30+15, [x,y]=P(L,(rZod+rZin)/2), f=fs(14,10);
+    s+='<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" fill="rgba(226,236,232,.62)">'+(SIGN_GLYPHS[i]||'')+'︎</text>';}
+  // cúspides: eixos marcados, demais apenas insinuadas
   for(let h=0;h<12;h++){
-    const L=R.chart.cusps[h], [x1,y1]=P(L,rHin), [x2,y2]=P(L,rHou);
-    const ax=[0,3,6,9].includes(h);
-    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(255,255,255,'+(ax?'.28':'.10')+')" stroke-width="'+(ax?1.3:1)+'"/>';
+    const L=R.chart.cusps[h], ax=(h%3===0);
+    const [x1,y1]=P(L,rHin), [x2,y2]=P(L,ax?rZin:rHou);
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(255,255,255,'+(ax?'.24':'.07')+')" stroke-width="'+(ax?1.2:1)+'"/>';
     const Lm=R.chart.cusps[h]+adiff(R.chart.cusps[h],R.chart.cusps[(h+1)%12])/2;
-    const [mx,my]=P(Lm,(rHou+rHin)/2+(mob?4:6));
-    s+='<text x="'+mx+'" y="'+(my+4)+'" text-anchor="middle" font-size="'+(mob?10:12)+'" font-family="Inter" fill="rgba(226,236,232,.55)">'+(h+1)+'</text>';}
-  // arco verde na casa mais ativada
+    const [mx,my]=P(Lm,rHin+fs(11,8)), f=fs(10,7.5);
+    s+='<text x="'+mx+'" y="'+(my+f*0.35)+'" text-anchor="middle" font-size="'+f+'" font-family="IBM Plex Mono" fill="rgba(226,236,232,.40)">'+(h+1)+'</text>';}
+  // arco verde na casa mais ativada — único acento do desenho
   const rank=rsHousesRank(R);
   if(rank.length){const h=rank[0].h-1, L0=R.chart.cusps[h], L1=R.chart.cusps[(h+1)%12];
-    const a0=ang(L0)*RAD, a1=ang(L0+adiff(L0,L1))*RAD, rr=rZin-(mob?4:6);
+    const a0=ang(L0)*RAD, a1=ang(L0+adiff(L0,L1))*RAD, rr=rZin-fs(5,3);
     const [x0,y0]=[CX+rr*Math.cos(a0),CY-rr*Math.sin(a0)], [x1,y1]=[CX+rr*Math.cos(a1),CY-rr*Math.sin(a1)];
-    s+='<path d="M'+x0+' '+y0+' A'+rr+' '+rr+' 0 0 0 '+x1+' '+y1+'" fill="none" stroke="rgba('+GR+',.85)" stroke-width="2.4" filter="url(#rsg)"/>';}
-  // planetas
+    s+='<path d="M'+x0+' '+y0+' A'+rr+' '+rr+' 0 0 0 '+x1+' '+y1+'" fill="none" stroke="rgba('+GR+',.8)" stroke-width="'+fs(2.4,1.6)+'" stroke-linecap="round" filter="url(#rsg)"/>';}
+  // planetas: só o disco e o glifo, sem hastes
   REV_PL.forEach(k=>{ if(!R.chart.pts[k])return;
     const L=R.chart.pts[k].lon, [x,y]=P(L,rPl), on=k===R.planetKey||k===R.ascRuler;
-    const [tx,ty]=P(L,rHou-2), [t2x,t2y]=P(L,rPl+(mob?8:11));
-    s+='<line x1="'+tx+'" y1="'+ty+'" x2="'+t2x+'" y2="'+t2y+'" stroke="rgba('+GR+',.28)"/>';
-    s+='<circle cx="'+x+'" cy="'+y+'" r="'+(mob?9:11)+'" fill="#08100d" stroke="rgba('+GR+','+(on?'.75':'.28')+')"'+(on?' filter="url(#rsg)"':'')+'/>'
-      +'<text x="'+x+'" y="'+(y+(mob?4:5))+'" text-anchor="middle" font-size="'+(mob?10:12)+'" fill="'+(on?'#a8e6c4':'rgba(226,236,232,.75)')+'">'+(PT_GLYPH[k]||'')+'︎</text>';});
-  // ângulos rotulados
+    const rd=fs(11.5,8), f=fs(12,9);
+    s+='<circle cx="'+x+'" cy="'+y+'" r="'+rd+'" fill="#08100d" stroke="rgba('+GR+','+(on?'.7':'.2')+')"'+(on?' filter="url(#rsg)"':'')+'/>'
+      +'<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" fill="'+(on?'#a8e6c4':'rgba(226,236,232,.66)')+'">'+(PT_GLYPH[k]||'')+'︎</text>';});
+  // ângulos: apenas os nomes, na periferia
   [['ASC',R.ascLon],['MC',R.chart.mc],['DSC',n360(R.ascLon+180)],['IC',n360(R.chart.mc+180)]].forEach(([nm,L])=>{
-    const [x,y]=P(L,rZod+(mob?15:22));
-    s+='<text x="'+x+'" y="'+(y-2)+'" text-anchor="middle" font-size="'+(mob?9:11)+'" font-family="Inter" fill="rgba(226,236,232,.75)">'+nm+'</text>'
-      +'<text x="'+x+'" y="'+(y+(mob?9:11))+'" text-anchor="middle" font-size="'+(mob?8:10)+'" font-family="IBM Plex Mono" fill="rgba(226,236,232,.42)">'+Math.floor(n360(L)%30)+'°</text>';});
-  // núcleo
+    const [x,y]=P(L,rZod+fs(13,9)), f=fs(8.5,6.5);
+    s+='<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(.8,1.4*u)+'" fill="rgba(226,236,232,.45)">'+nm+'</text>';});
+  // núcleo enxuto: glifo do planeta do retorno e seu nome
   s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="url(#rsc)" stroke="rgba(255,255,255,.06)"/>';
-  const pp=R.chart.pts[R.planetKey];
-  s+='<text x="'+CX+'" y="'+(CY-(mob?16:24))+'" text-anchor="middle" font-size="'+(mob?24:34)+'" fill="#a8e6c4">'+(PT_GLYPH[R.planetKey]||'')+'︎</text>';
-  s+='<text x="'+CX+'" y="'+(CY+(mob?6:10))+'" text-anchor="middle" font-size="'+(mob?13:17)+'" font-family="Inter" letter-spacing="1.6" fill="#e2ece8">'+PT_NAME[R.planetKey].toUpperCase()+'</text>';
-  if(pp)s+='<text x="'+CX+'" y="'+(CY+(mob?22:32))+'" text-anchor="middle" font-size="'+(mob?11:14)+'" font-family="IBM Plex Mono" fill="rgba(226,236,232,.62)">'+zfmt(pp.lon)+'</text>';
-  s+='<text x="'+CX+'" y="'+(CY+(mob?38:52))+'" text-anchor="middle" font-size="'+(mob?7.5:9)+'" font-family="IBM Plex Mono" letter-spacing="2" fill="rgba('+GR+',.85)">REGENTE: '+PT_NAME[R.ascRuler].toUpperCase()+'</text>';
+  const fG=fs(46,24), fN=fs(10.5,8);
+  s+='<text x="'+CX+'" y="'+(CY+fG*0.14)+'" text-anchor="middle" font-size="'+fG+'" fill="#a8e6c4">'+(PT_GLYPH[R.planetKey]||'')+'︎</text>';
+  s+='<text x="'+CX+'" y="'+(CY+fG*0.14+fN*2.1)+'" text-anchor="middle" font-size="'+fN+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(1.2,2*u)+'" fill="rgba(226,236,232,.55)">'+PT_NAME[R.planetKey].toUpperCase()+'</text>';
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   return s;
 }
@@ -919,31 +939,37 @@ function renderRS(){
   if(!R){ ['rs-cmp','rs-cards'].forEach(i2=>{if($(i2))$(i2).innerHTML='';});
     if($('rs-wheel'))$('rs-wheel').innerHTML='';
     $('rs-body').innerHTML='<div class="card"><p>Não foi possível calcular a Revolução '+K.label+'. Importe o mapa pelo link do Aspectarian.</p></div>';return;}
-  const nb=rsNeighbors(R,3), sel=$('rs-year');
-  if(sel){sel.innerHTML=nb.map(x=>'<option value="'+x.R.start.getTime()+'"'+(x.rel==='atual'?' selected':'')+'>'
-      +x.R.start.getUTCFullYear()+(x.R.end&&x.R.end.getUTCFullYear()!==x.R.start.getUTCFullYear()?(' – '+x.R.end.getUTCFullYear()):'')+'</option>').join('');
+  const nb=rsNeighbors(R,3), sel=$('rs-year'), lab=$('rs-year-k');
+  const curto=K.per<40;                                  // retorno lunar → rótulo por mês
+  if(lab)lab.textContent=curto?'Mês':'Ano';
+  if(sel){sel.innerHTML=nb.map(x=>{
+      const d0=x.R.start;
+      const txt=curto?(MESES[d0.getUTCMonth()]+' '+d0.getUTCDate()+', '+d0.getUTCFullYear())
+        :(d0.getUTCFullYear()+(x.R.end&&x.R.end.getUTCFullYear()!==d0.getUTCFullYear()?(' – '+x.R.end.getUTCFullYear()):''))
+          +' · '+fdate(d0);
+      return '<option value="'+d0.getTime()+'"'+(x.rel==='atual'?' selected':'')+'>'+txt+'</option>';}).join('');
     sel.onchange=()=>{RS_CURSOR=new Date(+sel.value+DAY);renderRS();};}
   $('rs-wheel').innerHTML=rsWheelSVG(R,S);
   const pv=$('rs-prev'),nx=$('rs-next');
   if(pv)pv.onclick=()=>rsStep(-1); if(nx)nx.onclick=()=>rsStep(1);
   // painel comparativo: revolução × natal
   const rulerNat=NATAL.pts[R.ascRuler];
+  const q=(k,v,wide)=>'<div class="rvq'+(wide?' rvq-w':'')+'"><span>'+k+'</span><b>'+v+'</b></div>';
   $('rs-cmp').innerHTML=
-    '<div class="card rsbox"><div class="kicker">mapa da revolução</div>'
-     +'<div class="rvc-big">'+R.ascSignNm+' <i>'+Math.floor(n360(R.ascLon)%30)+'°</i></div>'
-     +'<div class="rvc-sub">Ascendente do retorno</div>'
-     +'<div class="rsr"><span class="rsr-i">☉</span><div><span>Regente do Ascendente</span><b>'+PT_NAME[R.ascRuler].toUpperCase()+'</b></div></div>'
-     +'<div class="rsr"><span class="rsr-i">✦</span><div><span>Planeta do retorno</span><b>'+PT_NAME[R.planetKey].toUpperCase()
-       +(R.planetRevHouse?(' · CASA '+R.planetRevHouse):'')+'</b></div></div>'
-     +'<div class="rsr"><span class="rsr-i">◷</span><div><span>Vigência</span><b>'+fdate(R.start).toUpperCase()+(R.end?(' – '+fdate(R.end).toUpperCase()):'')+'</b></div></div>'
-    +'</div>'
-    +'<div class="card rsbox"><div class="kicker">onde isso vai no natal</div>'
-     +'<div class="rsr"><span class="rsr-i">↳</span><div><span>Ascendente do retorno</span><b>CAI NA '+R.ascNatalHouse+'ª NATAL</b></div></div>'
-     +'<p class="rs-d">'+cap1(HOUSE_THEME[R.ascNatalHouse])+'.</p>'
-     +'<div class="rsr"><span class="rsr-i">↳</span><div><span>Regente do Asc no natal</span><b>'
-       +(rulerNat?('CASA '+rulerNat.h+' · '+(rulerNat.dig||'').toUpperCase()):'—')+'</b></div></div>'
-     +(S?('<div class="rsr"><span class="rsr-i">↳</span><div><span>Profecção vigente</span><b>CASA '+S.profHouse+' · SENHOR '+PT_NAME[S.lord].toUpperCase()+'</b></div></div>'):'')
-    +'</div>';
+    '<section class="rvmini"><div class="kicker">mapa da revolução</div><div class="rvqs">'
+     +q('Ascendente',R.ascSignNm+' <i>'+Math.floor(n360(R.ascLon)%30)+'°</i>')
+     +q('Regente do Asc',PT_NAME[R.ascRuler])
+     +q('Planeta do retorno',PT_NAME[R.planetKey]
+        +(R.planetRevHouse?(' <i>· casa '+R.planetRevHouse+' no mapa da revolução</i>'):''),true)
+     +q('Vigência',fdate(R.start)+(R.end?(' – '+fdate(R.end)):''),true)
+    +'</div></section>'
+    +'<section class="rvmini"><div class="kicker">onde isso vai no natal</div><div class="rvqs">'
+     +q('Asc do retorno','casa '+R.ascNatalHouse+' natal')
+     +q('Regente no natal',rulerNat?('casa '+rulerNat.h+' <i>'+(rulerNat.dig||'')+'</i>'):'—')
+     +(S?q('Profecção','casa '+S.profHouse):'')
+     +(S?q('Senhor do ano',PT_NAME[S.lord]):'')
+     +q('Matéria',cap1(HOUSE_THEME[R.ascNatalHouse]),true)
+    +'</div></section>';
   // cards clicáveis: cada elemento do retorno
   const escopo=S?(' Dentro da firdária de '+(PT_NAME[S.mk]||'—')+(S.sk?(' / '+PT_NAME[S.sk]):'')
     +' e da profecção da '+ordinal(S.profHouse)+', ') : ' ';
@@ -1467,9 +1493,13 @@ function renderConfig(){
   if(rb)rb.onclick=()=>{CFG=JSON.parse(JSON.stringify(CFG_DEF));cfgSave();cfgApply();renderConfig();};
 }
 function cfgApply(){
-  try{ if(typeof NATAL!=='undefined'&&NATAL){
+  if(typeof NATAL==='undefined'||!NATAL)return;
+  try{
+    TEMPER_CACHE=null; AXES_CACHE=null;                 // invalida os caches
     CHARTMETA.temper=temperEngine();
-    if(typeof profileData==='function')profileData(true);
-    renderTemp(); renderPers(); renderNatal(); syncTempo();
-  }}catch(e){console.error(e);}
+    profileData(true);                                   // recalcula temperamento e eixos
+    renderTemp(); renderPers();
+  }catch(e){console.error('cfg perfil',e);}
+  try{ renderNatal(); }catch(e){console.error('cfg natal',e);}
+  try{ if($('tl-info'))syncTempo(); }catch(e){console.error('cfg timeline',e);}
 }
