@@ -222,7 +222,7 @@ function trDetalhe(){
 /* lista curta dos trânsitos que importam agora */
 function trRelevantes(){
   const el=$('tr-rel'); if(!el)return;
-  const d=trDate(), rel=(typeof transitosRelevantes==='function')?transitosRelevantes(d,6):[];
+  const d=trDate(), rel=(typeof transitosRelevantes==='function')?transitosRelevantes(d,5):[];
   if(!rel.length){el.innerHTML='<p class="note">nenhum trânsito de prioridade alta nesta data.</p>';return;}
   const S=tempoState(d);
   el.innerHTML=rel.map(h=>{
