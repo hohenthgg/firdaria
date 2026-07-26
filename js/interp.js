@@ -251,16 +251,8 @@ const RS_CTX=['iniciativa, coragem e novos começos','recursos, estabilidade e p
   'relações, parcerias e acordos','crises, perdas e recursos partilhados','sentido, estudos e horizontes amplos',
   'carreira, reputação e responsabilidades','grupos, projetos e amizades','recolhimento, bastidores e entrega'];
 /* síntese literal automática do momento (conclusão → contexto) */
-function synthLiteral(d){
-  const age=ageAt(d), f=firdAt(age), p=profAt(age), y=rsYearOf(d), rs=RS_DATA[y];
-  const mk=f.majorKey, sk=(f.subKey&&f.subKey!==mk&&PT_NAME[f.subKey])?f.subKey:null;
-  let s=cap(HOUSE_TAG[p.houseN])+' está em primeiro plano neste ano.';
-  s+=' O ciclo maior é de '+(PT_NAME[mk]||f.major)+(PT_NAME[mk]?(' — '+AGENDA_KW[mk]):'')
-    +(sk?(', e a fase atual, de '+PT_NAME[sk]+', relaciona esses assuntos a '+ruledHouses(sk).map(h=>HOUSE_TAG[h]).join(', ')+'.'):'.');
-  if(rs&&rs.raw&&rs.raw.asc!=null){const sg=signOf(rs.raw.asc), rl=SIGN_RULER[sg];
-    s+=' O contexto anual da Revolução, com Ascendente em '+SIGNS[sg]+' regido por '+PT_NAME[rl]+', volta-se a '+RS_CTX[sg]+'.';}
-  return s;
-}
+/* synthLiteral, periodExec e execCardHTML vivem agora em motor.js
+   (motor de convergência por camadas). */
 
 /* relação natal entre dois planetas: aspecto / recepção / nenhuma */
 function relBetween(a,b){
@@ -338,32 +330,6 @@ function crossFirdProf(mk,sk,p){
 }
 
 /* cartão executivo de quatro linhas + síntese */
-function periodExec(age){
-  const f=firdAt(age+0.001), p=profAt(age);
-  const mk=f.majorKey, sk=(f.subKey&&f.subKey!==mk&&PT_NAME[f.subKey])?f.subKey:null;
-  const foco = PT_NAME[mk]?themeOf(ruledHouses(mk)):'passagem de nodo';
-  const canal = sk?themeOf(ruledHouses(sk)):'a fase repete o regente do ciclo';
-  const demanda = HOUSE_THEME[p.houseN];
-  const cross = crossFirdProf(mk,sk,p);
-  // síntese: liga foco (administrado) → demanda (execução do ano) via administrador
-  const sint = 'Síntese: '+(PT_NAME[mk]?('a agenda de '+PT_NAME[mk]+' ('+foco.split(';')[0]+') '):'')
-    +'encontra no ano a demanda da casa '+p.houseN+' ('+demanda.split(',')[0]+'), administrada por '+PT_NAME[p.lordKey]+'.';
-  return {header:(f.major+(sk?(' / '+PT_NAME[sk]):''))+' · Profecção da Casa '+p.houseN,
-    foco,canal,demanda,sint,cross,f,p,mk,sk};
-}
-function execCardHTML(age,compact){
-  const e=periodExec(age);
-  let s='<div class="exec">'
-    +'<div class="exec-h">'+e.header+'</div>'
-    +'<div class="exec-l"><span>Foco principal</span>'+e.foco+'</div>'
-    +'<div class="exec-l"><span>Canal atual</span>'+e.canal+'</div>'
-    +'<div class="exec-l"><span>Demanda do ano</span>'+e.demanda+'</div>'
-    +'<div class="exec-s">'+e.sint+'</div>';
-  if(!compact)s+='<div class="exec-cross">'+e.cross+'</div>';
-  s+='</div>';
-  return s;
-}
-
 /* ============================================================
    ARQUÉTIPO (carta de tarô) por planeta — símbolo dominante do regente.
    Arquétipo ATUAL = regente do Ascendente · IDEAL = regente do Lote do Espírito.

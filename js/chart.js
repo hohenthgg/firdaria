@@ -263,14 +263,13 @@ function buildPromises(){
     const fat='<b>'+PT_NAME[k]+'</b> rege a '+ru.map(h=>h+'ª').join(' e a ')+' ('+ru.map(h=>HOUSE_THEME[h]).join('; ')+') e está na casa '+occ+' ('+HOUSE_THEME[occ]+'): '
       +ru.map(h=>HOUSE_THEME[h].split(',')[0]).join(' e ')+' tendem a se desenvolver por meio de '+HOUSE_THEME[occ].split(',')[0]+'.';
     PROMESSAS.push({
-      id:'prom-'+k, t, pl:k, casas,
+      id:'prom-'+k, t, pl:k, casas, ruled:ru, occ,
       fat,
       cond, testemunhos,
       cond_manif:'Manifesta-se '+condDelivery(k)+'.',
       facilit:(rec.length?rec.join('; '):(dignified?'dignidade de '+PT_NAME[k]:'aspectos favoráveis a '+PT_NAME[k])),
       atencao:(debil?'debilidade essencial: tende a exigir mais esforço, revisão ou tempo':(combust?'combustão: o tema opera encoberto pela identidade':(tenseAsp?'aspecto tenso: pede conciliação':'sem debilidades essenciais relevantes detectadas'))),
-      tec:'Chaves de ativação: firdária de '+PT_NAME[k]+'; profecções das casas '+casas.join(', ')+'; '+PT_NAME[k]+' como Senhor do Ano; '+PT_NAME[k]+' angular na Revolução; trânsitos a '+PT_NAME[k]+'.',
-      anos:yearsForHouses(casas)});
+      tec:'Ativação: firdária de '+PT_NAME[k]+'; profecção das casas '+casas.map(h=>h+'ª').join(', ')+'; '+PT_NAME[k]+' como Senhor do Ano; reforço na revolução selecionada; trânsitos a '+PT_NAME[k]+'.'});
   });
   // ordena por condição e força
   const rank={forte:0,disponivel:1,conflitiva:2,condicional:3,latente:4};
@@ -278,25 +277,16 @@ function buildPromises(){
   PROMESSAS=PROMESSAS.slice(0,8);
 }
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
-/* índice de convergência da ativação de uma promessa num instante */
+/* índice de convergência da ativação — delega ao motor de convergência
+   (motor.js). Mantido o nome para compatibilidade com o restante do app.
+   A pontuação é interna: serve para ORDENAR, não é probabilidade de evento. */
 function scoreProm(pr, d){
-  const age=ageAt(d), f=firdAt(age+0.001), p=profAt(age), y=rsYearOf(d);
-  const F=[]; let s=0; const add=(pts,lb)=>{s+=pts;F.push([pts,lb]);};
-  const inPromise=k=>k===pr.pl; // planeta central da promessa
-  if(f.majorKey===pr.pl) add(3,'firdária maior é '+PT_NAME[pr.pl]);
-  if(f.subKey===pr.pl&&f.subKey!==f.majorKey) add(2,'sub-firdária é '+PT_NAME[pr.pl]);
-  if(pr.casas.includes(p.houseN)) add(3,'casa profectada ('+p.houseN+'ª) integra a promessa');
-  if(p.lordKey===pr.pl) add(3,'Senhor do Ano é '+PT_NAME[pr.pl]);
-  if((RSMETA.angular[y]||[]).includes(pr.pl)) add(2,PT_NAME[pr.pl]+' angular na Revolução '+y);
-  // RS Asc cai em casa da promessa
-  const rs=RS_DATA[y];
-  if(rs&&rs.raw&&rs.raw.asc!=null){const hh=houseByRule(rs.raw.asc,NATAL.cusps); if(pr.casas.includes(hh)) add(2,'Asc da Revolução cai na casa '+hh+' (da promessa)');}
-  // RS repete aspecto natal do planeta
-  if((RSMETA.echo[y]||[]).some(([a,b])=>a===pr.pl||b===pr.pl)) add(2,'a Revolução repete um aspecto natal de '+PT_NAME[pr.pl]);
-  // trânsito exato a esse planeta hoje
-  if(typeof transitHits==='function'){try{const hit=transitHits(d).find(h=>(h.nk===pr.pl)&&h.orb<1); if(hit) add(2,'trânsito próximo a '+PT_NAME[pr.pl]+' natal');}catch(e){}}
-  const tier=s>=9?'convergência temporal muito alta':s>=6?'promessa ativa':s>=3?'promessa disponível':'promessa latente';
-  return {score:s,tier,factors:F};
+  if(typeof promiseState==='function'){
+    const st=promiseState(pr,d);
+    const tier=st.estado==='ativada'?'promessa ativada':st.estado==='disponível'?'promessa disponível':'promessa latente';
+    return {score:st.score, tier, estado:st.estado, factors:st.itens, papeis:st.papeis};
+  }
+  return {score:0,tier:'promessa latente',estado:'latente',factors:[]};
 }
 function buildConteudoDyn(){
   const sp=NATAL.pts.spirit, spr=SIGN_RULER[signOf(sp.lon)];

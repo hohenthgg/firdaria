@@ -128,17 +128,19 @@ function renderNatal(){
   // promessas — potenciais natais por múltiplos testemunhos
   const now=new Date();
   $('prom-body').innerHTML=(PROMESSAS.length?PROMESSAS:[]).map(pr=>{
-    const act=(typeof scoreProm==='function')?scoreProm(pr,now):{score:0,tier:'—',factors:[]};
+    const st=(typeof promiseState==='function')?promiseState(pr,now):{estado:'latente',itens:[]};
+    const q=(typeof qualidade==='function')?qualidade(pr.pl):{txt:pr.cond};
     return '<div class="prom" data-id="'+pr.id+'">'
-    +'<div class="p-t">'+pr.t+' <span class="prom-cond '+pr.cond+'">'+pr.cond+'</span> <span class="mono" style="color:var(--dim2)">· '+PT_NAME[pr.pl]+' · casas '+pr.casas.join(', ')+'</span></div>'
-    +'<div class="p-b"><b>Potencial natal:</b> '+pr.fat
-    +'<br><b>Condições de manifestação:</b> '+pr.cond_manif
-    +'<br><b>Facilitadores:</b> '+pr.facilit+'<br><b>Pontos de atenção:</b> '+pr.atencao
-    +'<br><b>Testemunhos que a sustentam ('+pr.testemunhos.length+'):</b> '+pr.testemunhos.join('; ')
-    +'<br><b>'+pr.tec+'</b>'
-    +'<br><b>Ativação hoje:</b> <span class="mono">'+act.tier+' ('+act.score+')</span>'+(act.factors.length?(' — '+act.factors.map(f=>'+'+f[0]+' '+f[1]).join('; ')):'')
-    +'<br><b>Anos de maior ativação:</b> '+(pr.anos.join(', ')||'—')
-    +'<br><span class="mono" style="color:var(--dim2)">clique de novo para desmarcar na linha do tempo</span></div></div>';
+    +'<div class="p-t">'+pr.t
+      +' <span class="prom-cond '+pr.cond+'">'+st.estado+'</span>'
+      +' <span class="mono" style="color:var(--dim2)">· '+(PT_GLYPH[pr.pl]||'')+' '+PT_NAME[pr.pl]
+      +' · casas '+pr.casas.map(h=>h+'ª').join(', ')+' · '+q.txt+'</span></div>'
+    +'<div class="p-b"><b>Administra:</b> '+((pr.ruled||[]).map(h=>HOUSE_TAG[h]).join(' e ')||'—')
+      +' · <b>executa por:</b> '+(HOUSE_TAG[pr.occ]||'—')+'.'
+    +(st.itens&&st.itens.length?('<br><b>Convergência agora:</b> '+st.itens.map(f=>f[1]).join('; ')+'.'):'')
+    +(typeof fundamentoHTML==='function'?fundamentoHTML(['promessa','convergencia','testemunho'],
+        [pr.fat,'Condição: '+pr.cond_manif,'Ativação: '+pr.tec]):'')
+    +'</div></div>';
   }).join('')||'<p class="mono">Nenhuma promessa com dois ou mais testemunhos convergentes foi detectada.</p>';
   $('prom-body').onclick=e=>{
     const el=e.target.closest('.prom'); if(!el)return;
@@ -277,139 +279,135 @@ function cordRange(){
    Profecção, Revoluções). Sóbrio: só o segmento ativo é preenchido; transições
    por pequenos traços; nomes quando há espaço; cursor único fino com a data acima.
    Detalhes por clique (data-layer / data-goto / data-rs) e tooltip (<title>). */
+/* ============================================================
+   ÓRBITA CONCÊNTRICA — camadas do tempo que se movem juntas.
+   Anel externo: Firdária (12 setores de período) · anel 2: Subfirdária ·
+   anel 3: Profecção (12 casas) · núcleo: revolução SELECIONADA.
+   Só o setor vigente é destacado. Clique abre o detalhe da camada.
+   ============================================================ */
 function drawCord(){
-  const svg=$('cord'); const W=svg.clientWidth||1200,H=304;
+  const svg=$('cord'); if(!svg)return;
+  const W=svg.clientWidth||900, mob=W<620;
+  const H=mob?Math.min(W,430):Math.min(W,560);
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
-  const [t0,t1]=cordRange();
-  const mob=W<620, L=mob?96:150, R=mob?12:18, FS=mob?12:14;
-  const XX=t=>L+((t-t0)/(t1-t0))*(W-L-R);
-  const clampX=x=>Math.max(L,Math.min(W-R,x));
-  const IVO='#eef0f3', DIM='#9aa1ab', DIM2='#6c727b', LINE='rgba(255,255,255,.09)', AC='143,163,187';
-  const byY=new Date(BIRTH).getUTCFullYear();
-  const cursAge=ageAt(CURSOR);
-  const years=(t1-t0)/DAY/365.25;
-  const selY=rsYearOf(CURSOR);
+  if(typeof NATAL==='undefined'||!NATAL){svg.innerHTML='';return;}
+  const CX=W/2, CY=H/2+ (mob?4:6), R=Math.min(W,H)/2-(mob?14:22);
+  const TAU=Math.PI*2;
+  const C_INK='#131a28', C_DIM='#606b80', C_DIM2='#98a1b2', C_LINE='rgba(19,26,40,.13)', C_SOFT='rgba(19,26,40,.05)';
+  const S=tempoState(CURSOR); if(!S){svg.innerHTML='';return;}
+  const P=(ang,r)=>[CX+r*Math.sin(ang), CY-r*Math.cos(ang)];
+  const arc=(a0,a1,r0,r1)=>{                 // setor anelar
+    const [x0,y0]=P(a0,r1),[x1,y1]=P(a1,r1),[x2,y2]=P(a1,r0),[x3,y3]=P(a0,r0);
+    const big=(a1-a0)>Math.PI?1:0;
+    return 'M'+x0+' '+y0+' A'+r1+' '+r1+' 0 '+big+' 1 '+x1+' '+y1
+         +' L'+x2+' '+y2+' A'+r0+' '+r0+' 0 '+big+' 0 '+x3+' '+y3+' Z';
+  };
   let s='';
-  const rows={fird:40, sub:100, prof:160, rev:220}, BH=44, RULE=280;
-  const CY=y=>y+BH/2;
-  const LINE2='rgba(255,255,255,.16)';
-  // estimativa de largura do rótulo p/ evitar sobreposição
-  const glyphish=ch=>{const c=ch.codePointAt(0);return c>=0x2200&&c<=0x27bf;};
-  const estW=(t,fs)=>{let n=0;for(const ch of t){const c=ch.codePointAt(0);if(c===0xFE0E)continue;n+=glyphish(ch)?fs*0.86:(ch===' ')?fs*0.32:(ch==='·'||ch==='–'||ch==='ª')?fs*0.42:fs*0.56;}return n;};
-  const fit=(w,fs,cands)=>{for(const c of cands){if(c&&estW(c,fs)+14<=w)return c;}return '';};
-  const sgl=i=>(SIGN_GLYPHS[i]||'')+'︎';   // glifo do signo, presentação texto
-  // rótulo da faixa + nó circular à esquerda (motivo do referencial)
-  const lbl=(y,txt)=>{
-    if(mob){s+='<text x="6" y="'+(CY(y)+4)+'" font-size="11" font-family="Inter" fill="'+DIM+'">'+txt+'</text>';return;}
-    s+='<circle cx="26" cy="'+CY(y)+'" r="14" fill="none" stroke="'+LINE2+'"/>'
-    +'<circle cx="26" cy="'+CY(y)+'" r="4.5" fill="none" stroke="'+DIM+'"/>'
-    +'<text x="52" y="'+(CY(y)+5)+'" font-size="14.5" font-family="Inter" fill="'+DIM+'">'+txt+'</text>';};
-  // banda de fundo
-  const band=y=>{s+='<rect x="'+L+'" y="'+y+'" width="'+(W-L-R)+'" height="'+BH+'" rx="11" fill="rgba(255,255,255,.022)" stroke="'+LINE+'"/>';};
-  // faixa Firdária — segmentos rotulados, ativo em caixa destacada
-  const segF=(x1,x2,active,label,attrs)=>{const w=x2-x1; if(w<0.6)return;
-    s+='<line x1="'+x1+'" y1="'+(rows.fird-3)+'" x2="'+x1+'" y2="'+(rows.fird+BH+3)+'" stroke="'+LINE+'"/>';
-    if(active) s+='<rect x="'+(x1+2)+'" y="'+(rows.fird+3)+'" width="'+Math.max(1,w-4)+'" height="'+(BH-6)+'" rx="9" fill="#0f1013" stroke="rgba(255,255,255,.85)" stroke-width="1.4"/>';
-    s+='<rect '+(attrs||'')+' x="'+x1+'" y="'+rows.fird+'" width="'+w+'" height="'+BH+'" fill="transparent" style="cursor:pointer"/>';
-    if(label) s+='<text '+(attrs||'')+' x="'+(x1+w/2)+'" y="'+(CY(rows.fird)+5)+'" text-anchor="middle" font-size="'+FS+'" font-family="Inter" fill="'+(active?IVO:DIM)+'" style="pointer-events:none">'+label+'</text>';};
-  // faixas inferiores — só marca de transição + área clicável (sem rótulo)
-  const tickHit=(x1,x2,y,attrs)=>{const w=x2-x1; if(w<0.4)return;
-    s+='<line x1="'+x1+'" y1="'+(y+7)+'" x2="'+x1+'" y2="'+(y+BH-7)+'" stroke="'+LINE+'"/>';
-    s+='<rect '+(attrs||'')+' x="'+x1+'" y="'+y+'" width="'+w+'" height="'+BH+'" fill="transparent" style="cursor:pointer"/>';};
-  // pastilha central com o planeta ativo da faixa (no cursor)
-  const badge=(y,txt,attrs)=>{const fsb=FS+0.5,bw=Math.min(W-L-R-8,estW(txt,fsb)+34),bh=mob?28:32,cxx=clampX(XX(CURSOR.getTime()));
-    const bx=Math.max(L+4,Math.min(W-R-bw-4,cxx-bw/2)),by=CY(y)-bh/2;
-    s+='<path d="M'+(cxx-6)+' '+by+' L'+(cxx+6)+' '+by+' L'+cxx+' '+(by+7)+' Z" fill="#0f1013" stroke="rgba(255,255,255,.55)"/>';
-    s+='<rect '+(attrs||'')+' x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+bh+'" rx="9" fill="#0e0f13" stroke="rgba(255,255,255,.85)" stroke-width="1.3" style="cursor:pointer"/>';
-    s+='<text '+(attrs||'')+' x="'+(bx+bw/2)+'" y="'+(by+bh/2+5)+'" text-anchor="middle" font-size="'+fsb+'" font-family="Inter" fill="'+IVO+'" style="pointer-events:none">'+txt+'</text>';};
+  // anéis: [nome, raio externo, raio interno]
+  const w1=mob?28:40, gap=mob?11:15;
+  const rF=[R, R-w1], rS=[R-w1-gap, R-2*w1-gap], rP=[R-2*w1-2*gap, R-3*w1-2*gap];
+  const rCore=rP[1]-gap;
+  // trilhos
+  [rF,rS,rP].forEach(rr=>{
+    s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rr[0]+'" fill="none" stroke="'+C_LINE+'"/>';
+    s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rr[1]+'" fill="none" stroke="'+C_LINE+'"/>';
+  });
+  // rótulo da camada: fica na folga entre anéis, sobre um recorte branco
+  const label=(txt,r)=>{
+    const [x,y]=P(0,r), fs=mob?8:9.5, w=txt.length*(fs*0.78)+14, h=fs+7;
+    return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="'+(h/2)+'" fill="#ffffff"/>'
+      +'<text x="'+x+'" y="'+(y+fs*0.36)+'" text-anchor="middle" font-size="'+fs+'" '
+      +'font-family="IBM Plex Mono" letter-spacing="2.2" fill="'+C_DIM2+'">'+txt+'</text>';
+  };
+  const setor=(a0,a1,rr,ativo,attrs)=>
+    '<path '+(attrs||'')+' d="'+arc(a0,a1,rr[1],rr[0])+'" fill="'+(ativo?'rgba(74,107,150,.14)':C_SOFT)+'" '
+    +'stroke="'+(ativo?'rgba(74,107,150,.55)':C_LINE)+'" stroke-width="'+(ativo?1.4:1)+'" style="cursor:pointer"/>';
+  const meioTexto=(a,r,txt,ativo,fs)=>{
+    const [x,y]=P(a,r);
+    return '<text x="'+x+'" y="'+(y+4)+'" text-anchor="middle" font-size="'+(fs||(mob?9.5:12))+'" font-family="Inter" '
+      +'fill="'+(ativo?C_INK:C_DIM)+'" style="pointer-events:none">'+txt+'</text>';
+  };
+  const estW=(t,fs)=>{let n=0;for(const ch of t){const c=ch.codePointAt(0);if(c===0xFE0E)continue;
+    n+=(c>=0x2200&&c<=0x27bf)?fs*.86:(ch===' ')?fs*.32:fs*.55;}return n;};
 
-  // ===== FIRDÁRIA =====
-  lbl(rows.fird,'Firdária'); band(rows.fird);
-  let age0=0;
+  /* ---------- anel 1 · FIRDÁRIA (proporcional aos anos de cada período) ---------- */
+  const TOT=FIRD.reduce((a,f)=>a+f[2],0);
+  let acc=0;
   FIRD.forEach(([k,nm,len])=>{
-    const a=BIRTH+age0*365.2425*DAY,b=BIRTH+(age0+len)*365.2425*DAY;const yA=byY+Math.round(age0);const now=cursAge>=age0&&cursAge<age0+len;const mid=age0+len/2;age0+=len;
-    if(b<t0||a>t1)return;
-    const x1=clampX(XX(a)),x2=clampX(XX(b)),w=x2-x1,g=PT_GLYPH[k]||'';
-    const label=fit(w,14,[g+' '+nm+' · '+yA+'–'+(yA+len), g+' '+nm, nm, g]);
-    segF(x1,x2,now,label,'data-goto="'+mid+'" data-layer="firdaria"');
+    const a0=acc/TOT*TAU, a1=(acc+len)/TOT*TAU, mid=(a0+a1)/2;
+    const ativo=(S.age>=acc&&S.age<acc+len);
+    s+=setor(a0,a1,rF,ativo,'data-layer="firdaria" data-goto="'+(acc+len/2)+'"');
+    const arcLen=(a1-a0)*((rF[0]+rF[1])/2), g=PT_GLYPH[k]||'';
+    const nome=(PT_NAME[k]||nm);
+    const txt=estW(g+' '+nome,12)+8<arcLen?(g+' '+nome):(estW(nome,12)+6<arcLen?nome:g);
+    s+=meioTexto(mid,(rF[0]+rF[1])/2,txt,ativo);
+    acc+=len;
   });
-  // ===== SUB-FIRDÁRIA ===== (marcas + pastilha central)
-  lbl(rows.sub,'Subfirdária'); band(rows.sub);
-  for(let a=0;a<75;){
-    const f=firdAt(a); const st=f.subStart,en=f.subEnd;
-    if(!st){a+=0.02;continue;}
-    const enAge=(en-BIRTH)/DAY/365.2425, stAge=(st-BIRTH)/DAY/365.2425;
-    if(!(en<t0||st>t1)){const x1=clampX(XX(st)),x2=clampX(XX(en)),mid=(stAge+enAge)/2;
-      tickHit(x1,x2,rows.sub,'data-goto="'+mid+'" data-layer="sub"');}
-    a=enAge>a+1e-4?enAge:a+0.02;
-  }
-  // ===== PROFECÇÃO ===== (marcas + pastilha central)
-  lbl(rows.prof,'Profecção'); band(rows.prof);
-  for(let yr=0;yr<75;yr++){
-    const a=BIRTH+yr*365.2425*DAY,b=BIRTH+(yr+1)*365.2425*DAY;
-    if(b<t0||a>t1)continue;
-    const x1=clampX(XX(a)),x2=clampX(XX(b));
-    tickHit(x1,x2,rows.prof,'data-goto="'+(yr+0.5)+'" data-layer="profeccao"');
-  }
-  // ===== REVOLUÇÕES ===== (marcas + pastilha central)
-  lbl(rows.rev,'Revoluções'); band(rows.rev);
-  Object.keys(RS_DATA).forEach(y=>{
-    const a=Date.UTC(+y,new Date(BIRTH).getUTCMonth(),new Date(BIRTH).getUTCDate()), b=a+365.2425*DAY;
-    if(b<t0||a>t1)return;
-    const x1=clampX(XX(a)),x2=clampX(XX(b));
-    tickHit(x1,x2,rows.rev,'data-rs="'+y+'" data-layer="revolucao"');
-  });
-  // eventos pessoais (traço)
-  EVENTS.forEach(ev=>{const t=new Date(ev.d).getTime(); if(t<t0||t>t1)return;
-    const x=clampX(XX(t)); s+='<line x1="'+x+'" y1="'+rows.rev+'" x2="'+x+'" y2="'+(rows.rev+BH)+'" stroke="#b9a6d6" stroke-width="1.4"><title>'+esc(ev.txt)+' ('+ev.d+')</title></line>';});
+  s+=label('FIRDÁRIA',rF[0]+(mob?8:11));
 
-  // ===== régua (calendário) =====
-  const tick=years>30?10:years>8?2:years>1.5?0.5:years>0.1?1/12:1/365;
-  s+='<line x1="'+L+'" y1="'+RULE+'" x2="'+(W-R)+'" y2="'+RULE+'" stroke="'+LINE+'"/>';
-  for(let yy=Math.ceil((t0-BIRTH)/DAY/365.2425/tick)*tick;;yy+=tick){
-    const t=BIRTH+yy*365.2425*DAY;if(t>t1)break;
-    const x=XX(t), d=new Date(t);
-    s+='<path d="M'+x+' '+(RULE-3.5)+' L'+(x+3.5)+' '+RULE+' L'+x+' '+(RULE+3.5)+' L'+(x-3.5)+' '+RULE+' Z" fill="'+DIM2+'"/>';
-    const tl=tick>=1?String(d.getUTCFullYear()):tick>=1/12?MESES[d.getUTCMonth()]:String(d.getUTCDate());
-    s+='<text x="'+x+'" y="'+(RULE+16)+'" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono" fill="'+DIM2+'">'+tl+'</text>';
+  /* ---------- anel 2 · SUBFIRDÁRIA (7 fases do período vigente) ---------- */
+  const fNow=firdAt(S.age), base=fNow.from||0, len=fNow.len||1, part=len/7;
+  const subs=FIRD.slice(0,7).map(f=>f[0]);
+  let si=subs.indexOf(fNow.majorKey); if(si<0)si=0;
+  for(let i=0;i<7;i++){
+    const a0=i/7*TAU, a1=(i+1)/7*TAU, mid=(a0+a1)/2;
+    const sk=subs[(si+i)%7];
+    const ativo=(S.age>=base+i*part&&S.age<base+(i+1)*part);
+    s+=setor(a0,a1,rS,ativo,'data-layer="sub" data-goto="'+(base+i*part+part/2)+'"');
+    const arcLen=(a1-a0)*((rS[0]+rS[1])/2), g=PT_GLYPH[sk]||'', nome=PT_NAME[sk]||'';
+    const txt=estW(g+' '+nome,11)+8<arcLen?(g+' '+nome):g;
+    s+=meioTexto(mid,(rS[0]+rS[1])/2,txt,ativo,mob?9:11);
   }
-  // ===== pino A + conector vertical + pastilhas ativas + data =====
-  const cx=clampX(XX(CURSOR.getTime()));
-  if(PINNED){const px=clampX(XX(PINNED.getTime()));s+='<line x1="'+px+'" y1="'+rows.fird+'" x2="'+px+'" y2="'+RULE+'" stroke="'+DIM+'" stroke-width="1" stroke-dasharray="3 4"/>';}
-  s+='<line x1="'+cx+'" y1="26" x2="'+cx+'" y2="'+RULE+'" stroke="'+IVO+'" stroke-width="1"/>';
-  // pastilhas: planeta ativo de cada faixa inferior
-  const fNow=firdAt(cursAge);
-  badge(rows.sub,(PT_GLYPH[fNow.subKey]||'')+' '+(PT_NAME[fNow.subKey]||fNow.sub||'—'),'data-layer="sub"');
-  const pNow=profAt(Math.floor(cursAge));
-  badge(rows.prof,(PT_GLYPH[pNow.lordKey]||'')+' '+(PT_NAME[pNow.lordKey]||'—')+' · Casa '+pNow.houseN,'data-layer="profeccao"');
-  badge(rows.rev,(PT_GLYPH.sun||'☉')+' RS '+selY,'data-rs="'+selY+'" data-layer="revolucao"');
-  // data acima do cursor
-  const dtxt=fdate(CURSOR), pw=estW(dtxt,11)+22, px=Math.max(L,Math.min(W-R-pw,cx-pw/2));
-  s+='<rect x="'+px+'" y="4" width="'+pw+'" height="20" rx="10" fill="#15161b" stroke="rgba(255,255,255,.18)"/>'
-    +'<text x="'+(px+pw/2)+'" y="18" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="'+IVO+'">'+dtxt+'</text>';
+  s+=label('SUBFIRDÁRIA',(rF[1]+rS[0])/2);
+
+  /* ---------- anel 3 · PROFECÇÃO (12 casas do ciclo anual) ---------- */
+  const anoBase=Math.floor(S.age)-((Math.floor(S.age))%12);
+  for(let i=0;i<12;i++){
+    const a0=i/12*TAU, a1=(i+1)/12*TAU, mid=(a0+a1)/2;
+    const casa=i+1, ativo=(S.profHouse===casa);
+    s+=setor(a0,a1,rP,ativo,'data-layer="profeccao" data-goto="'+(anoBase+i+0.5)+'"');
+    const lord=NATAL.rulers[casa];
+    const arcLen=(a1-a0)*((rP[0]+rP[1])/2);
+    const txt=estW('Casa '+casa+' '+(PT_GLYPH[lord]||''),11)+6<arcLen
+      ?('Casa '+casa+' '+(PT_GLYPH[lord]||'')):(''+casa);
+    s+=meioTexto(mid,(rP[0]+rP[1])/2,txt,ativo,mob?9:11);
+  }
+  s+=label('PROFECÇÃO',(rS[1]+rP[0])/2);
+
+  /* ---------- núcleo · REVOLUÇÃO SELECIONADA ---------- */
+  const REV=S.rev;
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="#ffffff" stroke="rgba(74,107,150,.45)" stroke-width="1.3" '
+    +'data-layer="revolucao" style="cursor:pointer"/>';
+  const fsT=mob?13:17, fsS=mob?9:11;
+  if(REV){
+    s+='<text x="'+CX+'" y="'+(CY-(mob?12:16))+'" text-anchor="middle" font-size="'+fsT+'" font-family="Inter" font-weight="600" fill="'+C_INK+'" style="pointer-events:none">'
+      +REV.sigla+' '+REV.start.getUTCFullYear()+'</text>';
+    s+='<text x="'+CX+'" y="'+(CY+(mob?3:4))+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM+'" style="pointer-events:none">'
+      +'Asc em '+REV.ascSignNm+'</text>';
+    s+='<text x="'+CX+'" y="'+(CY+(mob?15:19))+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM+'" style="pointer-events:none">'
+      +(PT_NAME[REV.ascRuler]||'')+' regente</text>';
+    s+='<text x="'+CX+'" y="'+(CY+(mob?29:36))+'" text-anchor="middle" font-size="'+(mob?13:16)+'" font-family="Inter" fill="'+C_DIM2+'" style="pointer-events:none">'
+      +(SIGN_GLYPHS[REV.ascSign]||'')+'︎</text>';
+  } else {
+    s+='<text x="'+CX+'" y="'+(CY-2)+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM2+'" style="pointer-events:none">revolução</text>';
+    s+='<text x="'+CX+'" y="'+(CY+14)+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM2+'" style="pointer-events:none">indisponível</text>';
+  }
+  // marcador do instante: raio fino do núcleo à borda, no ângulo do ano vigente
+  const angNow=((S.age%12)/12)*TAU;
+  const [mx0,my0]=P(angNow,rCore+2), [mx1,my1]=P(angNow,R+ (mob?5:7));
+  s+='<line x1="'+mx0+'" y1="'+my0+'" x2="'+mx1+'" y2="'+my1+'" stroke="rgba(74,107,150,.5)" stroke-width="1"/>';
   svg.innerHTML=s;
 }
 function cordDrag(){
-  const svg=$('cord'); let dragging=false;
-  const pick=e=>{
-    const r=svg.getBoundingClientRect();
-    const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
-    const vb=svg.viewBox.baseVal.width||r.width;
-    const mob=vb<620, L=(mob?96:150)*(r.width/vb), R=(mob?12:18)*(r.width/vb);
-    const [t0,t1]=cordRange();
-    const t=t0+((x-L)/(r.width-L-R))*(t1-t0);
-    if(isFinite(t)){CURSOR=new Date(Math.max(BIRTH,Math.min(BIRTH+75*365.2425*DAY,t)));syncTempo();}
-  };
+  const svg=$('cord'); if(!svg)return;
   svg.addEventListener('pointerdown',e=>{
-    const layEl=e.target&&e.target.closest&&e.target.closest('[data-layer]');
-    if(layEl)TP_LAYER=layEl.dataset.layer;
-    const rs=e.target&&e.target.closest&&e.target.closest('[data-rs]');
-    if(rs){const y=rs.dataset.rs;const b=new Date(BIRTH);CURSOR=new Date(Date.UTC(+y,b.getUTCMonth(),b.getUTCDate(),b.getUTCHours()));syncTempo();return;}
     const g=e.target&&e.target.closest&&e.target.closest('[data-goto]');
-    if(g){const age=+g.dataset.goto;CURSOR=new Date(BIRTH+age*365.2425*DAY);syncTempo();return;}
-    dragging=true;pick(e);});
-  window.addEventListener('pointermove',e=>{if(dragging)pick(e);});
-  window.addEventListener('pointerup',()=>dragging=false);
+    const lay=e.target&&e.target.closest&&e.target.closest('[data-layer]');
+    if(lay)TP_LAYER=lay.dataset.layer;
+    if(g){const age=+g.dataset.goto;
+      if(isFinite(age)&&age>=0&&age<75)CURSOR=new Date(BIRTH+age*365.2425*DAY);}
+    if(lay||g)syncTempo();
+  });
 }
 /* mandala temporal única: anéis de progresso firdária · sub · profecção,
    centro com Senhor do Ano + casa profectada + Asc da Revolução. Minimalista. */
@@ -453,97 +451,149 @@ function hierarquiaHTML(){
 }
 /* ---- cartões executivos do momento (Firdária, Sub, Profecção, Revolução) ---- */
 function tempoExecCards(d){
-  const age=ageAt(d), f=firdAt(age), p=profAt(age), y=rsYearOf(d), rs=RS_DATA[y];
-  const byY=new Date(BIRTH).getUTCFullYear();
-  const mk=f.majorKey, sk=(f.subKey&&f.subKey!==mk&&PT_NAME[f.subKey])?f.subKey:null;
+  const S=tempoState(d); if(!S)return '';
+  const byY=new Date(BIRTH).getUTCFullYear(), f=S.f;
   const card=(layer,k,title,interval,theme)=>'<div class="tpcard" data-layer="'+layer+'"><div class="tpc-k">'+k+'</div>'
     +'<div class="tpc-t">'+title+'</div><div class="tpc-i">'+interval+'</div><div class="tpc-d">'+theme+'</div></div>';
-  // firdária
   const fFrom=byY+Math.round(f.from||0), fTo=fFrom+(f.len||0);
-  const cF=card('firdaria','Firdária',PT_NAME[mk]||f.major,(fFrom+'–'+fTo),
-    'Agenda: '+((PT_NAME[mk]&&AGENDA_KW[mk])||'passagem de nodo')+'.');
-  // sub
-  const cS=sk?card('sub','Subfirdária',PT_NAME[mk]+' / '+PT_NAME[sk],'até '+fdate(new Date(f.subEnd)),
-    'Fase: '+AGENDA_KW[sk]+'.')
-    :card('sub','Subfirdária',PT_NAME[mk]||f.major,'fase do ciclo','Fase: repete o regente do ciclo.');
-  // profecção
-  const cP=card('profeccao','Profecção','Casa '+p.houseN+' · Senhor '+PT_NAME[p.lordKey],'ano '+y,
-    'Ano de '+HOUSE_TAG[p.houseN]+'.');
-  // revolução
-  let cR;
-  if(rs&&rs.raw&&rs.raw.asc!=null){const sg=signOf(rs.raw.asc), rl=SIGN_RULER[sg];
-    cR=card('revolucao','Revolução Solar','Asc em '+SIGNS[sg]+' · '+PT_NAME[rl]+' regente','RS '+y,'Contexto: '+RS_CTX[sg]+'.');
-  } else cR=card('revolucao','Revolução Solar','—','RS '+y,'Sem revolução registrada para o ano.');
+  // firdária: assunto dominante pelas casas REGIDAS
+  const cF=card('firdaria','Firdária',PT_NAME[S.mk]||f.major,(fFrom+'–'+fTo),
+    PT_NAME[S.mk]?(cap1(casasTag(S.rulesMk))+' em destaque.'):'Passagem de nodo.');
+  // subfirdária: assunto secundário/imediato
+  const cS=S.sk?card('sub','Subfirdária',PT_NAME[S.sk],'até '+fdate(new Date(f.subEnd)),
+      cap1(casasTag(S.rulesSk))+' em segundo plano.')
+    :card('sub','Subfirdária',PT_NAME[S.mk]||f.major,'fase do ciclo','A fase repete o regente do ciclo.');
+  // profecção: assunto do ano
+  const cP=card('profeccao','Profecção','Casa '+S.profHouse+' · Senhor '+PT_NAME[S.lord],
+    'ano '+rsYearOf(d), 'Ano de '+casaTag(S.profHouse)+'.');
+  // revolução SELECIONADA (substitui a camada contextual)
+  const R=S.rev;
+  const cR=R?card('revolucao','Revolução '+R.label,'Asc em '+R.ascSignNm+' · '+PT_NAME[R.ascRuler]+' regente',
+      R.sigla+' '+fdate(R.start)+(R.end?(' → '+fdate(R.end)):''),
+      'Ambiente: '+casaTag(R.ascNatalHouse)+'.')
+    :card('revolucao','Revolução','—','—','Revolução indisponível: recarregue o mapa pelo link.');
   return cF+cS+cP+cR;
 }
-/* ---- promessas ativadas na data ---- */
-function tempoPromsHTML(d){
-  if(!PROMESSAS.length)return '';
-  const scored=PROMESSAS.map(pr=>({pr,act:scoreProm(pr,d)})).sort((a,b)=>b.act.score-a.act.score);
-  const lvl=sc=>sc>=6?['alta','Ativação alta']:sc>=3?['moderada','Ativação moderada']:sc>=1?['disponivel','Disponível']:['latente','Latente'];
-  const rows=scored.slice(0,6).map(({pr,act})=>{const [cls,txt]=lvl(act.score);
-    return '<details class="tpprom"><summary><span class="pp-t">'+pr.t+'</span><span class="pp-lv '+cls+'">'+txt+' · '+pr.testemunhos.length+' testemunhos</span></summary>'
-      +'<div class="pp-b"><b>Fundamento natal:</b> '+pr.fat
-      +'<br><b>Técnicas que ativam:</b> '+pr.tec
-      +'<br><b>Facilitadores:</b> '+pr.facilit+' · <b>Pontos de atenção:</b> '+pr.atencao
-      +(act.factors.length?('<br><b>Convergência agora:</b> '+act.factors.map(x=>x[1]).join('; ')):'')
-      +'</div></details>';}).join('');
-  return '<h3 class="tp-h">Promessas ativadas</h3><div class="tpproms">'+rows
-    +'</div><p class="note" style="margin-top:2px">A convergência mede repetição entre técnicas — não é probabilidade científica de evento.</p>';
+/* ---- seletor de revoluções ---- */
+function revSelectorHTML(){
+  return revKinds().map(k=>'<button class="btn'+(k.id===REV_SEL?' on':'')+'" data-rev="'+k.id+'" title="'+k.o+'">'
+    +(PT_GLYPH[k.key]||'')+' '+k.label+'</button>').join('');
 }
-/* ---- painel de detalhes (ao clicar num cartão/segmento) ---- */
+/* ---- cartão da revolução selecionada (período, planeta, regente, casas, contatos) ---- */
+function revCardHTML(d){
+  const S=tempoState(d); if(!S)return '';
+  const R=S.rev;
+  if(!R)return '<div class="card"><div class="kicker">revolução selecionada</div>'
+    +'<p>Não foi possível calcular a revolução '+(REV_BY_ID[REV_SEL]||{}).label+'. Importe o mapa pelo link do Aspectarian (é dele que vêm as coordenadas do lugar).</p></div>';
+  const row=(k,v)=>'<div class="rv-r"><span class="rv-k">'+k+'</span><span class="rv-v">'+v+'</span></div>';
+  const cont=R.contatos.slice(0,4).map(c=>PT_NAME[c.rev]+' '+c.gl+' '+c.alvoNm+' natal ('+c.orb.toFixed(1)+'°)').join(' · ')||'—';
+  const rep=R.repeats.slice(0,3).map(r=>PT_NAME[r.a]+' '+r.gl+' '+PT_NAME[r.b]).join(' · ')||'nenhum';
+  return '<div class="card rvcard"><div class="kicker">revolução selecionada</div>'
+    +'<div class="rv-h">'+(PT_GLYPH[R.planetKey]||'')+' Revolução '+R.label+'</div>'
+    +'<p class="rv-o">'+R.K.o+'</p>'
+    +row('Validade',fdate(R.start)+(R.end?(' → '+fdate(R.end)):''))
+    +row('Planeta que retorna',PT_NAME[R.planetKey]+(R.planetRevHouse?(' · casa '+R.planetRevHouse+' da revolução'):''))
+    +row('Ascendente da revolução',R.ascSignNm+' · regido por '+PT_NAME[R.ascRuler])
+    +row('Regente do Ascendente',PT_NAME[R.ascRuler]+(R.ascRulerRevHouse?(' na casa '+R.ascRulerRevHouse+' da revolução'):'')
+        +(R.ascRulerNatalHouse?(' · casa '+R.ascRulerNatalHouse+' no natal'):''))
+    +row('Área natal reativada','casa '+R.ascNatalHouse+' — '+casaTag(R.ascNatalHouse))
+    +row('Contatos com o natal',cont)
+    +row('Aspectos natais repetidos',rep)
+    +'<p class="rv-f">'+cap1(R.K.foco)+'.</p>'
+    +(typeof fundamentoHTML==='function'?fundamentoHTML(['revolucao','ascendente','dois-tempos'],
+       ['Ambiente lido pela casa natal onde cai o Ascendente da revolução; a revolução não substitui a promessa natal.']):'')
+    +'</div>';
+}
+/* ---- promessas: cartão enxuto (título · administrador · casas · condição · estado) ---- */
+function tempoPromsHTML(d){
+  if(typeof PROMESSAS==='undefined'||!PROMESSAS.length)return '';
+  const S=tempoState(d);
+  const scored=PROMESSAS.map(pr=>({pr,st:promiseState(pr,d,S)})).sort((a,b)=>b.st.score-a.st.score);
+  const rows=scored.slice(0,6).map(({pr,st})=>{
+    const cls={ativada:'alta','disponível':'moderada',latente:'latente'}[st.estado]||'latente';
+    const q=qualidade(pr.pl);
+    return '<details class="tpprom"><summary>'
+      +'<span class="pp-t">'+pr.t+'</span>'
+      +'<span class="pp-meta">'+(PT_GLYPH[pr.pl]||'')+' '+PT_NAME[pr.pl]
+        +' · casas '+(pr.casas||[]).map(h=>h+'ª').join(', ')
+        +' · '+q.txt+'</span>'
+      +'<span class="pp-lv '+cls+'">'+st.estado+'</span></summary>'
+      +'<div class="pp-b">'
+      +'<b>Administra:</b> '+casasTag(pr.ruled||[])+' · <b>executa por:</b> '+casaTag(pr.occ)+'.'
+      +(st.itens.length?('<br><b>Convergência agora:</b> '+st.itens.map(x=>x[1]).join('; ')+'.'):'')
+      +(typeof fundamentoHTML==='function'?fundamentoHTML(['promessa','convergencia','testemunho'],
+          [pr.fat, 'Ativação: '+pr.tec]):'')
+      +'</div></details>';}).join('');
+  return '<h3 class="tp-h">Promessas do mapa</h3><div class="tpproms">'+rows
+    +'</div><p class="note" style="margin-top:2px">A ordenação mede repetição entre técnicas — não é probabilidade de evento.</p>';
+}
+/* ---- painel de detalhes (ao clicar num cartão/setor) ---- */
 let TP_LAYER=null;
 document.addEventListener('click',e=>{
   const close=e.target.closest&&e.target.closest('[data-tpclose]');
   if(close){TP_LAYER=null;if(typeof syncTempo==='function')syncTempo();return;}
+  const rv=e.target.closest&&e.target.closest('[data-rev]');
+  if(rv){revSetKind(rv.dataset.rev);syncTempo();if(typeof renderTrans==='function')try{renderTrans();}catch(x){}return;}
   const card=e.target.closest&&e.target.closest('#tempo-exec [data-layer]');
   if(card){TP_LAYER=(TP_LAYER===card.dataset.layer)?null:card.dataset.layer;syncTempo();
     const det=document.getElementById('tempo-detail');if(det&&TP_LAYER)det.scrollIntoView({behavior:'smooth',block:'nearest'});}
 });
 function tempoDetailHTML(layer,d){
-  const age=ageAt(d), f=firdAt(age), p=profAt(age), y=rsYearOf(d), rs=RS_DATA[y];
-  const mk=f.majorKey, sk=(f.subKey&&f.subKey!==mk&&PT_NAME[f.subKey])?f.subKey:null;
+  const S=tempoState(d); if(!S)return '';
+  const mk=S.mk, sk=S.sk, p=S.p, R=S.rev;
   const sec=(k,v)=>'<div class="td-sec"><span class="td-k">'+k+'</span><span class="td-v">'+v+'</span></div>';
-  const para=v=>'<div class="td-sec"><span class="td-v">'+v+'</span></div>';
-  const planetSecs=k=>{const it=interpPlanet(k),pp=NATAL.pts[k],ru=ruledHouses(k);
-    return sec('Interpretação literal',it.sintese)
-      +sec('Casas regidas',ru.length?ru.map(h=>h+'ª — '+HOUSE_THEME[h]).join('<br>'):'—')
-      +sec('Casa ocupada natalmente',pp.h+' — '+HOUSE_THEME[pp.h]+(pp.hBack?(' · fundo na '+pp.hBack+'ª (regra dos 5°)'):''))
-      +sec('Condição do planeta',pp.dig+' · força '+(STR[k]||4)+'/8')
-      +sec('Manifestações possíveis','<ul class="ilist">'+it.manif.slice(0,4).map(m=>'<li>'+m+'</li>').join('')+'</ul>')
-      +sec('Facilitadores · pontos de atenção','favorece '+it.alta.slice(0,2).map(x=>x.replace(/^favorece /,'')).join(', ')+' · sob aflição, '+it.baixa.slice(0,2).map(x=>x.replace(/^sob aflição, pode aumentar /,'')).join(', '));
-  };
-  let head,sub,body;
-  if(layer==='firdaria'&&PT_NAME[mk]){head=PT_NAME[mk]+' — Firdária maior';sub='agenda estratégica do ciclo';
-    const fb=firdariaText(mk); body=para(fb.agenda)+para(fb.canal)+para(fb.cond)+planetSecs(mk);}
-  else if(layer==='sub'){ if(!sk){head=(PT_NAME[mk]||f.major)+' — Sub-firdária';sub='a fase repete o regente do ciclo';body=sec('Fase','O tema maior em estado concentrado.');}
-    else{head=PT_NAME[sk]+' — Sub-firdária';sub='fase operacional dentro da agenda maior';const sb=subText(mk,sk);
-      body=para(sb.entra)+para(sb.funcao)+para(sb.relacao)+planetSecs(sk);}}
-  else if(layer==='profeccao'){head='Casa '+p.houseN+' — Profecção do ano';sub='demanda específica do ano · Senhor '+PT_NAME[p.lordKey];
-    const pb=profBlocks(p);body=para(pb.materia)+para(pb.admin)+para(pb.traz)+para(pb.local)+sec('Cruzamento com a firdária',crossFirdProf(mk,sk,p))+planetSecs(p.lordKey);}
-  else if(layer==='revolucao'){head='Revolução Solar '+y;sub='cenário anual de manifestação';
-    body=rs?(sec('Ascendente e regente',rs.asc)+sec('Destaques do ano',rs.destaque)+sec('Estrelas',rs.estrelas)):sec('—','Sem revolução registrada para '+y+'.');}
-  else return '';
-  // promessas relacionadas à camada
-  const relK=layer==='profeccao'?p.lordKey:layer==='sub'?sk:layer==='revolucao'?null:mk;
-  const proms=PROMESSAS.filter(pr=>relK&&pr.pl===relK).slice(0,3);
-  if(proms.length)body+=sec('Promessas natais relacionadas',proms.map(pr=>'<b>'+pr.t+'</b> ('+pr.cond+')').join('<br>'));
+  // as três distinções, sempre separadas
+  const tri=k=>{const q=qualidade(k), pp=NATAL.pts[k];
+    return sec('Assuntos que administra',ruledHouses(k).map(h=>h+'ª — '+HOUSE_THEME[h]).join('<br>')||'—')
+      +sec('Campo natal onde executa',pp?(pp.h+'ª — '+HOUSE_THEME[pp.h]+(pp.hBack?(' · fundo na '+pp.hBack+'ª (regra dos 5°)'):'')):'—')
+      +sec('Qualidade da entrega',q.txt+' · '+({boa:'tende a entregar',condicional:'entrega conforme os apoios',travada:'exige mais esforço e tempo'}[q.nivel]||'—'));};
+  let head,sub,body,tags;
+  if(layer==='firdaria'&&PT_NAME[mk]){
+    head=PT_NAME[mk]+' — Firdária maior'; sub='agenda ampla do ciclo'; tags=['firdaria','senhor-do-tempo'];
+    body=sec('Assunto dominante',cap1(casasTag(S.rulesMk))+' — tende a permanecer em primeiro plano durante o período.')+tri(mk);
+  } else if(layer==='sub'){
+    if(!sk){head=(PT_NAME[mk]||S.f.major)+' — Subfirdária';sub='a fase repete o regente do ciclo';tags=['firdaria','sub'];
+      body=sec('Fase','O mesmo assunto, em estado concentrado.');}
+    else{head=PT_NAME[sk]+' — Subfirdária';sub='fase e assuntos secundários';tags=['firdaria','sub','aspecto'];
+      const rel=relBetween(mk,sk);
+      body=sec('Assunto secundário',cap1(casasTag(S.rulesSk))+' — entra em segundo plano, de modo mais imediato.')
+        +sec('Relação com o regente do ciclo',rel.txt+'.')+tri(sk);}
+  } else if(layer==='profeccao'){
+    head='Casa '+p.houseN+' — Profecção do ano'; sub='matéria prioritária · Senhor '+PT_NAME[p.lordKey]; tags=['profeccao','senhor-do-ano'];
+    body=sec('Matéria do ano',cap1(casaTag(p.houseN))+' ('+ordinal(p.houseN)+' em '+(p.sign||'')+') — '+HOUSE_THEME[p.houseN]+'.')
+      +sec('Administrador do ano',PT_NAME[p.lordKey]+' rege o signo profectado e conduz esses assuntos.')
+      +tri(p.lordKey);
+  } else if(layer==='revolucao'){
+    if(!R)return '<div class="tdcard"><button class="td-close" data-tpclose>✕</button><div class="td-h">Revolução</div>'
+      +'<div class="td-sub">indisponível</div><div class="td-sec"><span class="td-v">Importe o mapa pelo link para calcular as revoluções.</span></div></div>';
+    head='Revolução '+R.label; sub='ambiente atual de manifestação'; tags=['revolucao','ascendente','dois-tempos'];
+    body=sec('Validade',fdate(R.start)+(R.end?(' → '+fdate(R.end)):''))
+      +sec('Ambiente',cap1(casaTag(R.ascNatalHouse))+' — o Ascendente da revolução cai na '+ordinal(R.ascNatalHouse)+' natal.')
+      +sec('Regente do Ascendente',PT_NAME[R.ascRuler]+(R.ascRulerRevHouse?(' · casa '+R.ascRulerRevHouse+' da revolução'):''))
+      +sec('Foco do retorno',cap1(R.K.foco)+'.')
+      +sec('Aspectos natais repetidos',R.repeats.slice(0,3).map(r=>PT_NAME[r.a]+' '+r.gl+' '+PT_NAME[r.b]).join(' · ')||'nenhum');
+  } else return '';
+  // promessas ligadas à camada
+  const relK=layer==='profeccao'?p.lordKey:layer==='sub'?sk:layer==='revolucao'?(R&&R.ascRuler):mk;
+  const proms=(typeof PROMESSAS!=='undefined'?PROMESSAS:[]).filter(pr=>relK&&pr.pl===relK).slice(0,3);
+  if(proms.length)body+=sec('Promessas natais relacionadas',
+    proms.map(pr=>pr.t+' — '+promiseState(pr,d,S).estado).join('<br>'));
+  if(typeof fundamentoHTML==='function')body+=fundamentoHTML(tags);
   return '<div class="tdcard"><button class="td-close" data-tpclose>✕</button><div class="td-h">'+head+'</div><div class="td-sub">'+sub+'</div>'+body+'</div>';
 }
 function syncTempo(){
-  if(!NATAL){['tempo-exec','tempo-synth','tempo-proms','tempo-detail','fird-ledger'].forEach(id=>{if($(id))$(id).innerHTML='';});
+  if(typeof NATAL==='undefined'||!NATAL){
+    ['tempo-exec','tempo-synth','tempo-proms','tempo-detail','tempo-rev','fird-ledger'].forEach(id=>{if($(id))$(id).innerHTML='';});
     if($('tempo-synth'))$('tempo-synth').innerHTML=emptyState();return;}
   $('tempo-date').textContent=fdate(CURSOR)+' · '+Math.floor(ageAt(CURSOR))+' anos';
   $('tempo-pick').value=CURSOR.toISOString().slice(0,10);
+  if($('tempo-revsel'))$('tempo-revsel').innerHTML=revSelectorHTML();
   drawCord();
-  // 2 · cartões executivos
   $('tempo-exec').innerHTML=tempoExecCards(CURSOR);
   if(TP_LAYER){const c=$('tempo-exec').querySelector('[data-layer="'+TP_LAYER+'"]');if(c)c.classList.add('on');}
-  // 3 · síntese literal
   $('tempo-synth').innerHTML=synthLiteral(CURSOR);
-  // 5 · promessas ativadas
+  if($('tempo-rev'))$('tempo-rev').innerHTML=revCardHTML(CURSOR);
   $('tempo-proms').innerHTML=tempoPromsHTML(CURSOR);
-  // painel de detalhes (se alguma camada estiver aberta)
   $('tempo-detail').innerHTML=TP_LAYER?tempoDetailHTML(TP_LAYER,CURSOR):'';
   renderCompare();
 }
@@ -604,7 +654,7 @@ function renderLedger(){
   if(!NATAL){return;}
   const nowAge=ageAt(new Date());
   let html='',ageStart=0;
-  const promYears=ACTIVE_PROM?PROMESSAS.find(p=>p.id===ACTIVE_PROM).anos:[];
+  const promYears=[];
   FIRD.forEach(([k,nm,len])=>{
     const a0=ageStart,a1=ageStart+len;ageStart=a1;
     const isNow=nowAge>=a0&&nowAge<a1;
@@ -642,7 +692,7 @@ function renderRetro(dateStr,evtTxt){
   const a=Math.floor(ageAt(d)); if(a<0){$('retro-body').innerHTML='<div class="card">data anterior ao nascimento.</div>';return;}
   const top=scoredHits(d,0).slice(0,4);
   const key=d.toISOString().slice(0,10);
-  const proms=PROMESSAS.filter(pr=>pr.anos.includes(rsYearOf(d)));
+  const proms=PROMESSAS.filter(pr=>pr.casas.includes(profAt(a).houseN)||pr.pl===profAt(a).lordKey);
   $('retro-body').innerHTML='<div class="card"><div class="kicker">O que estava ativo em '+fdate(d)+(evtTxt?(' — “'+esc(evtTxt)+'”'):'')+'</div>'
     +buildYearReport(a)
     +'<div class="rep-sec"><span class="rep-k">Trânsitos do dia</span>'+(top.map(h=>h.tg+' '+h.gl+' '+h.np.g+' ('+h.orb.toFixed(1)+'°, '+h.rel.tier+')').join(' · ')||'—')+'</div>'
@@ -694,38 +744,142 @@ function renderRS(){
   $('rs-body').innerHTML=html;
 }
 
-/* ================= TRÂNSITOS (4 modos) ================= */
-let TMODE='hoje';
+/* ================= TRÂNSITOS ================= */
+let TMODE='hoje', TRX_SEL=null, TRX_FILTER=null;
 const AREAS={identidade:[1],dinheiro:[2,8],estudos:[3,9],'residência':[4],criatividade:[5],'saúde e rotina':[6],relacionamentos:[7],carreira:[10],grupos:[11],'assuntos privados':[12]};
 function transDate(){const v=$('trans-pick').value;return v?new Date(v+'T12:00:00Z'):new Date();}
+
+/* --- roda de planetas: nós clicáveis com contagem de contatos --- */
+function transWheelSVG(d,hits){
+  const W=520,H=380,CX=W/2,CY=H/2,R=Math.min(W,H)/2-42;
+  const ORDER=['sun','moon','mercury','venus','mars','jupiter','saturn'];
+  const cnt={}; hits.forEach(h=>cnt[h.tKey]=(cnt[h.tKey]||0)+1);
+  let s='<circle cx="'+CX+'" cy="'+CY+'" r="'+(R-6)+'" fill="none" stroke="rgba(19,26,40,.10)" stroke-dasharray="2 5"/>';
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(R*0.52)+'" fill="#ffffff" stroke="rgba(19,26,40,.10)"/>';
+  const sel=TRX_SEL&&hits[TRX_SEL]?hits[TRX_SEL]:null;
+  s+='<text x="'+CX+'" y="'+(CY-4)+'" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" letter-spacing="2" fill="#98a1b2">'
+    +(sel?'TRÂNSITO SELECIONADO':'SELECIONE UM TRÂNSITO')+'</text>';
+  s+='<text x="'+CX+'" y="'+(CY+16)+'" text-anchor="middle" font-size="12" font-family="Inter" fill="#4f5a6e">'
+    +(sel?(PT_NAME[sel.tKey]+' '+sel.gl+' '+sel.np.nm):'os movimentos que moldam o momento')+'</text>';
+  ORDER.forEach((k,i)=>{
+    const ang=(i/ORDER.length)*Math.PI*2, x=CX+R*Math.sin(ang), y=CY-R*Math.cos(ang);
+    const n=cnt[k]||0, on=sel&&sel.tKey===k, has=n>0;
+    s+='<g data-trxpl="'+k+'" style="cursor:pointer">'
+      +'<circle cx="'+x+'" cy="'+y+'" r="'+(on?27:23)+'" fill="#ffffff" stroke="'+(on?'rgba(74,107,150,.75)':(has?'rgba(19,26,40,.18)':'rgba(19,26,40,.08)'))+'" stroke-width="'+(on?2:1.2)+'"/>'
+      +'<text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" font-size="17" font-family="Inter" fill="'+(has?'#131a28':'#b3bac6')+'" style="pointer-events:none">'+(PT_GLYPH[k]||'')+'︎</text>'
+      +'<text x="'+x+'" y="'+(y+40)+'" text-anchor="middle" font-size="10.5" font-family="Inter" fill="'+(has?'#4f5a6e':'#b3bac6')+'" style="pointer-events:none">'+PT_NAME[k]+'</text>'
+      +(n?('<circle cx="'+(x+18)+'" cy="'+(y-16)+'" r="8.5" fill="#eef2f8" stroke="rgba(19,26,40,.12)"/>'
+        +'<text x="'+(x+18)+'" y="'+(y-12.5)+'" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="#4f5a6e" style="pointer-events:none">'+n+'</text>'):'')
+      +'</g>';
+  });
+  return '<svg id="trans-wheel" viewBox="0 0 '+W+' '+H+'">'+s+'</svg>';
+}
+/* --- cartão de detalhe curto de um trânsito --- */
+function transDetailHTML(hit,d,S){
+  if(!hit)return '<div class="card trx-empty"><div class="kicker">detalhe</div>'
+    +'<p>Escolha um planeta na roda ou um trânsito na lista para ver o detalhe.</p></div>';
+  const T=transitoTexto(hit,d,S);
+  const dur=Math.max(1,Math.round((T.janela.end-T.janela.start)/DAY));
+  return '<div class="card trxcard">'
+    +'<div class="trx-h"><span class="trx-g">'+(PT_GLYPH[hit.tKey]||'')+'︎</span>'
+      +'<div><div class="trx-t">'+T.titulo+'</div>'
+      +'<div class="trx-sub">'+hit.orb.toFixed(1)+'° · '+(T.lento?'contexto (planeta lento)':'disparador (planeta rápido)')+' · casa '+hit.np.h+'</div></div>'
+      +'<span class="tag '+(hit.cls==='tens'?'red':hit.cls==='harm'?'green':'')+'">'+({conj:'conjunção',harm:'harmônico',tens:'tenso'})[hit.cls]+'</span></div>'
+    +'<p class="trx-ef">'+T.efeito+'</p>'
+    +'<p class="trx-pq"><b>Por que importa agora:</b> '+T.porque+'</p>'
+    +'<div class="trx-win">'
+      +'<div><span>Início</span>'+fdate(T.janela.start)+'</div>'
+      +'<div><span>Pico</span>'+fdate(T.janela.peak)+'</div>'
+      +'<div><span>Término</span>'+fdate(T.janela.end)+'</div>'
+      +'<div><span>Duração</span>'+dur+' dias</div></div>'
+    +(typeof fundamentoHTML==='function'?fundamentoHTML(['transito','regencia','ritmo','alvo'],[T.tecnico]):'')
+    +'</div>';
+}
+/* --- barra lateral: por planeta e por tema --- */
+function transSideHTML(d,all){
+  const cnt={}; all.forEach(h=>cnt[h.tKey]=(cnt[h.tKey]||0)+1);
+  const pls=['sun','moon','mercury','venus','mars','jupiter','saturn'];
+  let s='<button class="trx-i'+(TRX_FILTER?'':' on')+'" data-trxf="">'+'<span class="ti-g">◎</span><span class="ti-n">Todos</span>'
+    +'<span class="ti-c">'+all.length+'</span></button>';
+  s+='<div class="trx-lbl">por planeta</div>';
+  pls.forEach(k=>{ s+='<button class="trx-i'+(TRX_FILTER==='pl:'+k?' on':'')+'" data-trxf="pl:'+k+'">'
+    +'<span class="ti-g">'+(PT_GLYPH[k]||'')+'︎</span><span class="ti-n">'+PT_NAME[k]+'</span>'
+    +'<span class="ti-c">'+(cnt[k]||0)+'</span></button>';});
+  s+='<div class="trx-lbl">por tema</div>';
+  Object.keys(AREAS).slice(0,6).forEach(a=>{
+    const hs=AREAS[a], n=all.filter(h=>[h.np.h].concat(ruledHouses(h.nk)).some(x=>hs.includes(x))).length;
+    s+='<button class="trx-i'+(TRX_FILTER==='ar:'+a?' on':'')+'" data-trxf="ar:'+a+'">'
+      +'<span class="ti-g">·</span><span class="ti-n">'+a+'</span><span class="ti-c">'+n+'</span></button>';});
+  return s;
+}
+/* --- vista principal (padrão): só os 3–5 trânsitos realmente relevantes --- */
+function renderTransHoje(d){
+  const S=tempoState(d);
+  let rel=transitosRelevantes(d,5);
+  const all=transitHits(d).map(h=>Object.assign(h,{pri:transitPriority(h,d,S)}));
+  if(TRX_FILTER&&TRX_FILTER.startsWith('pl:')){
+    const k=TRX_FILTER.slice(3);
+    rel=all.filter(h=>h.tKey===k).sort((a,b)=>b.pri.score-a.pri.score||a.orb-b.orb).slice(0,5);
+  } else if(TRX_FILTER&&TRX_FILTER.startsWith('ar:')){
+    const hs=AREAS[TRX_FILTER.slice(3)]||[];
+    rel=all.filter(h=>[h.np.h].concat(ruledHouses(h.nk)).some(x=>hs.includes(x)))
+           .sort((a,b)=>b.pri.score-a.pri.score||a.orb-b.orb).slice(0,5);
+  }
+  if(TRX_SEL==null||!rel[TRX_SEL])TRX_SEL=rel.length?0:null;
+  const sel=TRX_SEL!=null?rel[TRX_SEL]:null;
+  // lista curta
+  const lista=rel.map((h,i)=>{const T=transitoTexto(h,d,S);
+    return '<button class="trx-row'+(i===TRX_SEL?' on':'')+'" data-trxi="'+i+'">'
+      +'<span class="tr-g">'+(PT_GLYPH[h.tKey]||'')+'︎ '+h.gl+' '+(h.np.g||'')+'</span>'
+      +'<span class="tr-t">'+T.titulo+'</span>'
+      +'<span class="tr-m">'+h.orb.toFixed(1)+'° · '+(T.lento?'contexto':'disparador')+'</span></button>';}).join('')
+    ||'<p class="note">Nenhum trânsito atinge o limiar de relevância nesta data.</p>';
+  // janelas críticas (próximos 60 dias, entre os relevantes)
+  const crit=rel.filter(h=>h.cls==='tens').slice(0,3).map(h=>{const T=transitoTexto(h,d,S);
+    return '<div class="evrow tens"><span class="d">'+fdate(T.janela.start)+' → '+fdate(T.janela.end)+'</span>'
+      +'<span class="t">'+T.titulo+'</span></div>';}).join('')||'<p class="note">sem janelas tensas relevantes.</p>';
+  return '<div class="trx">'
+    +'<aside class="trx-side">'+transSideHTML(d,all.filter(h=>h.pri.score>=3))+'</aside>'
+    +'<div class="trx-mid">'+transWheelSVG(d,rel)+'<div class="trx-list">'+lista+'</div></div>'
+    +'<div class="trx-det">'+transDetailHTML(sel,d,S)+'</div>'
+    +'</div>'
+    +'<div class="trx-bottom">'
+      +'<div class="card"><div class="kicker">o que sustenta a leitura</div>'
+        +'<p style="font-size:.85rem">'+(S?synthLiteral(d):'')+'</p></div>'
+      +'<div class="card"><div class="kicker">janelas críticas</div>'+crit+'</div>'
+    +'</div>';
+}
 function renderTrans(){
-  if(!NATAL){$('trans-body').innerHTML=emptyState();return;}
+  if(typeof NATAL==='undefined'||!NATAL){$('trans-body').innerHTML=emptyState();return;}
   $('trans-eph').textContent='· efemérides: '+(usingAE?'Astronomy Engine':'longitudes médias (aprox.)');
   const d=transDate();
   let html='';
-  if(TMODE==='hoje'){
-    const top=scoredHits(d,0).slice(0,3);
-    html='<h3>Três ativações principais — '+fdate(d)+'</h3>'+(top.map(h=>renderHit(h,d,true)).join('')||'<div class="card">céu em silêncio.</div>');
-  }
+  if(TMODE==='hoje') html=renderTransHoje(d);
   if(TMODE==='30d'){
     const ev=scanEvents(d,30);
     html='<h3>Próximos 30 dias a partir de '+fdate(d)+'</h3>';
     const fav=ev.filter(e=>e.cls==='harm'),ten=ev.filter(e=>e.cls==='tens');
     html+='<div class="grid2"><div class="card"><div class="kicker">janelas favoráveis</div>'+(fav.slice(0,8).map(e=>'<div class="evrow harm"><span class="d">'+fdate(e.d)+'</span><span class="t">'+e.txt+'</span></div>').join('')||'—')+'</div>'
       +'<div class="card"><div class="kicker">períodos tensos</div>'+(ten.slice(0,8).map(e=>'<div class="evrow tens"><span class="d">'+fdate(e.d)+'</span><span class="t">'+e.txt+'</span></div>').join('')||'—')+'</div></div>';
-    html+='<div class="card"><div class="kicker">cronologia completa: exatos, ingressos, estações, lunações, passagens</div>'
+    html+='<div class="card"><div class="kicker">cronologia: exatos, ingressos, estações, lunações, passagens</div>'
       +ev.map(e=>'<div class="evrow '+e.cls+'"><span class="d">'+fdate(e.d)+'</span><span class="t">'+e.txt+'</span></div>').join('')+'</div>';
   }
-  if(TMODE==='planeta'){
-    html='<div class="toolrow"><select id="tp-sel">'+TB.map(t=>'<option value="'+t[1]+'">'+t[2]+' '+PT_NAME[t[1]]+'</option>').join('')+'</select></div><div id="tp-out"></div>';
-  }
-  if(TMODE==='area'){
-    html='<div class="toolrow"><select id="ta-sel">'+Object.keys(AREAS).map(a=>'<option>'+a+'</option>').join('')+'</select></div><div id="ta-out"></div>';
-  }
+  if(TMODE==='planeta') html='<div class="toolrow"><select id="tp-sel">'+TB.map(t=>'<option value="'+t[1]+'">'+t[2]+' '+PT_NAME[t[1]]+'</option>').join('')+'</select></div><div id="tp-out"></div>';
+  if(TMODE==='area')    html='<div class="toolrow"><select id="ta-sel">'+Object.keys(AREAS).map(a=>'<option>'+a+'</option>').join('')+'</select></div><div id="ta-out"></div>';
   $('trans-body').innerHTML=html;
   if(TMODE==='planeta'){$('tp-sel').onchange=()=>renderTransPlanet(d);renderTransPlanet(d);}
   if(TMODE==='area'){$('ta-sel').onchange=()=>renderTransArea(d);renderTransArea(d);}
 }
+/* interações da aba de trânsitos */
+document.addEventListener('click',e=>{
+  if(!e.target.closest)return;
+  const f=e.target.closest('[data-trxf]');
+  if(f){TRX_FILTER=f.dataset.trxf||null;TRX_SEL=null;renderTrans();return;}
+  const row=e.target.closest('[data-trxi]');
+  if(row){TRX_SEL=+row.dataset.trxi;renderTrans();return;}
+  const pl=e.target.closest('[data-trxpl]');
+  if(pl){TRX_FILTER='pl:'+pl.dataset.trxpl;TRX_SEL=null;renderTrans();return;}
+});
 function renderTransPlanet(d){
   const key=$('tp-sel').value, bn=TB.find(t=>t[1]===key)[0], g=TB.find(t=>t[1]===key)[2];
   const L=tlon(bn,d), house=houseOfLon(L), spd=speedOf(bn,d);
