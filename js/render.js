@@ -277,11 +277,11 @@ function cordRange(){
    ============================================================ */
 function drawCord(){
   const svg=$('cord'); if(!svg)return;
-  const W=svg.clientWidth||900, mob=W<620;
-  const H=Math.min(W,mob?520:700);           // quadrado: o círculo ocupa toda a caixa e fica centrado
+  const W=Math.max(240,svg.clientWidth||460), mob=W<420;
+  const H=W;                                 // quadrado: o círculo ocupa a caixa e fica centrado
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   if(typeof NATAL==='undefined'||!NATAL){svg.innerHTML='';return;}
-  const CX=W/2, CY=H/2, R=Math.min(W,H)/2-(mob?17:26);
+  const CX=W/2, CY=H/2, R=W/2-(mob?14:20);
   const TAU=Math.PI*2;
   const C_INK='#eaf0fa', C_DIM='#98a5bd', C_DIM2='#6b7793', C_LINE='rgba(255,255,255,.09)', C_SOFT='rgba(255,255,255,.020)';
   const AU='220,184,119';
@@ -315,11 +315,10 @@ function drawCord(){
       +'L'+x8+' '+y8
       +'A'+rr+' '+rr+' 0 0 1 '+x1+' '+y1+'Z';
   };
-  let s='<defs><filter id="auglow" x="-40%" y="-40%" width="180%" height="180%">'
-    +'<feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
-    +'<radialGradient id="corefill"><stop offset="0%" stop-color="#0d1424"/><stop offset="100%" stop-color="#06090f"/></radialGradient></defs>';
-  // anéis proporcionais ao raio: [externo, interno]
-  const w1=R*0.162, gap=R*0.050;
+  let s='<defs>'
+    +'<radialGradient id="corefill"><stop offset="0%" stop-color="#0c1120"/><stop offset="100%" stop-color="#06090f"/></radialGradient></defs>';
+  // anéis finos, com folga generosa entre camadas
+  const w1=R*0.118, gap=R*0.068;
   const rF=[R, R-w1], rS=[R-w1-gap, R-2*w1-gap], rP=[R-2*w1-2*gap, R-3*w1-2*gap];
   const rCore=rP[1]-gap;
   // trilhos discretos
@@ -334,10 +333,11 @@ function drawCord(){
       +'<text x="'+(x+ls/2)+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" '
       +'font-family="IBM Plex Mono" letter-spacing="'+ls+'" fill="'+C_DIM2+'">'+txt+'</text>';
   };
+  // sem brilho: o ouro marca o estado ativo apenas pelo preenchimento e pelo traço
   const setor=(a0,a1,rr,ativo,attrs)=>
-    '<path '+(attrs||'')+' d="'+arc(a0,a1,rr[1],rr[0])+'" fill="'+(ativo?'rgba('+AU+',.13)':C_SOFT)+'" '
-    +'stroke="'+(ativo?'rgba('+AU+',.85)':C_LINE)+'" stroke-width="'+(ativo?1.5:1)+'" stroke-linejoin="round" '
-    +(ativo?'filter="url(#auglow)" ':'')+'style="cursor:pointer"/>';
+    '<path '+(attrs||'')+' d="'+arc(a0,a1,rr[1],rr[0])+'" fill="'+(ativo?'rgba('+AU+',.11)':C_SOFT)+'" '
+    +'stroke="'+(ativo?'rgba('+AU+',.7)':C_LINE)+'" stroke-width="'+(ativo?1.2:1)+'" stroke-linejoin="round" '
+    +'style="cursor:pointer"/>';
   const meioTexto=(a,r,txt,ativo,f)=>{
     const [x,y]=P(a,r), ff=f||fs(12);
     return '<text x="'+x+'" y="'+(y+ff*0.34)+'" text-anchor="middle" font-size="'+ff+'" font-family="Inter" '
@@ -353,13 +353,14 @@ function drawCord(){
     const a0=acc/TOT*TAU, a1=(acc+len)/TOT*TAU, mid=(a0+a1)/2;
     const ativo=(S.age>=acc&&S.age<acc+len);
     s+=setor(a0,a1,rF,ativo,'data-layer="firdaria" data-goto="'+(acc+len/2)+'"');
+    // nome completo só no setor ativo; nos demais, apenas o glifo
     const arcLen=(a1-a0)*((rF[0]+rF[1])/2), g=PT_GLYPH[k]||'';
-    const nome=(PT_NAME[k]||nm), fA=fs(13.5), fI=fs(12.5);
-    const txt=ativo?((estW(g+' '+nome,fA)+10<arcLen)?(g+' '+nome):nome):g;
+    const nome=(PT_NAME[k]||nm), fA=fs(11.5,8.5), fI=fs(11,8);
+    const txt=ativo?((estW(g+' '+nome,fA)+8<arcLen)?(g+' '+nome):nome):g;
     s+=meioTexto(mid,(rF[0]+rF[1])/2,txt,ativo,ativo?fA:fI);
     acc+=len;
   });
-  s+=label('FIRDÁRIA',rF[0]+Math.max(8,12*u));
+  s+=label('FIRDÁRIA',rF[0]+Math.max(7,10*u));
 
   /* ---------- anel 2 · SUBFIRDÁRIA (7 fases do período vigente) ---------- */
   const fNow=firdAt(S.age), base=fNow.from||0, len=fNow.len||1, part=len/7;
@@ -370,8 +371,8 @@ function drawCord(){
     const sk=subs[(si+i)%7];
     const ativo=(S.age>=base+i*part&&S.age<base+(i+1)*part);
     s+=setor(a0,a1,rS,ativo,'data-layer="sub" data-goto="'+(base+i*part+part/2)+'"');
-    const arcLen=(a1-a0)*((rS[0]+rS[1])/2), g=PT_GLYPH[sk]||'', nome=PT_NAME[sk]||'', fA=fs(12.5), fI=fs(11.5);
-    const txt=ativo?((estW(g+' '+nome,fA)+10<arcLen)?(g+' '+nome):nome):g;
+    const arcLen=(a1-a0)*((rS[0]+rS[1])/2), g=PT_GLYPH[sk]||'', nome=PT_NAME[sk]||'', fA=fs(11,8), fI=fs(10.5,7.5);
+    const txt=ativo?((estW(g+' '+nome,fA)+8<arcLen)?(g+' '+nome):nome):g;
     s+=meioTexto(mid,(rS[0]+rS[1])/2,txt,ativo,ativo?fA:fI);
   }
   s+=label('SUBFIRDÁRIA',(rF[1]+rS[0])/2);
@@ -382,54 +383,34 @@ function drawCord(){
     const a0=i/12*TAU, a1=(i+1)/12*TAU, mid=(a0+a1)/2;
     const casa=i+1, ativo=(S.profHouse===casa);
     s+=setor(a0,a1,rP,ativo,'data-layer="profeccao" data-goto="'+(anoBase+i+0.5)+'"');
-    const lord=NATAL.rulers[casa];
-    const arcLen=(a1-a0)*((rP[0]+rP[1])/2), fA=fs(12), fI=fs(10.5);
-    const txt=ativo?(estW('Casa '+casa+' '+(PT_GLYPH[lord]||''),fA)+8<arcLen
-      ?('Casa '+casa+' '+(PT_GLYPH[lord]||'')):('Casa '+casa)):(''+casa);
-    s+=meioTexto(mid,(rP[0]+rP[1])/2,txt,ativo,ativo?fA:fI);
+    // a profecção mostra apenas as casas de 1 a 12
+    s+=meioTexto(mid,(rP[0]+rP[1])/2,''+casa,ativo,ativo?fs(11.5,8.5):fs(10,7.5));
   }
   s+=label('PROFECÇÃO',(rS[1]+rP[0])/2);
 
-  /* ---------- núcleo · TIPOS DE REVOLUÇÃO + retorno vigente ---------- */
-  const REV=S.rev, KINDS=revKinds(), rIn=rCore*0.63;
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="url(#corefill)" stroke="rgba(255,255,255,.09)"/>';
-  KINDS.forEach((K,i)=>{
-    const a0=(i/KINDS.length)*TAU-Math.PI/KINDS.length, a1=a0+TAU/KINDS.length, mid=(a0+a1)/2;
-    const on=K.id===REV_SEL;
-    s+='<path data-rev="'+K.id+'" d="'+arc(a0,a1,rIn,rCore,Math.max(3.5,6*u))+'" fill="'+(on?'rgba('+AU+',.13)':'rgba(255,255,255,.016)')+'" '
-      +'stroke="'+(on?'rgba('+AU+',.85)':'rgba(255,255,255,.07)')+'" stroke-width="'+(on?1.5:1)+'" stroke-linejoin="round"'
-      +(on?' filter="url(#auglow)"':'')+' style="cursor:pointer"><title>'+K.o+'</title></path>';
-    const rl=(rIn+rCore)/2, [lx,ly]=P(mid,rl), fg=fs(14);
-    s+='<text x="'+lx+'" y="'+(ly+(on?-fg*0.18:fg*0.35))+'" text-anchor="middle" font-size="'+fg+'" font-family="Inter" '
-      +'fill="'+(on?'#e9eef8':C_DIM2)+'" style="pointer-events:none">'+(PT_GLYPH[K.key]||'')+'︎</text>';
-    if(on)s+='<text x="'+lx+'" y="'+(ly+fg*0.92)+'" text-anchor="middle" font-size="'+fs(9)+'" font-family="Inter" '
-      +'fill="var(--gold)" style="pointer-events:none">'+K.label+'</text>';
-  });
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rIn+'" fill="#05080f" stroke="rgba('+AU+',.30)" data-layer="revolucao" style="cursor:pointer"/>';
+  /* ---------- núcleo · idade · retorno · casa profectada · Senhor do Ano ---------- */
+  const REV=S.rev;
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="url(#corefill)" stroke="rgba(255,255,255,.08)" '
+    +'data-layer="revolucao" style="cursor:pointer"/>';
   const idade=Math.floor(S.age), frac=(S.age-idade);
-  const fAge=fs(38,15), fKick=fs(7.5,6), fRev=fs(9.5,7);
-  s+='<text x="'+CX+'" y="'+(CY+fAge*0.10)+'" text-anchor="middle" font-size="'+fAge+'" font-family="Cormorant Garamond" fill="'+C_INK+'" style="pointer-events:none">'
+  const fAge=fs(30,17), fKick=fs(7,6), fM=fs(8.5,6.8);
+  const CY0=CY-fM*1.8;                       // bloco do núcleo centrado verticalmente
+  s+='<text x="'+(CX+1.1)+'" y="'+(CY0-fAge*0.92)+'" text-anchor="middle" font-size="'+fKick+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(1.2,2*u)+'" fill="'+C_DIM2+'" style="pointer-events:none">ANO DE VIDA</text>';
+  s+='<text x="'+CX+'" y="'+(CY0-fAge*0.04)+'" text-anchor="middle" font-size="'+fAge+'" font-family="Cormorant Garamond" fill="'+C_INK+'" style="pointer-events:none">'
     +idade+','+Math.floor(frac*10)+'</text>';
-  s+='<text x="'+(CX+1.1)+'" y="'+(CY-fAge*0.62)+'" text-anchor="middle" font-size="'+fKick+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(1.3,2.2*u)+'" fill="'+C_DIM2+'" style="pointer-events:none">ANO DE VIDA</text>';
-  s+='<text x="'+CX+'" y="'+(CY+fAge*0.10+fRev*1.9)+'" text-anchor="middle" font-size="'+fRev+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(.6,1*u)+'" fill="'+C_DIM+'" style="pointer-events:none">'
-    +(REV?(REV.sigla+' '+REV.start.getUTCFullYear()):'sem retorno')+'</text>';
-  // marcador do instante: raio fino do núcleo à borda, no ângulo do ano vigente
+  const yDiv=CY0+fAge*0.30, wDiv=rCore*0.62;
+  s+='<line x1="'+(CX-wDiv/2)+'" y1="'+yDiv+'" x2="'+(CX+wDiv/2)+'" y2="'+yDiv+'" stroke="rgba(255,255,255,.10)"/>';
+  const mono=(y,txt,col)=>'<text x="'+CX+'" y="'+y+'" text-anchor="middle" font-size="'+fM+'" font-family="IBM Plex Mono" '
+    +'letter-spacing="'+Math.max(.5,.9*u)+'" fill="'+col+'" style="pointer-events:none">'+txt+'</text>';
+  s+=mono(yDiv+fM*1.7,(REV?(REV.sigla+' '+REV.start.getUTCFullYear()):'SEM RETORNO'),C_DIM);
+  s+=mono(yDiv+fM*3.1,'CASA '+S.profHouse,'rgba('+AU+',.85)');
+  s+=mono(yDiv+fM*4.5,(PT_GLYPH[S.lord]||'')+'︎ '+(PT_NAME[S.lord]||'—').toUpperCase(),C_DIM2);
+  // marcador do instante, discreto
   const angNow=((S.age%12)/12)*TAU;
-  const [mx0,my0]=P(angNow,rCore+2), [mx1,my1]=P(angNow,R+Math.max(4,7*u));
-  s+='<line x1="'+mx0+'" y1="'+my0+'" x2="'+mx1+'" y2="'+my1+'" stroke="rgba('+AU+',.4)" stroke-width="1" stroke-dasharray="2 4" stroke-linecap="round"/>';
-  s+='<circle cx="'+mx1+'" cy="'+my1+'" r="'+Math.max(1.8,2.6*u)+'" fill="rgba('+AU+',.75)"/>';
+  const [mx0,my0]=P(angNow,rCore+2), [mx1,my1]=P(angNow,R+Math.max(3,5*u));
+  s+='<line x1="'+mx0+'" y1="'+my0+'" x2="'+mx1+'" y2="'+my1+'" stroke="rgba('+AU+',.3)" stroke-width="1" stroke-dasharray="2 4" stroke-linecap="round"/>';
+  s+='<circle cx="'+mx1+'" cy="'+my1+'" r="'+Math.max(1.6,2.2*u)+'" fill="rgba('+AU+',.7)"/>';
   svg.innerHTML=s;
-}
-function cordDrag(){
-  const svg=$('cord'); if(!svg)return;
-  svg.addEventListener('pointerdown',e=>{
-    const g=e.target&&e.target.closest&&e.target.closest('[data-goto]');
-    const lay=e.target&&e.target.closest&&e.target.closest('[data-layer]');
-    if(lay)TP_LAYER=lay.dataset.layer;
-    if(g){const age=+g.dataset.goto;
-      if(isFinite(age)&&age>=0&&age<75)CURSOR=new Date(BIRTH+age*365.2425*DAY);}
-    if(lay||g)syncTempo();
-  });
 }
 /* mandala temporal única: anéis de progresso firdária · sub · profecção,
    centro com Senhor do Ano + casa profectada + Asc da Revolução. Minimalista. */
@@ -474,32 +455,6 @@ function hierarquiaHTML(){
 /* ---- cartões executivos do momento (Firdária, Sub, Profecção, Revolução) ---- */
 /* ---- cards do "caminho ativo" (coluna esquerda) ---- */
 const LAYER_IC={firdaria:'☿',sub:'☉',profeccao:'♃',revolucao:'⌂'};
-function tempoExecCards(d){
-  const S=tempoState(d); if(!S)return '';
-  const byY=new Date(BIRTH).getUTCFullYear(), f=S.f;
-  const card=(layer,k,titulo,desc,fk,fv,glyph)=>
-    '<div class="tpcard" data-layer="'+layer+'">'
-     +'<div class="tpc-b"><div class="tpc-k">'+k+'</div><div class="tpc-t">'+titulo+'</div>'
-     +'<p class="tpc-d">'+desc+'</p>'
-     +'<div class="tpc-f"><span>'+fk+'</span><b>'+fv+'</b></div></div>'
-     +'<span class="tpc-g">'+glyph+'</span></div>';
-  const fFrom=byY+Math.round(f.from||0), fTo=fFrom+(f.len||0);
-  const out=[];
-  out.push(card('firdaria','Firdária',PT_NAME[S.mk]||f.major,
-    cap1(casasTag(S.rulesMk))+'.'+(S.occMk?(' Executa por '+casaTag(S.occMk)+'.'):''),
-    'Desde', fFrom+'  ·  até '+fTo, (PT_GLYPH[S.mk]||'✦')+'︎'));
-  if(S.sk) out.push(card('sub','Subfirdária',PT_NAME[S.sk],
-    cap1(casasTag(S.rulesSk))+' em segundo plano.','Até',fdate(new Date(f.subEnd)),(PT_GLYPH[S.sk]||'✦')+'︎'));
-  out.push(card('profeccao','Profecção','Casa '+S.profHouse+' · '+PT_NAME[S.lord],
-    cap1(casaTag(S.profHouse))+'. Administrada por '+PT_NAME[S.lord]+'.',
-    'Foco', cap1(HOUSE_TAG[S.profHouse]), (PT_GLYPH[S.lord]||'✦')+'︎'));
-  const R=S.rev;
-  out.push(R?card('revolucao','Revolução '+R.label,'Asc em '+R.ascSignNm,
-    'Ambiente: '+casaTag(R.ascNatalHouse)+'. Regente '+PT_NAME[R.ascRuler]+'.',
-    'Vigência', fdate(R.start)+(R.end?(' → '+fdate(R.end)):''), '⌂')
-    :card('revolucao','Revolução','—','Retorno indisponível.','—','—','⌂'));
-  return out.join('');
-}
 /* ---- coluna direita: retorno, casas ativadas, planetas ativos, síntese ---- */
 function revCardHTML(d){
   const S=tempoState(d); if(!S)return '';
@@ -643,32 +598,6 @@ function planetRanking(d,S){
   return rows.map(r=>({k:r.k,p:Math.round(r.sc/max*100)})).sort((a,b)=>b.p-a.p);
 }
 /* painel horizontal sob o círculo */
-function tlInfoHTML(d){
-  const S=tempoState(d); if(!S)return '';
-  const R=S.rev;
-  const box=(k,rows)=>'<div class="tli"><span class="tli-k">'+k+'</span>'+rows+'</div>';
-  const kv=(k,v)=>'<div class="tli-r"><span>'+k+'</span><b>'+v+'</b></div>';
-  let out='';
-  out+=box('Vigência temporal',
-    kv('Firdária',(PT_NAME[S.mk]||S.f.major)+(S.sk?(' / '+PT_NAME[S.sk]):''))
-    +kv('Período',(new Date(BIRTH+(S.f.from||0)*365.2425*DAY)).getUTCFullYear()+' – '
-        +(new Date(BIRTH+((S.f.from||0)+(S.f.len||0))*365.2425*DAY)).getUTCFullYear())
-    +(R?kv('Retorno',fdate(R.start)+(R.end?(' → '+fdate(R.end)):'')):''));
-  if(R) out+=box('Revolução '+R.label,
-    kv('Asc do retorno',R.ascSignNm+' '+Math.floor(n360(R.ascLon)%30)+'°')
-    +kv('No natal','cai na '+ordinal(R.ascNatalHouse)+' — '+casaTag(R.ascNatalHouse))
-    +kv('Regente do Asc',PT_NAME[R.ascRuler])
-    +kv('Planeta do retorno',PT_NAME[R.planetKey]+(R.planetRevHouse?(' · casa '+R.planetRevHouse+' do retorno'):'')));
-  out+=box('Profecção',
-    kv('Casa do ano',ordinal(S.profHouse)+' — '+casaTag(S.profHouse))
-    +kv('Senhor do Ano',PT_NAME[S.lord])
-    +(S.occLord?kv('Atua por',casaTag(S.occLord)):''));
-  const rank=planetRanking(d,S).slice(0,5);
-  out+=box('Planetas acionados',
-    rank.map(r=>'<div class="tli-b"><span>'+(PT_GLYPH[r.k]||'')+'︎ '+PT_NAME[r.k]+'</span>'
-      +'<i><em style="width:'+r.p+'%"></em></i><u>'+r.p+'%</u></div>').join(''));
-  return out;
-}
 /* síntese de IA — hierárquica e literal, gerada pelo motor local */
 function tlIaHTML(d){
   const S=tempoState(d); if(!S)return '';
@@ -696,30 +625,6 @@ function tlIaHTML(d){
   return '<div class="ia-out">'+F.map(([k,v])=>'<div class="ia-sec"><span>'+k+'</span><p>'+v+'</p></div>').join('')
     +'<p class="note">Síntese gerada pelo motor interpretativo local, em ordem hierárquica (firdária → fase → profecção → revolução → promessas).</p></div>';
 }
-function syncTempo(){
-  if(typeof NATAL==='undefined'||!NATAL){
-    ['tempo-exec','tl-info','tl-ia-out','tempo-detail','fird-ledger'].forEach(id=>{if($(id))$(id).innerHTML='';});
-    if($('tl-info'))$('tl-info').innerHTML=emptyState();return;}
-  if($('tempo-date'))$('tempo-date').textContent=fdate(CURSOR);
-  if($('tempo-age'))$('tempo-age').textContent=Math.floor(ageAt(CURSOR))+' anos';
-  if($('tempo-pick'))$('tempo-pick').value=CURSOR.toISOString().slice(0,10);
-  const sel=$('tempo-revsel2');
-  if(sel){ if(sel.dataset.built!=='1'){
-      sel.innerHTML=revKinds().map(k=>'<option value="'+k.id+'">'+k.label+'</option>').join('');
-      sel.dataset.built='1'; sel.onchange=()=>{revSetKind(sel.value);syncTempo();}; }
-    sel.value=REV_SEL; }
-  drawCord();
-  if($('tempo-exec')){$('tempo-exec').innerHTML=tempoExecCards(CURSOR);
-    if(TP_LAYER){const c=$('tempo-exec').querySelector('[data-layer="'+TP_LAYER+'"]');if(c)c.classList.add('on');}}
-  if($('tl-info'))$('tl-info').innerHTML=tlInfoHTML(CURSOR);
-  if($('tl-ia-out'))$('tl-ia-out').innerHTML='';
-  if($('tempo-detail'))$('tempo-detail').innerHTML=TP_LAYER?tempoDetailHTML(TP_LAYER,CURSOR):'';
-}
-document.addEventListener('click',e=>{
-  if(e.target.closest&&e.target.closest('#tl-ia')){
-    const out=$('tl-ia-out'); if(out)out.innerHTML=tlIaHTML(CURSOR);
-  }
-});
 function renderCompare(){
   if(!PINNED){$('tempo-compare').innerHTML='';return;}
   const A=PINNED,B=CURSOR;
