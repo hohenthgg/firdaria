@@ -293,7 +293,8 @@ function drawCord(){
   if(typeof NATAL==='undefined'||!NATAL){svg.innerHTML='';return;}
   const CX=W/2, CY=H/2+ (mob?4:6), R=Math.min(W,H)/2-(mob?14:22);
   const TAU=Math.PI*2;
-  const C_INK='#131a28', C_DIM='#606b80', C_DIM2='#98a1b2', C_LINE='rgba(19,26,40,.13)', C_SOFT='rgba(19,26,40,.05)';
+  const C_INK='#eaf0fa', C_DIM='#98a5bd', C_DIM2='#6b7793', C_LINE='rgba(255,255,255,.10)', C_SOFT='rgba(255,255,255,.022)';
+  const AU='220,184,119';
   const S=tempoState(CURSOR); if(!S){svg.innerHTML='';return;}
   const P=(ang,r)=>[CX+r*Math.sin(ang), CY-r*Math.cos(ang)];
   const arc=(a0,a1,r0,r1)=>{                 // setor anelar
@@ -302,7 +303,9 @@ function drawCord(){
     return 'M'+x0+' '+y0+' A'+r1+' '+r1+' 0 '+big+' 1 '+x1+' '+y1
          +' L'+x2+' '+y2+' A'+r0+' '+r0+' 0 '+big+' 0 '+x3+' '+y3+' Z';
   };
-  let s='';
+  let s='<defs><filter id="auglow" x="-40%" y="-40%" width="180%" height="180%">'
+    +'<feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    +'<radialGradient id="corefill"><stop offset="0%" stop-color="#0d1424"/><stop offset="100%" stop-color="#06090f"/></radialGradient></defs>';
   // anéis: [nome, raio externo, raio interno]
   const w1=mob?28:40, gap=mob?11:15;
   const rF=[R, R-w1], rS=[R-w1-gap, R-2*w1-gap], rP=[R-2*w1-2*gap, R-3*w1-2*gap];
@@ -315,13 +318,14 @@ function drawCord(){
   // rótulo da camada: fica na folga entre anéis, sobre um recorte branco
   const label=(txt,r)=>{
     const [x,y]=P(0,r), fs=mob?8:9.5, w=txt.length*(fs*0.78)+14, h=fs+7;
-    return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="'+(h/2)+'" fill="#ffffff"/>'
+    return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="'+(h/2)+'" fill="#05070e"/>'
       +'<text x="'+x+'" y="'+(y+fs*0.36)+'" text-anchor="middle" font-size="'+fs+'" '
       +'font-family="IBM Plex Mono" letter-spacing="2.2" fill="'+C_DIM2+'">'+txt+'</text>';
   };
   const setor=(a0,a1,rr,ativo,attrs)=>
-    '<path '+(attrs||'')+' d="'+arc(a0,a1,rr[1],rr[0])+'" fill="'+(ativo?'rgba(74,107,150,.14)':C_SOFT)+'" '
-    +'stroke="'+(ativo?'rgba(74,107,150,.55)':C_LINE)+'" stroke-width="'+(ativo?1.4:1)+'" style="cursor:pointer"/>';
+    '<path '+(attrs||'')+' d="'+arc(a0,a1,rr[1],rr[0])+'" fill="'+(ativo?'rgba('+AU+',.13)':C_SOFT)+'" '
+    +'stroke="'+(ativo?'rgba('+AU+',.85)':C_LINE)+'" stroke-width="'+(ativo?1.5:1)+'" '
+    +(ativo?'filter="url(#auglow)" ':'')+'style="cursor:pointer"/>';
   const meioTexto=(a,r,txt,ativo,fs)=>{
     const [x,y]=P(a,r);
     return '<text x="'+x+'" y="'+(y+4)+'" text-anchor="middle" font-size="'+(fs||(mob?9.5:12))+'" font-family="Inter" '
@@ -374,28 +378,37 @@ function drawCord(){
   }
   s+=label('PROFECÇÃO',(rS[1]+rP[0])/2);
 
-  /* ---------- núcleo · REVOLUÇÃO SELECIONADA ---------- */
-  const REV=S.rev;
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="#ffffff" stroke="rgba(74,107,150,.45)" stroke-width="1.3" '
-    +'data-layer="revolucao" style="cursor:pointer"/>';
-  const fsT=mob?13:17, fsS=mob?9:11;
+  /* ---------- núcleo · TIPOS DE REVOLUÇÃO + retorno vigente ---------- */
+  const REV=S.rev, KINDS=revKinds(), rIn=rCore*0.56;
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="url(#corefill)" stroke="rgba(255,255,255,.10)"/>';
+  KINDS.forEach((K,i)=>{
+    const a0=(i/KINDS.length)*TAU-Math.PI/KINDS.length, a1=a0+TAU/KINDS.length, mid=(a0+a1)/2;
+    const on=K.id===REV_SEL;
+    s+='<path data-rev="'+K.id+'" d="'+arc(a0,a1,rIn,rCore)+'" fill="'+(on?'rgba('+AU+',.13)':'rgba(255,255,255,.016)')+'" '
+      +'stroke="'+(on?'rgba('+AU+',.85)':'rgba(255,255,255,.07)')+'" stroke-width="'+(on?1.5:1)+'"'
+      +(on?' filter="url(#auglow)"':'')+' style="cursor:pointer"><title>'+K.o+'</title></path>';
+    const rl=(rIn+rCore)/2, [lx,ly]=P(mid,rl);
+    s+='<text x="'+lx+'" y="'+(ly-3)+'" text-anchor="middle" font-size="'+(mob?11:14)+'" font-family="Inter" '
+      +'fill="'+(on?'#e9eef8':C_DIM2)+'" style="pointer-events:none">'+(PT_GLYPH[K.key]||'')+'︎</text>'
+      +'<text x="'+lx+'" y="'+(ly+(mob?10:13))+'" text-anchor="middle" font-size="'+(mob?8:10)+'" font-family="Inter" '
+      +'fill="'+(on?'var(--gold)':C_DIM2)+'" style="pointer-events:none">'+K.label+'</text>';
+  });
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rIn+'" fill="#05080f" stroke="rgba('+AU+',.35)" data-layer="revolucao" style="cursor:pointer"/>';
+  const fsT=mob?12:16, fsS=mob?8.5:10.5;
   if(REV){
-    s+='<text x="'+CX+'" y="'+(CY-(mob?12:16))+'" text-anchor="middle" font-size="'+fsT+'" font-family="Inter" font-weight="600" fill="'+C_INK+'" style="pointer-events:none">'
+    s+='<text x="'+CX+'" y="'+(CY-(mob?10:14))+'" text-anchor="middle" font-size="'+fsT+'" font-family="Cormorant Garamond" fill="'+C_INK+'" style="pointer-events:none">'
       +REV.sigla+' '+REV.start.getUTCFullYear()+'</text>';
-    s+='<text x="'+CX+'" y="'+(CY+(mob?3:4))+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM+'" style="pointer-events:none">'
+    s+='<text x="'+CX+'" y="'+(CY+(mob?4:6))+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM+'" style="pointer-events:none">'
       +'Asc em '+REV.ascSignNm+'</text>';
-    s+='<text x="'+CX+'" y="'+(CY+(mob?15:19))+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM+'" style="pointer-events:none">'
+    s+='<text x="'+CX+'" y="'+(CY+(mob?15:20))+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM+'" style="pointer-events:none">'
       +(PT_NAME[REV.ascRuler]||'')+' regente</text>';
-    s+='<text x="'+CX+'" y="'+(CY+(mob?29:36))+'" text-anchor="middle" font-size="'+(mob?13:16)+'" font-family="Inter" fill="'+C_DIM2+'" style="pointer-events:none">'
-      +(SIGN_GLYPHS[REV.ascSign]||'')+'︎</text>';
   } else {
-    s+='<text x="'+CX+'" y="'+(CY-2)+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM2+'" style="pointer-events:none">revolução</text>';
-    s+='<text x="'+CX+'" y="'+(CY+14)+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM2+'" style="pointer-events:none">indisponível</text>';
+    s+='<text x="'+CX+'" y="'+(CY+3)+'" text-anchor="middle" font-size="'+fsS+'" font-family="Inter" fill="'+C_DIM2+'" style="pointer-events:none">retorno indisponível</text>';
   }
   // marcador do instante: raio fino do núcleo à borda, no ângulo do ano vigente
   const angNow=((S.age%12)/12)*TAU;
   const [mx0,my0]=P(angNow,rCore+2), [mx1,my1]=P(angNow,R+ (mob?5:7));
-  s+='<line x1="'+mx0+'" y1="'+my0+'" x2="'+mx1+'" y2="'+my1+'" stroke="rgba(74,107,150,.5)" stroke-width="1"/>';
+  s+='<line x1="'+mx0+'" y1="'+my0+'" x2="'+mx1+'" y2="'+my1+'" stroke="rgba('+AU+',.4)" stroke-width="1" stroke-dasharray="2 4"/>';
   svg.innerHTML=s;
 }
 function cordDrag(){
@@ -476,8 +489,9 @@ function tempoExecCards(d){
 }
 /* ---- seletor de revoluções ---- */
 function revSelectorHTML(){
-  return revKinds().map(k=>'<button class="btn'+(k.id===REV_SEL?' on':'')+'" data-rev="'+k.id+'" title="'+k.o+'">'
-    +(PT_GLYPH[k.key]||'')+' '+k.label+'</button>').join('');
+  return revKinds().map(k=>'<button class="rvleg'+(k.id===REV_SEL?' on':'')+'" data-rev="'+k.id+'">'
+    +'<span class="rvleg-g">'+(PT_GLYPH[k.key]||'')+'︎</span>'
+    +'<span class="rvleg-t"><b>'+k.label+'</b>'+(k.curto||k.o)+'</span></button>').join('');
 }
 /* ---- cartão da revolução selecionada (período, planeta, regente, casas, contatos) ---- */
 function revCardHTML(d){
@@ -707,42 +721,150 @@ function renderRetro(dateStr,evtTxt){
 }
 
 /* ================= REVOLUÇÃO SOLAR ================= */
+/* ================= REVOLUÇÕES — qualquer planeta, qualquer retorno ================= */
+let RS_KIND='solar', RS_CURSOR=null, RS_CMP=false;
+function rsCursor(){return RS_CURSOR||new Date();}
+/* navega para o retorno anterior/seguinte do tipo vigente */
+function rsStep(dir){
+  const K=REV_BY_ID[RS_KIND]; if(!K)return;
+  const R=revolutionFor(RS_KIND,rsCursor()); if(!R)return;
+  const t=dir>0?((R.end?R.end.getTime():rsCursor().getTime())+DAY):(R.start.getTime()-DAY);
+  const lim=BIRTH+DAY, max=Date.now()+K.per*2*DAY;
+  RS_CURSOR=new Date(Math.max(lim,Math.min(max,t)));
+  renderRS();
+}
+/* roda de quatro camadas: período · ascendente e regente · casas ativadas · síntese */
+function rsWheelSVG(R,S){
+  const svg=$('rs-wheel'); const W=(svg&&svg.clientWidth)||620, mob=W<560;
+  const H=W, CX=W/2, CY=H/2, R0=W/2-(mob?12:18);
+  const AU='220,184,119', BL='111,159,216', CN='127,210,230';
+  const rings=[R0, R0*0.78, R0*0.57, R0*0.36];
+  const k=R0/300;                                   // escala das distâncias
+  let s='<defs><filter id="rsglow" x="-60%" y="-60%" width="220%" height="220%">'
+    +'<feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    +'<radialGradient id="rscore"><stop offset="0%" stop-color="#0e1526"/><stop offset="100%" stop-color="#05080f"/></radialGradient></defs>';
+  const ring=(r,col,w)=>'<circle cx="'+CX+'" cy="'+CY+'" r="'+r+'" fill="none" stroke="rgba('+col+',.40)" stroke-width="'+(w||1)+'"/>';
+  const txt=(y,t,fs,col,fam,ls)=>'<text x="'+CX+'" y="'+y+'" text-anchor="middle" font-size="'+fs+'" font-family="'+(fam||'Inter')+'"'
+    +(ls?' letter-spacing="'+ls+'"':'')+' fill="'+col+'">'+t+'</text>';
+  s+=ring(rings[0],AU,1.4)+ring(rings[1],BL,1)+ring(rings[2],CN,1)+ring(rings[3],AU,1.2);
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rings[3]+'" fill="url(#rscore)"/>';
+  const FS=x=>Math.max(7,x*k);
+  // planetas do retorno no anel externo (antes dos textos, para ficarem por baixo)
+  ['sun','moon','mercury','venus','mars','jupiter','saturn'].forEach(pk=>{ if(!R.chart.pts[pk])return;
+    const ang=(R.chart.pts[pk].lon-R.ascLon)*Math.PI/180+Math.PI;
+    const rr=(rings[0]+rings[1])/2, x=CX+rr*Math.sin(ang), y=CY-rr*Math.cos(ang);
+    s+='<circle cx="'+x+'" cy="'+y+'" r="'+(2.6*k)+'" fill="rgba('+CN+',.9)"/>'
+      +'<text x="'+x+'" y="'+(y-9*k)+'" text-anchor="middle" font-size="'+FS(13)+'" font-family="Inter" fill="#c9d4e8">'+(PT_GLYPH[pk]||'')+'︎</text>';});
+  // camada 1 — período do retorno
+  let y1=CY-rings[0];
+  s+=txt(y1+18*k,'ANO DA REVOLUÇÃO '+R.label.toUpperCase(),FS(9.5),'#8c7c5c','IBM Plex Mono',2.2*k);
+  s+=txt(y1+46*k,String(R.start.getUTCFullYear()),FS(30),'#dcb877','Cormorant Garamond');
+  s+=txt(y1+63*k,'de '+fdate(R.start)+(R.end?(' a '+fdate(R.end)):''),FS(10.5),'#9aa6bd');
+  // camada 2 — ascendente e regente
+  let y2=CY-rings[1];
+  s+=txt(y2+18*k,'ASCENDENTE DO RETORNO',FS(9.5),'#5b7fa8','IBM Plex Mono',2*k);
+  s+=txt(y2+44*k,R.ascSignNm+' <tspan font-size="'+FS(14)+'" fill="#9aa6bd">'+(zfmt(R.ascLon).match(/\d+°\d*/)||[''])[0]+'</tspan>',FS(22),'#8fc0ee','Cormorant Garamond');
+  s+=txt(y2+62*k,'Regente: '+PT_NAME[R.ascRuler],FS(11.5),'#9aa6bd');
+  // camada 3 — ênfases e casas ativadas
+  let y3=CY-rings[2];
+  s+=txt(y3+16*k,'ÊNFASES DO PERÍODO',FS(9.5),'#4f8fa0','IBM Plex Mono',2*k);
+  s+=txt(y3+30*k,'Casas ativadas',FS(11),'#9aa6bd');
+  const casas=S?[...new Set([R.ascNatalHouse,S.profHouse,R.ascRulerNatalHouse,(NATAL.pts[R.planetKey]||{}).h].filter(Boolean))].slice(0,4)
+               :[R.ascNatalHouse].filter(Boolean);
+  const cr=15*k, cyy=y3+52*k, x0=CX-((casas.length-1)*cr*2.6)/2;
+  casas.forEach((h,i)=>{const x=x0+i*cr*2.6, on=S&&h===S.profHouse;
+    s+='<circle cx="'+x+'" cy="'+cyy+'" r="'+cr+'" fill="'+(on?'rgba('+AU+',.14)':'rgba(255,255,255,.03)')+'" '
+      +'stroke="rgba('+(on?AU+',.85':'255,255,255,.16')+')"'+(on?' filter="url(#rsglow)"':'')+'/>'
+      +'<text x="'+x+'" y="'+(cyy+FS(14)*0.36)+'" text-anchor="middle" font-size="'+FS(14)+'" font-family="Inter" fill="'+(on?'#dcb877':'#9aa6bd')+'">'+h+'</text>';});
+  // camada 4 — síntese e foco (dentro do núcleo)
+  s+=txt(CY-52*k,'SÍNTESE DO PERÍODO',FS(9.5),'#8c7c5c','IBM Plex Mono',2*k);
+  const frase=cap1(casaTag(R.ascNatalHouse))+(S?(' e '+casaTag(S.profHouse)):'');
+  const pal=frase.split(' '); const linhas=[]; let cur='';
+  pal.forEach(w=>{ if((cur+' '+w).trim().length>20){linhas.push(cur.trim());cur=w;} else cur+=' '+w; });
+  if(cur.trim())linhas.push(cur.trim());
+  linhas.slice(0,3).forEach((ln,i)=>{s+=txt(CY-26*k+i*20*k,ln,FS(16),'#e9eef8','Cormorant Garamond');});
+  const byBase=CY-26*k+Math.min(3,linhas.length)*20*k;
+  s+='<rect x="'+(CX-56*k)+'" y="'+(byBase+4*k)+'" width="'+(112*k)+'" height="'+(22*k)+'" rx="'+(11*k)+'" fill="rgba('+AU+',.12)" stroke="rgba('+AU+',.45)"/>';
+  s+=txt(byBase+19*k,'FOCO CENTRAL',FS(8.5),'#dcb877','IBM Plex Mono',2*k);
+  s+=txt(byBase+44*k,'Casa '+(S?S.profHouse:R.ascNatalHouse)+' · '+PT_NAME[R.planetKey]+' · '+PT_NAME[R.ascRuler],FS(11),'#9aa6bd');
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  return s;
+}
 function renderRS(){
-  if(!NATAL||!Object.keys(RS_DATA).length){$('rs-body').innerHTML=emptyState();return;}
-  const sel=$('rs-year');
-  const by=new Date(BIRTH).getUTCFullYear();
-  const years=Object.keys(RS_DATA).sort();
-  const want=years.join(',');
-  if(sel.dataset.built!==want){ // reconstrói ao trocar o conjunto de anos (novo mapa/RS) — idade pela data real de nascimento
-    const prev=sel.value;
-    sel.innerHTML='';
-    years.forEach(y=>{const o=document.createElement('option');const a=+y-by;o.value=y;o.textContent='RS '+y+' · '+a+(a===1?' ano':' anos');sel.appendChild(o);});
-    sel.value=years.includes(prev)?prev:(years.includes(String(rsYearOf(new Date())))?String(rsYearOf(new Date())):(years.slice(-1)[0]||''));
-    sel.dataset.built=want;
-    sel.onchange=renderRS;
-    $('rs-cmp').onclick=()=>{renderRS(true);};
+  if(typeof NATAL==='undefined'||!NATAL){if($('rs-body'))$('rs-body').innerHTML=emptyState();return;}
+  // abas de tipo (inclui Jupiteriana e Saturnina)
+  if($('rs-kinds'))$('rs-kinds').innerHTML=REV_KINDS.map(k=>
+    '<button class="rvtab'+(k.id===RS_KIND?' on':'')+'" data-rsk="'+k.id+'">'+k.label+'</button>').join('');
+  const d=rsCursor(), R=revolutionFor(RS_KIND,d), S=tempoState(d);
+  const K=REV_BY_ID[RS_KIND];
+  if($('rs-kicker'))$('rs-kicker').textContent='ciclos de retorno · '+K.label.toLowerCase();
+  if(!R){
+    ['rs-temas','rs-planetas','rs-side','rs-legend'].forEach(i=>{if($(i))$(i).innerHTML='';});
+    if($('rs-wheel'))$('rs-wheel').innerHTML='';
+    if($('rs-navlabel'))$('rs-navlabel').textContent='—';
+    if($('rs-navsub'))$('rs-navsub').textContent='retorno indisponível';
+    $('rs-body').innerHTML='<div class="card"><p>Não foi possível calcular a Revolução '+K.label+' nesta data. Importe o mapa pelo link do Aspectarian.</p></div>';
+    return;
   }
-  const kick=$('rs-kicker'); if(kick)kick.textContent='retornos solares · '+by+'–'+(new Date().getUTCFullYear()+1);
-  const y=+sel.value, rs=RS_DATA[y], a=y-by, p=profAt(a), f=firdAt(a+0.05);
-  const block=(yy,rr,aa)=>{
-    const pp=profAt(aa),ff=firdAt(aa+0.05);
-    return '<div class="card"><div class="kicker">Revolução Solar '+yy+' · '+aa+' anos · firdária de '+ff.major+' (sub-período de '+ff.sub+') · profecção: casa '+pp.houseN+' em '+pp.sign+' · Senhor do Ano: '+PT_NAME[pp.lordKey]+'</div>'
-      +(rr?('<p class="lede" style="font-size:1rem">'+rr.asc+'</p><p style="font-size:.85rem">'+rr.destaque+'</p><p style="font-size:.8rem;color:var(--gold)">'+rr.estrelas+'</p>')
-          :'<p>Sem RS registrada para '+yy+'. Adicione em RS_DATA['+yy+'] (js/data.js).</p>')
-      +'<div class="mono" style="margin-top:6px">'+synthYear(aa,pp,ff)+'</div>'
-      +(rr&&rr.raw?('<details style="margin-top:8px"><summary class="mono" style="cursor:pointer">posições informadas</summary><table><tr><th>Ponto</th><th>Posição</th><th>Casa RS</th></tr>'+Object.entries(rr.raw.pts).map(([k,pp2])=>'<tr><td class="g">'+(PT_GLYPH[k]||k)+' '+(PT_FULL[k]||k)+'</td><td class="m">'+zfmt(pp2.lon)+(pp2.retro?' ℞':'')+'</td><td class="m">'+(pp2.h||'—')+'</td></tr>').join('')+'</table></details>'):'')+'</div>';
-  };
-  let html=block(y,rs,a);
-  if(arguments[0]===true&&RS_DATA[y+1]!==undefined){
-    html+='<h3>Ano seguinte</h3>'+block(y+1,RS_DATA[y+1],a+1);
-    const pa=profAt(a),pb=profAt(a+1),fa=firdAt(a+0.05),fb=firdAt(a+1.05);
-    html+='<div class="card"><div class="kicker">diferença de clima</div><p style="font-size:.82rem">'
-      +(fa.major!==fb.major?('Troca de era: '+fa.major+' → '+fb.major+'. '):(fa.sub!==fb.sub?('Sub-firdária muda: '+fa.sub+' → '+fb.sub+'. '):'Mesma firdária. '))
-      +'Profecção passa da casa '+pa.houseN+' ('+HOUSE_SHORT[pa.houseN]+') para a casa '+pb.houseN+' ('+HOUSE_SHORT[pb.houseN]+'); Senhor do Ano '
-      +(pa.lordKey===pb.lordKey?('permanece '+PT_NAME[pa.lordKey]):('muda de '+PT_NAME[pa.lordKey]+' para '+PT_NAME[pb.lordKey]))+'.</p></div>';
+  $('rs-navlabel').textContent=R.start.getUTCFullYear();
+  $('rs-navsub').textContent='Revolução '+R.label+' · '+fdate(R.start);
+  $('rs-wheel').innerHTML=rsWheelSVG(R,S);
+  // camadas (legenda)
+  $('rs-legend').innerHTML=[['Camada 1','Período do retorno','var(--gold)'],['Camada 2','Ascendente e regente','#6f9fd8'],
+    ['Camada 3','Ênfases e casas','#7fd2e6'],['Camada 4','Síntese e foco','var(--gold)']]
+    .map(([a,b,c])=>'<span class="rvlg"><i style="background:'+c+'"></i><b>'+a+'</b>'+b+'</span>').join('');
+  // temas ativados
+  const casas=[...new Set([R.ascNatalHouse,S?S.profHouse:null,R.ascRulerNatalHouse,(NATAL.pts[R.planetKey]||{}).h].filter(Boolean))];
+  $('rs-temas').innerHTML='<div class="card rvbox"><div class="kicker">temas ativados</div>'
+    +casas.map(h=>'<div class="rvt"><span class="rvt-n">'+cap1(HOUSE_TAG[h])+'</span><span class="rvt-c">Casa '+h+'</span></div>').join('')
+    +'</div>';
+  // planetas em destaque (na revolução)
+  const dest=['sun','moon','mercury','venus','mars','jupiter','saturn']
+    .filter(k=>R.chart.pts[k]).map(k=>({k,h:R.houseOfRev(R.chart.pts[k].lon)}))
+    .filter(x=>[1,4,7,10].includes(x.h)||x.k===R.planetKey||x.k===R.ascRuler).slice(0,5);
+  $('rs-planetas').innerHTML='<div class="card rvbox"><div class="kicker">planetas em destaque</div>'
+    +(dest.map(x=>'<div class="rvt"><span class="rvt-n">'+(PT_GLYPH[x.k]||'')+'︎ '+PT_NAME[x.k]+'</span><span class="rvt-c">na Casa '+x.h+'</span></div>').join('')||'<p class="note">—</p>')
+    +'</div>';
+  // painéis à direita
+  const cont=R.contatos.slice(0,4).map(c=>PT_NAME[c.rev]+' '+c.gl+' '+c.alvoNm+' ('+c.orb.toFixed(1)+'°)').join(' · ')||'—';
+  $('rs-side').innerHTML=
+    '<div class="card rvbox"><div class="kicker">por que este retorno importa</div>'
+     +'<p class="rv-o">'+R.K.o+' '+cap1(R.K.campo)+'.</p>'
+     +'<div class="rvi"><b>Ambiente</b>casa '+R.ascNatalHouse+' natal — '+casaTag(R.ascNatalHouse)+'</div>'
+     +'<div class="rvi"><b>Regente do Asc</b>'+PT_NAME[R.ascRuler]+(R.ascRulerRevHouse?(' · casa '+R.ascRulerRevHouse+' do retorno'):'')+'</div>'
+     +'<div class="rvi"><b>Planeta que retorna</b>'+PT_NAME[R.planetKey]+(R.planetRevHouse?(' · casa '+R.planetRevHouse):'')+'</div>'
+     +'<div class="rvi"><b>Contatos com o natal</b>'+cont+'</div>'
+     +'<div class="rvi"><b>Aspectos repetidos</b>'+(R.repeats.slice(0,3).map(r=>PT_NAME[r.a]+' '+r.gl+' '+PT_NAME[r.b]).join(' · ')||'nenhum')+'</div>'
+    +'</div>'
+    +'<div class="card rvbox"><div class="kicker">síntese literal</div><p class="rv-s">'+rsSynth(R,S)+'</p>'
+     +(typeof fundamentoHTML==='function'?fundamentoHTML(['revolucao','ascendente','dois-tempos','aspecto']):'')+'</div>';
+  // comparação com o retorno seguinte
+  let html='';
+  if(RS_CMP&&R.end){
+    const R2=revolutionFor(RS_KIND,new Date(R.end.getTime()+DAY));
+    if(R2)html='<div class="card"><div class="kicker">retorno seguinte · '+fdate(R2.start)+'</div>'
+      +'<p style="font-size:.85rem">Ascendente passa de '+R.ascSignNm+' (regido por '+PT_NAME[R.ascRuler]+') para '
+      +R2.ascSignNm+' (regido por '+PT_NAME[R2.ascRuler]+'); o ambiente natal muda da casa '+R.ascNatalHouse
+      +' ('+casaTag(R.ascNatalHouse)+') para a casa '+R2.ascNatalHouse+' ('+casaTag(R2.ascNatalHouse)+').</p></div>';
   }
   $('rs-body').innerHTML=html;
 }
+/* síntese literal do retorno — curta, por camadas, sem frases vagas */
+function rsSynth(R,S){
+  const F=[];
+  F.push('Retorno de '+PT_NAME[R.planetKey]+' válido de '+fdate(R.start)+(R.end?(' a '+fdate(R.end)):'')+'.');
+  F.push('O Ascendente em '+R.ascSignNm+', regido por '+PT_NAME[R.ascRuler]+', cai na '+ordinal(R.ascNatalHouse)
+    +' natal: o período tende a se manifestar por '+casaTag(R.ascNatalHouse)+'.');
+  if(S)F.push('A matéria do ano permanece '+casaTag(S.profHouse)+', administrada por '+PT_NAME[S.lord]+'.');
+  if(R.repeats.length)F.push('Um aspecto natal se repete no retorno ('+PT_NAME[R.repeats[0].a]+' '+R.repeats[0].gl+' '+PT_NAME[R.repeats[0].b]
+    +'): essa promessa tende a ficar mais visível.');
+  return F.join(' ');
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest)return;
+  const k=e.target.closest('[data-rsk]');
+  if(k){RS_KIND=k.dataset.rsk;RS_CURSOR=null;renderRS();return;}
+});
 
 /* ================= TRÂNSITOS ================= */
 let TMODE='hoje', TRX_SEL=null, TRX_FILTER=null;
@@ -751,26 +873,45 @@ function transDate(){const v=$('trans-pick').value;return v?new Date(v+'T12:00:0
 
 /* --- roda de planetas: nós clicáveis com contagem de contatos --- */
 function transWheelSVG(d,hits){
-  const W=520,H=380,CX=W/2,CY=H/2,R=Math.min(W,H)/2-42;
+  const W=560,H=420,CX=W/2,CY=H/2,R=Math.min(W,H)/2-52;
   const ORDER=['sun','moon','mercury','venus','mars','jupiter','saturn'];
   const cnt={}; hits.forEach(h=>cnt[h.tKey]=(cnt[h.tKey]||0)+1);
-  let s='<circle cx="'+CX+'" cy="'+CY+'" r="'+(R-6)+'" fill="none" stroke="rgba(19,26,40,.10)" stroke-dasharray="2 5"/>';
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(R*0.52)+'" fill="#ffffff" stroke="rgba(19,26,40,.10)"/>';
-  const sel=TRX_SEL&&hits[TRX_SEL]?hits[TRX_SEL]:null;
-  s+='<text x="'+CX+'" y="'+(CY-4)+'" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" letter-spacing="2" fill="#98a1b2">'
+  const sel=TRX_SEL!=null&&hits[TRX_SEL]?hits[TRX_SEL]:null;
+  const pos={};
+  ORDER.forEach((k,i)=>{const a=(i/ORDER.length)*Math.PI*2;pos[k]=[CX+R*Math.sin(a),CY-R*Math.cos(a)];});
+  let s='<defs>'
+    +'<filter id="nglow" x="-70%" y="-70%" width="240%" height="240%">'
+    +'<feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    +'<radialGradient id="halo"><stop offset="0%" stop-color="rgba(255,255,255,.30)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient>'
+    +'<radialGradient id="nodefill"><stop offset="0%" stop-color="#111a2c"/><stop offset="100%" stop-color="#070b14"/></radialGradient>'
+    +'</defs>';
+  // teia: liga cada nó ao anel central
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+R+'" fill="none" stroke="rgba(255,255,255,.06)"/>';
+  ORDER.forEach(k=>{const [x,y]=pos[k];
+    s+='<line x1="'+CX+'" y1="'+CY+'" x2="'+x+'" y2="'+y+'" stroke="rgba(255,255,255,'+((cnt[k]||0)?'.13':'.05')+')" stroke-width="1"/>';});
+  // núcleo
+  const rc=R*0.52;
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(rc+16)+'" fill="url(#halo)"/>';
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rc+'" fill="#05080f" stroke="rgba(255,255,255,.16)"/>';
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(rc-7)+'" fill="none" stroke="rgba(255,255,255,.06)"/>';
+  s+='<text x="'+CX+'" y="'+(CY-6)+'" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" letter-spacing="2.6" fill="#8e9bb4">'
     +(sel?'TRÂNSITO SELECIONADO':'SELECIONE UM TRÂNSITO')+'</text>';
-  s+='<text x="'+CX+'" y="'+(CY+16)+'" text-anchor="middle" font-size="12" font-family="Inter" fill="#4f5a6e">'
-    +(sel?(PT_NAME[sel.tKey]+' '+sel.gl+' '+sel.np.nm):'os movimentos que moldam o momento')+'</text>';
-  ORDER.forEach((k,i)=>{
-    const ang=(i/ORDER.length)*Math.PI*2, x=CX+R*Math.sin(ang), y=CY-R*Math.cos(ang);
-    const n=cnt[k]||0, on=sel&&sel.tKey===k, has=n>0;
-    s+='<g data-trxpl="'+k+'" style="cursor:pointer">'
-      +'<circle cx="'+x+'" cy="'+y+'" r="'+(on?27:23)+'" fill="#ffffff" stroke="'+(on?'rgba(74,107,150,.75)':(has?'rgba(19,26,40,.18)':'rgba(19,26,40,.08)'))+'" stroke-width="'+(on?2:1.2)+'"/>'
-      +'<text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" font-size="17" font-family="Inter" fill="'+(has?'#131a28':'#b3bac6')+'" style="pointer-events:none">'+(PT_GLYPH[k]||'')+'︎</text>'
-      +'<text x="'+x+'" y="'+(y+40)+'" text-anchor="middle" font-size="10.5" font-family="Inter" fill="'+(has?'#4f5a6e':'#b3bac6')+'" style="pointer-events:none">'+PT_NAME[k]+'</text>'
-      +(n?('<circle cx="'+(x+18)+'" cy="'+(y-16)+'" r="8.5" fill="#eef2f8" stroke="rgba(19,26,40,.12)"/>'
-        +'<text x="'+(x+18)+'" y="'+(y-12.5)+'" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="#4f5a6e" style="pointer-events:none">'+n+'</text>'):'')
-      +'</g>';
+  s+='<text x="'+CX+'" y="'+(CY+16)+'" text-anchor="middle" font-size="12" font-family="Inter" fill="'+(sel?'#e9eef8':'#6b7793')+'">'
+    +(sel?(PT_NAME[sel.tKey]+' '+sel.gl+' '+sel.np.nm):'Explore as ativações')+'</text>';
+  if(!sel)s+='<text x="'+CX+'" y="'+(CY+34)+'" text-anchor="middle" font-size="12" font-family="Inter" fill="#6b7793">planetárias do momento.</text>';
+  // nós
+  ORDER.forEach(k=>{
+    const [x,y]=pos[k], n=cnt[k]||0, on=sel&&sel.tKey===k, has=n>0, r=on?30:26;
+    s+='<g data-trxpl="'+k+'" style="cursor:pointer">';
+    if(on) s+='<circle cx="'+x+'" cy="'+y+'" r="'+(r+13)+'" fill="url(#halo)"/>';
+    s+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="url(#nodefill)" '
+      +'stroke="'+(on?'rgba(255,255,255,.92)':(has?'rgba(255,255,255,.30)':'rgba(255,255,255,.11)'))+'" '
+      +'stroke-width="'+(on?1.8:1.1)+'"'+(on?' filter="url(#nglow)"':'')+'/>'
+      +'<text x="'+x+'" y="'+(y+6)+'" text-anchor="middle" font-size="18" font-family="Inter" fill="'+(has?'#e9eef8':'#4a5570')+'" style="pointer-events:none">'+(PT_GLYPH[k]||'')+'︎</text>'
+      +'<text x="'+x+'" y="'+(y+r+16)+'" text-anchor="middle" font-size="10.5" font-family="Inter" fill="'+(has?'#9aa6bd':'#4a5570')+'" style="pointer-events:none">'+PT_NAME[k]+'</text>';
+    if(n) s+='<circle cx="'+(x+20)+'" cy="'+(y-18)+'" r="9" fill="#0d1424" stroke="rgba(220,184,119,.55)"/>'
+      +'<text x="'+(x+20)+'" y="'+(y-14.5)+'" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="var(--gold)" style="pointer-events:none">'+n+'</text>';
+    s+='</g>';
   });
   return '<svg id="trans-wheel" viewBox="0 0 '+W+' '+H+'">'+s+'</svg>';
 }
