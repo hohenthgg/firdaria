@@ -14,13 +14,6 @@ document.getElementById('tempo-pick').addEventListener('change',function(){
   if(this.value){CURSOR=new Date(this.value+'T12:00:00Z');syncTempo();}
 });
 document.getElementById('tempo-today').onclick=()=>{CURSOR=new Date();syncTempo();};
-let TANIM=null;
-document.getElementById('tempo-anim').onclick=function(){
-  if(TANIM){clearInterval(TANIM);TANIM=null;this.textContent='▶';return;}
-  this.textContent='❚❚';
-  const step={vida:200,decada:30,ano:5,mes:1,dia:1/24}[ZOOM]*DAY;
-  TANIM=setInterval(()=>{CURSOR=new Date(CURSOR.getTime()+step);if(CURSOR.getTime()>BIRTH+75*365.2425*DAY)CURSOR=new Date(BIRTH);syncTempo();},110);
-};
 document.getElementById('tempo-zoom').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b)return;
   document.querySelectorAll('#tempo-zoom .btn').forEach(x=>x.classList.toggle('on',x===b));
@@ -51,6 +44,15 @@ document.getElementById('retro-open').onclick=()=>{
   if(next)next.onclick=()=>{try{rsStep(1);}catch(e){console.error(e);}};
   if(cmp)cmp.onchange=function(){RS_CMP=this.checked;try{renderRS();}catch(e){console.error(e);}};
 })();
+/* Revoluções — CTA para interpretação completa */
+document.addEventListener('click',e=>{
+  if(e.target.closest&&e.target.closest('[data-rvcta]')){
+    const b=document.getElementById('rs-body');
+    try{ const R=revolutionFor(RS_KIND,rsCursor());
+      if(R&&b){ b.innerHTML=buildYearReport(Math.floor(ageAt(R.start)));
+        b.scrollIntoView({behavior:'smooth',block:'start'}); } }catch(x){console.error(x);}
+  }
+});
 /* Trânsitos */
 document.getElementById('trans-modes').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b)return;
@@ -59,9 +61,10 @@ document.getElementById('trans-modes').addEventListener('click',e=>{
 });
 document.getElementById('trans-pick').addEventListener('change',renderTrans);
 /* Perfil filtros */
-['ax-search','ax-dom','ax-sort'].forEach(id=>{
-  document.getElementById(id).addEventListener('input',renderPers);
-  document.getElementById(id).addEventListener('change',renderPers);
+['ax-search','ax-sort'].forEach(id=>{
+  const el=document.getElementById(id); if(!el)return;
+  el.addEventListener('input',renderPers);
+  el.addEventListener('change',renderPers);
 });
 /* ---- layout: Auto / PC / Mobile (opcional, salvo no navegador) ---- */
 const VIEW_MQ=window.matchMedia('(max-width:900px)');
