@@ -1094,65 +1094,138 @@ function runEletiva(){
   },30);
 }
 
-/* ================= PERFIL: temperamento + 48 eixos ================= */
-function temperament(){return CHARTMETA.temper;}
+/* ================= PERFIL — 8 seções ================= */
+let AXES_CACHE=null, TEMPER_CACHE=null;
+function profileData(force){
+  if(force||!TEMPER_CACHE){TEMPER_CACHE=temperEngine();AXES_CACHE=allAxes();}
+  return {T:TEMPER_CACHE,A:AXES_CACHE};
+}
+function temperament(){return TEMPER_CACHE||(TEMPER_CACHE=temperEngine());}
+/* 1 · síntese · 2 · quadrante · 3 · qualidades · 4 · leitura rápida */
 function renderTemp(){
-  if(!NATAL){$('temp-body').innerHTML=emptyState();return;}
-  const t=temperament();
-  const x=50+(t.dry/Math.max(1,t.Q.seco+t.Q['úmido']))*44;
-  const y=50-(t.hot/Math.max(1,t.Q.quente+t.Q.frio))*44;
-  const pair=t.humor==='colérico'?'quente e seco':t.humor==='sanguíneo'?'quente e úmido':t.humor==='melancólico'?'frio e seco':'frio e úmido';
+  if(typeof NATAL==='undefined'||!NATAL){$('temp-body').innerHTML=emptyState();return;}
+  const {T,A}=profileData(true);
+  if(!T){$('temp-body').innerHTML=emptyState();return;}
+  const x=T.seco, y=100-T.quente;                       // quadrante seco→ · quente↑
+  const bar=(rot,v,cor)=>'<div class="qbar"><div class="qb-h"><span>'+rot+'</span><b>'+v+'%</b></div>'
+    +'<div class="qb-t"><i style="width:'+v+'%;background:'+cor+'"></i></div></div>';
+  // leitura rápida: 3 frases curtas e literais
+  const fortes=A.slice().sort((a,b)=>Math.abs(b.pos-50)-Math.abs(a.pos-50)).slice(0,3);
+  const rapida=[
+    'Compleição '+T.humor+': '+HUMOR_TXT[T.humor]+'.',
+    'Traço mais marcado: '+fortes[0].frase.replace(/^Inclina-se\s+/,'').replace(/^\w/,c=>c.toUpperCase()),
+    'Em seguida vêm '+fortes[1].name.split('–')[fortes[1].pos>=50?0:1].toLowerCase()
+      +' e '+fortes[2].name.split('–')[fortes[2].pos>=50?0:1].toLowerCase()+'.'];
   $('temp-body').innerHTML=
-    '<p class="lede">Temperamento: <b style="color:var(--gold)">'+t.humor+'</b> — '+pair+' (quente '+t.Q.quente+' × frio '+t.Q.frio+' · seco '+t.Q.seco+' × úmido '+t.Q['úmido']+'). Confiança do veredicto: <b>'+t.conf+'%</b>.</p>'
-    +'<div class="qmap"><div class="ax axh"></div><div class="ax axv"></div><div class="lb q2">quente · úmido</div><div class="lb q1">quente · seco</div><div class="lb q4">frio · úmido</div><div class="lb q3">frio · seco</div><div class="marker" style="left:'+x+'%;top:'+y+'%"></div></div>'
-    +'<h3>Fatores e pesos</h3><table><tr><th>Testemunho</th><th>Qualidades</th><th>Peso</th></tr>'+t.fx.map(f=>'<tr><td>'+f[0]+'</td><td class="m">'+f[1]+'</td><td class="m">'+f[2]+'</td></tr>').join('')+'</table>'
-    +'<div class="card"><div class="kicker">contradições internas</div><p style="font-size:.82rem">'+(t.contra.length?t.contra.map(c=>c[0]+' ('+c[1]+')').join('; ')+'.':'nenhuma — compleição unívoca.')+'</p></div>'
-    +'<div class="note">Pesos: Asc + regente do Asc + planetas na I + Lua e fase (3) → estação do Sol (2, hemisfério norte) → senhor da genitura (1). Predisposição simbólica tradicional; não é diagnóstico.</div>';
+    // 1 · síntese principal
+    '<div class="pf-sint">'
+     +'<div class="pf-humor"><span class="pf-k">temperamento</span><b>'+cap1(T.humor)+'</b>'
+      +'<em>'+T.poloH+' e '+T.poloD+'</em></div>'
+     +'<div class="pf-conf"><span class="pf-k">confiança</span><b>'+T.conf+'%</b>'
+      +'<em>concordância '+T.confLabel+' entre '+T.fx.length+' testemunhos</em></div>'
+     +'<div class="pf-sec"><span class="pf-k">secundário</span><b>'+cap1(T.secundario)+'</b>'
+      +'<em>quadrante vizinho mais próximo</em></div>'
+    +'</div>'
+    // 2 · mapa dos temperamentos
+    +'<div class="pf-grid2">'
+     +'<div class="card pf-map"><div class="kicker">mapa dos temperamentos</div>'
+      +'<div class="qmap"><div class="ax axh"></div><div class="ax axv"></div>'
+      +'<div class="lb q2">sanguíneo<i>quente · úmido</i></div><div class="lb q1">colérico<i>quente · seco</i></div>'
+      +'<div class="lb q4">fleumático<i>frio · úmido</i></div><div class="lb q3">melancólico<i>frio · seco</i></div>'
+      +'<div class="marker" style="left:'+x+'%;top:'+y+'%"></div></div></div>'
+    // 3 · qualidades fundamentais
+     +'<div class="card pf-qual"><div class="kicker">qualidades fundamentais</div>'
+      +bar('quente',T.quente,'var(--red)')+bar('frio',T.frio,'var(--blue)')
+      +bar('seco',T.seco,'var(--gold)')+bar('úmido',T.umido,'var(--cyan)')
+      +'<p class="note">Pares opostos normalizados a 100% cada.</p></div>'
+    +'</div>'
+    // 4 · leitura rápida
+    +'<div class="card pf-quick"><div class="kicker">leitura rápida</div>'
+     +rapida.map(f=>'<p>'+f+'</p>').join('')+'</div>';
 }
-function literalAxis(r,name,poles,dom){
-  const pole=poles[r.poleIdx].toLowerCase();
-  const SIT={'Energia e ação':'sob prazo, competição ou obstáculo físico','Afetividade e relações':'em vínculos próximos e negociações pessoais','Cognição':'ao estudar, argumentar e decidir','Organização e adaptação':'em rotina, planejamento e imprevistos','Valores e orientação':'em escolhas de rumo e dilemas morais','Identidade e conflito':'quando contrariado, avaliado ou exposto'};
-  let q='';
-  if(r.quality==='integrada') q='traço estável e disponível';
-  else if(r.quality==='em disputa') q='traço em disputa: os dois polos aparecem alternadamente conforme o contexto';
-  else q='traço difuso: aparece de forma irregular';
-  return 'Comportamento: tende a <b>'+pole+'</b> '+(SIT[dom]||'')+' — '+q+'.'+(r.tension>0.65?' Sob estresse, o polo oposto irrompe.':'');
-}
-let AXCACHE=null;
-function computeAllAxes(){
-  if(AXCACHE)return AXCACHE;
-  AXCACHE=[];
-  AXES_CONFIG.forEach(([dom,sig,axes])=>{
-    axes.forEach(([name,tests])=>{
-      const r=computeAxis(name,tests.map(evalT),sig);
-      AXCACHE.push({dom,sig,name,r,poles:name.split('–')});
-    });
-  });
-  return AXCACHE;
+/* 5 · os 48 eixos, agrupados em famílias */
+const FAM_ORDEM=['físico','afetivo','cognitivo','volitivo','social','comportamental'];
+const FAM_TIT={'físico':'Físico e vital','afetivo':'Afetivo','cognitivo':'Cognitivo',
+  'volitivo':'Volitivo','social':'Social','comportamental':'Comportamental'};
+function axisCardHTML(a){
+  const esq=a.pos>=50, polo=esq?a.poloA:a.poloB, v=esq?a.pos:100-a.pos;
+  return '<div class="axc">'
+    +'<div class="axc-h"><span class="axc-n">'+a.name+'</span>'
+      +'<span class="axc-v">'+v+'%<i> '+polo.toLowerCase()+'</i></span></div>'
+    +'<div class="axc-bar"><i class="axc-mid"></i><i class="axc-dot" style="left:'+a.pos+'%"></i></div>'
+    +'<div class="axc-p"><span>'+a.poloA+'</span><span>'+a.poloB+'</span></div>'
+    +'<p class="axc-f">'+a.frase+'</p>'
+    +'<div class="axc-m">confiança '+a.conf+'% ('+a.confLabel+') · '+a.marks.length+' testemunhos</div>'
+    +'<details class="fund"><summary>Fundamento técnico</summary><ul class="ilist">'
+      +a.marks.slice().sort((x,y)=>Math.abs(y.dir*y.w)-Math.abs(x.dir*x.w))
+        .map(m=>'<li>'+m.txt+' <i>→ '+(m.dir>=0?a.poloA:a.poloB)+', peso '+m.w+'</i></li>').join('')
+      +'</ul></details>'
+    +'</div>';
 }
 function renderPers(){
-  if(!NATAL){$('pers-body').innerHTML=emptyState();return;}
-  const all=computeAllAxes();
-  const domSel=$('ax-dom');
-  if(domSel.options.length<=1) AXES_CONFIG.forEach(([d])=>{const o=document.createElement('option');o.textContent=d;domSel.appendChild(o);});
-  const q=($('ax-search').value||'').toLowerCase(), df=domSel.value, sort=$('ax-sort').value;
-  let list=all.filter(a=>(!df||a.dom===df)&&(!q||a.name.toLowerCase().includes(q)));
-  if(sort==='val')list=list.slice().sort((a,b)=>b.r.inten-a.r.inten);
-  if(sort==='conf')list=list.slice().sort((a,b)=>b.r.conf-a.r.conf);
-  if(sort==='tens')list=list.slice().sort((a,b)=>b.r.tension-a.r.tension);
-  let html='',lastDom='';
-  list.forEach(a=>{
-    if(sort==='dom'&&a.dom!==lastDom){html+='<div class="domtitle">'+a.dom+' · significador '+PT_NAME[a.sig]+'</div>';lastDom=a.dom;}
-    const [pA,pB]=a.poles, r=a.r, pct=((r.val-1)/3)*100;
-    html+='<div class="axrow"><div class="head"><span class="nm">'+a.name+'</span>'
-      +'<span class="meta">'+r.val.toFixed(2)+' · '+(r.poleIdx===0?pA:pB)+' · int '+(r.inten*100|0)+'% · conf '+(r.conf*100|0)+'% · tensão '+(r.tension*100|0)+'% · '+r.quality+'</span></div>'
-      +'<div class="axbar"><div class="mid"></div><div class="dot'+(r.conf<0.5?' weak':'')+(r.tension>0.65?' tense':'')+'" style="left:'+(100-pct)+'%"></div></div>'
-      +'<div class="poles"><span>'+pA+' (1)</span><span>'+pB+' (4)</span></div>'
-      +'<div class="lit">'+literalAxis(r,a.name,a.poles,a.dom)+'</div>'
-      +'<div class="facts"><b style="color:var(--green)">a favor do polo dominante:</b> '+(r.facts.slice(0,4).join(' · ')||'—')
-      +(r.tension>0.4?('<br><b style="color:var(--red)">contraditórios:</b> testemunhos do polo oposto somam '+(r.tension*100|0)+'% da força dominante'):'')+'</div></div>';
-  });
-  $('pers-body').innerHTML=html||'<p>nenhum eixo corresponde ao filtro.</p>';
+  if(typeof NATAL==='undefined'||!NATAL){$('pers-body').innerHTML=emptyState();return;}
+  const {T,A}=profileData();
+  const q=($('ax-search')&&$('ax-search').value||'').toLowerCase();
+  const dom=($('ax-dom')&&$('ax-dom').value)||'';
+  const sort=($('ax-sort')&&$('ax-sort').value)||'dom';
+  // preenche o seletor de domínios uma vez
+  const selDom=$('ax-dom');
+  if(selDom&&selDom.options.length<=1)
+    FAM_ORDEM.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=FAM_TIT[f];selDom.appendChild(o);});
+  let L=A.filter(a=>(!q||a.name.toLowerCase().includes(q))&&(!dom||a.fam===dom));
+  if(sort==='val')L=L.slice().sort((a,b)=>Math.abs(b.pos-50)-Math.abs(a.pos-50));
+  if(sort==='conf')L=L.slice().sort((a,b)=>b.conf-a.conf);
+  if(sort==='tens')L=L.slice().sort((a,b)=>Math.abs(a.pos-50)-Math.abs(b.pos-50));
+  let html='';
+  if(sort==='dom'&&!dom){
+    FAM_ORDEM.forEach(f=>{const g=L.filter(a=>a.fam===f); if(!g.length)return;
+      html+='<h4 class="axfam">'+FAM_TIT[f]+' <span>'+g.length+' eixos</span></h4><div class="axgrid">'
+        +g.map(axisCardHTML).join('')+'</div>';});
+  } else html='<div class="axgrid">'+L.map(axisCardHTML).join('')+'</div>';
+  // 6 · constituição tradicional (recolhida)
+  const C=constitution(T);
+  if(C)html+='<details class="card pf-const"><summary><span class="kicker" style="margin:0">constituição e suscetibilidades tradicionais</span>'
+    +'<b>'+cap1(C.constituicao)+' — '+C.qualidades+'</b><em>sustentação '+C.sust+'</em></summary>'
+    +'<div class="pf-cb">'
+    +'<div class="pf-cr"><span>Constituição predominante</span>'+cap1(C.constituicao)+' ('+C.qualidades+'). '+C.excesso+'.</div>'
+    +'<div class="pf-cr"><span>Funções tradicionalmente mais sensíveis</span><ul class="ilist">'
+      +C.sens.map(x=>'<li><b>'+x.o+'</b> — '+x.v+'</li>').join('')+'</ul></div>'
+    +'<div class="pf-cr"><span>Fatores de agravamento</span>'+(C.agrav.length?('<ul class="ilist">'+C.agrav.map(x=>'<li>'+x+'</li>').join('')+'</ul>'):'nenhum testemunho relevante detectado.')+'</div>'
+    +'<div class="pf-cr"><span>Fatores de compensação e proteção</span><ul class="ilist">'+C.comp.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>'
+    +'<div class="pf-cr"><span>Sustentação astrológica</span>'+C.sust+' — '+C.test.length+' testemunhos repetidos.</div>'
+    +'<p class="pf-aviso">Esta seção descreve tendências constitucionais da tradição. Não diagnostica, não prevê enfermidades e não substitui avaliação médica. Trate como suscetibilidade tradicional que merece atenção, nunca como conclusão clínica.</p>'
+    +'</div></details>';
+  // 7 · correspondências tipológicas
+  const Y=typology(A);
+  if(Y)html+='<div class="card pf-tipo"><div class="kicker">correspondências tipológicas</div>'
+    +'<p class="note" style="margin-top:0">Aproximações derivadas do padrão GLOBAL dos 48 eixos — nunca de um signo ou planeta isolado.</p>'
+    +'<div class="pf-tgrid">'
+     +'<div class="pf-t"><span class="pf-k">MBTI</span><b>'+Y.mbti+'</b>'
+      +'<em>alternativa próxima: '+Y.mbtiAlt+'</em><i>compatibilidade '+Y.compatLabel+' ('+Y.compat+'%)</i></div>'
+     +'<div class="pf-t"><span class="pf-k">Eneagrama</span><b>Tipo '+Y.enn+' · '+ENN_NOME[Y.enn]+'</b>'
+      +'<em>alternativa próxima: '+Y.ennAlt+' · '+ENN_NOME[Y.ennAlt]+'</em><i>apoio '+Y.ennScore+'%</i></div>'
+     +'<div class="pf-t"><span class="pf-k">Sociônica</span><b>'+Y.soc+' · '+(SOC_NOME[Y.soc]||'—')+'</b>'
+      +'<em>alternativa próxima: '+Y.socAlt+' · '+(SOC_NOME[Y.socAlt]||'—')+'</em><i>comparação funcional (Gulenko)</i></div>'
+    +'</div>'
+    +'<div class="pf-cr"><span>Eixos que sustentam a aproximação</span>'+(Y.sust.join(' · ')||'—')+'</div>'
+    +'<div class="pf-cr"><span>Divergências que impedem certeza</span>'
+      +(Y.diverg.length?Y.diverg.join('; ')+'.':'as quatro dicotomias estão suficientemente definidas, mas a correspondência segue sendo aproximação.')+'</div>'
+    +'<p class="note">Dimensões agregadas: E '+Y.dims.E+'% · N '+Y.dims.N+'% · F '+Y.dims.F+'% · J '+Y.dims.J+'%. '
+     +'A sociônica usa as descrições funcionais de Gulenko apenas como material de comparação — nenhum mapa corresponde automaticamente a um sociotipo.</p>'
+    +'</div>';
+  // 8 · fundamento técnico geral
+  html+='<details class="card pf-fund"><summary><span class="kicker" style="margin:0">fundamento técnico</span><b>pesos, testemunhos e regras usados</b></summary>'
+    +'<div class="pf-cb">'
+    +'<div class="pf-cr"><span>Hierarquia do temperamento</span>Ascendente 3 · planeta na cúspide da casa 1 = 3 (não recontado como planeta na casa 1) · planeta dentro da casa 1 = 2 · regente do Ascendente (sobretudo seu signo) 3 · Lua 2 · fase lunar 1 · Senhor da Genitura 1. Signo, casa, dignidade e condição modulam o peso entre 0,75× e 1,25×, sem criar pontuação nova.</div>'
+    +'<div class="pf-cr"><span>Normalização</span>quente × frio = 100% e seco × úmido = 100%, calculados separadamente. A confiança mede a concordância entre testemunhos, não a intensidade do resultado.</div>'
+    +'<div class="pf-cr"><span>Testemunhos do temperamento</span><table class="pf-tb"><tr><th>Fonte</th><th>Detalhe</th><th>Qualidades</th><th>Peso</th></tr>'
+      +T.fx.map(f=>'<tr><td>'+f.fonte+'</td><td class="m">'+f.detalhe+'</td><td class="m">'+f.qs.join(' · ')+'</td><td class="m">'+f.w+'</td></tr>').join('')+'</table></div>'
+    +'<div class="pf-cr"><span>Divergências internas</span>'+(T.contra.length?T.contra.map(c=>c.fonte+' ('+c.qs.join('-')+')').join('; ')+'.':'nenhuma — compleição unívoca.')+'</div>'
+    +'<div class="pf-cr"><span>Os 48 eixos</span>Cada eixo soma marcadores próprios (Ascendente, regente, Lua, planetas indicados, Senhor da Genitura, modalidades, elementos, casas e estrelas). Casas e estrelas entram como modificadores, nunca como prova isolada. A posição é a média ponderada das direções; a confiança combina concordância direcional (75%) e volume de testemunhos (25%).</div>'
+    +(typeof fundamentoHTML==='function'?fundamentoHTML(['temperamento','lua','aspecto','dignidade']):'')
+    +'</div></details>';
+  $('pers-body').innerHTML=html;
 }
+
 
 /* ================= FONTES E MÉTODO ================= */
