@@ -23,7 +23,7 @@ document.getElementById('ev-add').onclick=()=>{
   EVENTS.push({d,txt:t});
   localStorage.setItem('ag_events',JSON.stringify(EVENTS));
   document.getElementById('ev-txt').value='';
-  drawCord();
+  syncTempo();
 };
 document.getElementById('retro-open').onclick=()=>{
   const d=document.getElementById('ev-date').value;
@@ -53,7 +53,7 @@ function applyView(){
   const mob = m==='mobile' || (m==='auto' && VIEW_MQ.matches);
   document.body.classList.toggle('is-mobile',mob);
   document.querySelectorAll('#view-switch [data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===m));
-  try{drawCord();}catch(e){}
+  try{if(typeof TL_MODE!=='undefined'&&TL_MODE==='orbita')drawCord();}catch(e){}
 }
 function setView(m){localStorage.setItem('ag_view',m);applyView();}
 function bindView(){
@@ -156,9 +156,8 @@ function boot(){
   try{bindView();}catch(e){console.error(e);}
   try{bindImport();}catch(e){console.error(e);}
   try{bindDados();}catch(e){console.error(e);}
-  try{cordDrag();}catch(e){console.error(e);}
+  try{bindTimeline();}catch(e){console.error(e);}
   try{bindTrans();}catch(e){console.error(e);}
-  window.addEventListener('resize',()=>{try{drawCord();}catch(e){}});
   if(loadFromState()){
     document.getElementById('in-natal').value=STATE.natal.text;
     document.getElementById('in-name').value=STATE.natal.name||'';
