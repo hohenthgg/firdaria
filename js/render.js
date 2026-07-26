@@ -862,7 +862,7 @@ function renderRS(){
   const q=(k,v,wide)=>'<div class="rvq'+(wide?' rvq-w':'')+'"><span>'+k+'</span><b>'+v+'</b></div>';
   $('rs-cmp').innerHTML=
     '<section class="rvmini"><div class="kicker">mapa da revolução</div><div class="rvqs">'
-     +q('Ascendente',R.ascSignNm+' <i>'+Math.floor(n360(R.ascLon)%30)+'°</i>')
+     +q('Ascendente',sgOf(R.ascLon)+' '+R.ascSignNm+' <i>'+Math.floor(n360(R.ascLon)%30)+'°</i>')
      +q('Regente do Asc',PT_NAME[R.ascRuler])
      +q('Planeta do retorno',PT_NAME[R.planetKey]
         +(R.planetRevHouse?(' <i>· casa '+R.planetRevHouse+' no mapa da revolução</i>'):''),true)
@@ -886,7 +886,7 @@ function renderRS(){
     +'<div class="rvel-s"><span>Temas ativáveis</span><p>'+tem+'</p></div>'
     +'</div></details>';
   let cards='';
-  cards+=cardEl('Ascendente do retorno',R.ascSignNm+' · cai na '+R.ascNatalHouse+'ª natal',
+  cards+=cardEl('Ascendente do retorno',sgOf(R.ascLon)+' '+R.ascSignNm+' · '+R.ascNatalHouse+'ª natal',
     'A '+ordinal(R.ascNatalHouse)+' natal trata de '+HOUSE_THEME[R.ascNatalHouse]+'.',
     'O Ascendente define como o período se apresenta: em '+R.ascSignNm+', regido por '+PT_NAME[R.ascRuler]+'.',
     escopo+'a ativação tende a passar por '+temas([R.ascNatalHouse,S&&S.profHouse])+'.');

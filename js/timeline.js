@@ -7,6 +7,10 @@
 let TL_MODE=(function(){try{return localStorage.getItem('agx_tlmode')||'sintese';}catch(e){return 'sintese';}})();
 function tlSetMode(m){TL_MODE=m;try{localStorage.setItem('agx_tlmode',m);}catch(e){}syncTempo();}
 
+/* glifo de signo como ícone de texto: o seletor de variação impede o emoji */
+function sgGlyph(idx){return (SIGN_GLYPHS[idx]||'')+'\uFE0E';}
+function sgOf(lon){return sgGlyph(signOf(lon));}
+
 /* ---------- janelas de cada técnica (só datas, sem recalcular nada) ---------- */
 function tlWindows(S){
   const f=S.f, aIni=Math.floor(S.age);
@@ -53,7 +57,7 @@ function tlTracksHTML(d,S){
   let s3='';
   for(let i=0;i<12;i++){const casa=i+1, on=(S.profHouse===casa);
     s3+=seg(1,''+casa,on,anoBase+i+0.5,'Casa '+casa+' — '+casaTag(casa));}
-  out+=faixa('Profecção','Casa '+S.profHouse+' · '+(PT_GLYPH[S.lord]||'')+'︎ '+PT_NAME[S.lord],
+  out+=faixa('Profecção','Casa '+S.profHouse+' · '+sgGlyph(S.p.signIdx)+' '+(PT_GLYPH[S.lord]||'')+'︎ '+PT_NAME[S.lord],
     W.prof.ini.getUTCFullYear()+' – '+W.prof.fim.getUTCFullYear(), s3,
     (S.age-Math.floor(S.age/12)*12)/12*100);
 
@@ -63,7 +67,7 @@ function tlTracksHTML(d,S){
     const dur=R.end-R.start, pos=(d.getTime()-R.start.getTime())/dur*100, at=Math.floor(pos/100*12);
     let s4='';
     for(let i=0;i<12;i++)s4+=seg(1,'',i===at,null,null);
-    out+=faixa('Revolução',R.label+' · Asc em '+R.ascSignNm,
+    out+=faixa('Revolução',sgOf(R.ascLon)+' '+R.ascSignNm,
       fdate(R.start)+' – '+fdate(R.end), s4, pos);
   } else {
     out+=faixa('Revolução','—','retorno indisponível',seg(1,'',false,null,null),0);
@@ -90,14 +94,14 @@ function tempoExecCards(d){
     W.sub.fim?('até '+fdate(W.sub.fim)):'—',
     S.sk?('Traz '+casasTag(S.rulesSk)+' como assunto imediato.')
       :'A fase repete o regente do ciclo, em estado concentrado.'));
-  out.push(card('profeccao','Profecção',(PT_GLYPH[S.lord]||'✦')+'︎','Casa '+S.profHouse+' · '+PT_NAME[S.lord],
+  out.push(card('profeccao','Profecção',(PT_GLYPH[S.lord]||'✦')+'︎','Casa '+S.profHouse+' · '+sgGlyph(S.p.signIdx)+' '+PT_NAME[S.lord],
     W.prof.ini.getUTCFullYear()+' – '+W.prof.fim.getUTCFullYear(),
     'O ano trata de '+casaTag(S.profHouse)+', sob '+PT_NAME[S.lord]+'.'));
   const R=S.rev;
-  out.push(R?card('revolucao','Revolução '+R.label,'⌂',R.ascSignNm,
+  out.push(R?card('revolucao','Revolução '+R.label,sgOf(R.ascLon),R.ascSignNm,
       fdate(R.start)+(R.end?(' – '+fdate(R.end)):''),
       'O período tende a se manifestar por '+casaTag(R.ascNatalHouse)+'.')
-    :card('revolucao','Revolução','⌂','—','—','Importe o mapa pelo link para calcular os retornos.'));
+    :card('revolucao','Revolução','✦','—','—','Importe o mapa pelo link para calcular os retornos.'));
   return out.join('');
 }
 
