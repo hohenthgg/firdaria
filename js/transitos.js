@@ -221,53 +221,67 @@ const TERM_TXT={
   mars:'acelera e expõe ao atrito',
   venus:'suaviza e aproxima acordos',
   mercury:'movimenta papéis, conversas e informação'};
-/* fileira horizontal: um botão por casa */
+const ROMANO=['','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+/* fileira horizontal: doze cartas fechadas, uma por casa */
 function trRulersHTML(){
   let out='';
   for(let h=1;h<=12;h++){
     const k=NATAL.rulers[h]; if(!k)continue;
-    out+='<button class="rgb'+(TR_RUL===h?' on':'')+'" data-rgh="'+h+'">'
-      +'<span class="rgb-h">Reg. '+h+'ª</span>'
-      +'<span class="rgb-p"><i>'+(PT_GLYPH[k]||'')+'\uFE0E</i>'+PT_NAME[k]+'</span></button>';
+    out+='<button class="rgb'+(TR_RUL===h?' on':'')+'" data-rgh="'+h+'" title="Regente da '+h+'ª — '+casaTag(h)+'">'
+      +'<span class="rgb-n">'+ROMANO[h]+'</span>'
+      +'<span class="rgb-g">'+(PT_GLYPH[k]||'')+'\uFE0E</span>'
+      +'<span class="rgb-p">'+PT_NAME[k]+'</span></button>';
   }
   return out;
 }
-/* painel do regente selecionado, em três colunas para não crescer em altura */
-function trRulerPanelHTML(h){
+/* a carta aberta: lida dentro da tela, sem tocar no painel lateral */
+function trCartaHTML(h){
   const k=NATAL&&NATAL.rulers[h]; if(!k)return '';
   const d=trDate();
   const bn=TB.find(t=>t[1]===k)[0], L=tlon(bn,d), spd=speedOf(bn,d);
   const casaT=houseByRule(L,NATAL.cusps), tb=termBounds(L);
   const np=NATAL.pts[k], tbN=np?termBounds(np.lon):null, ru=ruledHouses(k), q=qualidade(k);
-  const lin=(a,b)=>'<div class="rgc-r"><span>'+a+'</span><b>'+b+'</b></div>';
+  const lin=(a,b)=>'<div class="ct-r"><span>'+a+'</span><b>'+b+'</b></div>';
   const grau=x=>Math.floor(x)+'°';
-  const hits=transitHits(d).filter(x=>x.tKey===k).sort((a,b)=>a.orb-b.orb).slice(0,4);
+  const hits=transitHits(d).filter(x=>x.tKey===k).sort((a,b)=>a.orb-b.orb).slice(0,3);
   const asp=hits.length
-    ? hits.map(x=>'<div class="rgc-asp '+x.cls+'"><i>'+x.gl+'</i>'
+    ? hits.map(x=>'<div class="ct-a '+x.cls+'"><i>'+x.gl+'</i>'
         +({conj:'conjunção a',harm:x.ang===60?'sextil a':'trígono a',tens:x.ang===90?'quadratura a':'oposição a'})[x.cls]
         +' '+x.np.nm+' natal <u>'+fmtOrb(x.orb)+'</u></div>').join('')
-    : '<div class="rgc-asp"><i>—</i>nenhum aspecto a pontos natais dentro do orbe nesta data.</div>';
+    : '<div class="ct-a"><i>—</i>nenhum aspecto a pontos natais dentro do orbe nesta data.</div>';
   const sintese=cap1(PT_NAME[k])+' administra '+(ru.length?casasTag(ru):'nenhuma casa')+'. '
     +'Neste momento cruza '+casaTag(casaT)+' ('+ordinal(casaT)+' natal), em '+SIGNS[tb.sign]
     +', no termo de '+PT_NAME[tb.lord]+' — '+(TERM_TXT[tb.lord]||'modula a entrega neste grau')+'. '
     +(spd<0?'Retrógrado, tende a rever o que já estava em curso. ':'')
     +'As matérias da '+ordinal(h)+' tendem a ser tratadas por '+casaTag(casaT)+'.';
-  return '<div class="rgp">'
-    +'<div class="rgp-h"><b>'+(PT_GLYPH[k]||'')+'\uFE0E '+PT_NAME[k]+'</b>'
+  const canto=(cls)=>'<span class="ct-c '+cls+'"><b>'+ROMANO[h]+'</b><i>'+(PT_GLYPH[k]||'')+'\uFE0E</i></span>';
+  return '<article class="carta">'
+    +'<button class="ct-x" data-rgclose aria-label="fechar">✕</button>'
+    +canto('a')+canto('b')
+    +'<header class="ct-h">'
+      +'<span class="ct-med">'+(PT_GLYPH[k]||'')+'\uFE0E</span>'
+      +'<b>'+PT_NAME[k]+'</b>'
       +'<em>regente da '+h+'ª · '+casaTag(h)+'</em>'
-      +'<button class="rgp-x" data-rgclose aria-label="fechar">✕</button></div>'
-    +'<div class="rgp-c"><span>posição</span>'
-      +lin('Transita',sgOf(L)+' '+SIGNS[signOf(L)]+' '+grau(n360(L)%30)+(spd<0?' ℞':''))
-      +lin('Casa cruzada',ordinal(casaT)+' natal — '+casaTag(casaT))
-      +lin('Termo do grau',(PT_GLYPH[tb.lord]||'')+'\uFE0E '+PT_NAME[tb.lord]+' ('+tb.from+'°–'+tb.to+'°)')
-      +(np?lin('No natal',sgOf(np.lon)+' '+SIGNS[signOf(np.lon)]+' '+grau(n360(np.lon)%30)+' · '+ordinal(np.h)):'')
-      +(tbN?lin('Termo natal',(PT_GLYPH[tbN.lord]||'')+'\uFE0E '+PT_NAME[tbN.lord]):'')
-      +lin('Também rege',ru.filter(x=>x!==h).length?ru.filter(x=>x!==h).map(ordinal).join(' e '):'—')
-      +lin('Condição natal',q.txt||'—')
+    +'</header>'
+    +'<div class="ct-b">'
+      +'<div class="ct-s"><span>posição de agora</span>'
+        +lin('Transita',sgOf(L)+' '+SIGNS[signOf(L)]+' '+grau(n360(L)%30)+(spd<0?' ℞':''))
+        +lin('Casa cruzada',ordinal(casaT)+' natal')
+        +lin('Matéria em jogo',cap1(casaTag(casaT)))
+        +lin('Termo do grau',(PT_GLYPH[tb.lord]||'')+'\uFE0E '+PT_NAME[tb.lord]+' ('+tb.from+'°–'+tb.to+'°)')
+      +'</div>'
+      +'<div class="ct-s"><span>no mapa natal</span>'
+        +(np?lin('Posição',sgOf(np.lon)+' '+SIGNS[signOf(np.lon)]+' '+grau(n360(np.lon)%30)):'')
+        +(np?lin('Casa',ordinal(np.h)):'')
+        +(tbN?lin('Termo do grau',(PT_GLYPH[tbN.lord]||'')+'\uFE0E '+PT_NAME[tbN.lord]):'')
+        +lin('Também rege',ru.filter(x=>x!==h).length?ru.filter(x=>x!==h).map(ordinal).join(' e '):'—')
+        +lin('Condição',q.txt||'—')
+      +'</div>'
+      +'<div class="ct-s"><span>leitura</span><p class="ct-p">'+sintese+'</p></div>'
+      +'<div class="ct-s"><span>aspectos aos pontos natais</span>'+asp+'</div>'
     +'</div>'
-    +'<div class="rgp-c"><span>o que isso significa</span><p class="rgc-s">'+sintese+'</p></div>'
-    +'<div class="rgp-c"><span>aspectos aos pontos natais</span>'+asp+'</div>'
-    +'</div>';
+    +'<footer class="ct-f">'+fdate(d)+'</footer>'
+    +'</article>';
 }
 function trCardVazio(){
   return '<article class="trcard trcard-empty">'
@@ -308,10 +322,18 @@ function renderTrans(){
   document.querySelectorAll('#tr-view [data-trv]').forEach(b=>b.classList.toggle('on',b.dataset.trv===TR_VIEW));
   try{ $('tr-wheel').innerHTML=trWheelSVG(); }catch(e){console.error('tr wheel',e);}
   trDetalhe(); trRelevantes();
-  try{ if($('tr-rulers'))$('tr-rulers').innerHTML=trRulersHTML();
-       if($('tr-ruler-panel'))$('tr-ruler-panel').innerHTML=TR_RUL?trRulerPanelHTML(TR_RUL):'';
-  }catch(e){console.error('tr rulers',e);}
+  try{ if($('tr-rulers'))$('tr-rulers').innerHTML=trRulersHTML(); trCarta(); }
+  catch(e){console.error('tr rulers',e);}
 }
+function trCarta(){
+  const ov=$('tr-carta'); if(!ov)return;
+  const slot=$('tr-carta-slot');
+  if(!TR_RUL||typeof NATAL==='undefined'||!NATAL){ov.hidden=true;document.body.classList.remove('carta-open');if(slot)slot.innerHTML='';return;}
+  if(slot)slot.innerHTML=trCartaHTML(TR_RUL);
+  const b=slot&&slot.querySelector('.ct-b'); if(b)b.scrollTop=0;
+  ov.hidden=false; document.body.classList.add('carta-open');
+}
+function trCartaFechar(){TR_RUL=null;if($('tr-rulers'))$('tr-rulers').innerHTML=trRulersHTML();trCarta();}
 function bindTrans(){
   const w=$('p-trans'); if(!w)return;
   w.addEventListener('click',e=>{
@@ -323,13 +345,27 @@ function bindTrans(){
       return;}
     const v=e.target.closest&&e.target.closest('[data-trv]');
     if(v){TR_VIEW=v.dataset.trv;renderTrans();return;}
-    // fileira de regentes: seleciona a casa, acende o planeta e abre o painel
-    if(e.target.closest&&e.target.closest('[data-rgclose]')){TR_RUL=null;renderTrans();return;}
+    // fileira de regentes: abre a carta, sem tocar no painel lateral
     const rb=e.target.closest&&e.target.closest('[data-rgh]');
-    if(rb){const h=+rb.dataset.rgh, k=NATAL&&NATAL.rulers[h];
-      TR_RUL=(TR_RUL===h)?null:h;
-      if(TR_RUL&&k)TR_SEL={side:'t',k};
-      renderTrans();}
+    if(rb){TR_RUL=(TR_RUL===+rb.dataset.rgh)?null:+rb.dataset.rgh;
+      if($('tr-rulers'))$('tr-rulers').innerHTML=trRulersHTML();
+      trCarta();}
+  });
+  const ov=$('tr-carta');
+  if(ov)ov.addEventListener('click',e=>{
+    const nv=e.target.closest&&e.target.closest('[data-rgnav]');
+    if(nv&&TR_RUL){TR_RUL=((TR_RUL-1+ +nv.dataset.rgnav)+12)%12+1;
+      if($('tr-rulers'))$('tr-rulers').innerHTML=trRulersHTML(); trCarta(); return;}
+    // ✕ ou qualquer ponto fora da carta fecha
+    if((e.target.closest&&e.target.closest('[data-rgclose]'))
+       ||!(e.target.closest&&e.target.closest('.carta'))) trCartaFechar();
+  });
+  document.addEventListener('keydown',e=>{
+    if(!TR_RUL||$('tr-carta').hidden)return;
+    if(e.key==='Escape')trCartaFechar();
+    else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
+      TR_RUL=((TR_RUL-1+(e.key==='ArrowRight'?1:-1))+12)%12+1;
+      if($('tr-rulers'))$('tr-rulers').innerHTML=trRulersHTML(); trCarta();}
   });
   const dt=$('tr-date');
   if(dt)dt.addEventListener('change',function(){if(this.value){TR_CURSOR=new Date(this.value+'T12:00:00Z');renderTrans();}});
