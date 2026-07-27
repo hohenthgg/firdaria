@@ -205,6 +205,65 @@ function trCardTransito(k){
     +'<div class="trsec"><span>O que ele toca agora</span>'+li+'</div>'
     +'</div></article>';
 }
+/* ---------------- regentes das casas ----------------
+   Um card por casa. Aberto, mostra onde o regente transita agora, o termo
+   ptolomaico do grau, a posição natal, uma síntese literal e os aspectos. */
+const TR_RUL_OPEN=new Set();
+/* limites do termo (tábua de TERMS, ptolomaica) que contém a longitude */
+function termBounds(L){
+  const s=signOf(L), d=n360(L)%30, T=TERMS[s]; let prev=0;
+  for(const [lim,p] of T){ if(d<lim) return {lord:p,from:prev,to:lim,sign:s}; prev=lim; }
+  return {lord:T[4][1],from:T[3][0],to:30,sign:s};
+}
+const TERM_TXT={
+  saturn:'pede prazo, estrutura e revisão',
+  jupiter:'favorece ampliação e o apoio de terceiros',
+  mars:'acelera e expõe ao atrito',
+  venus:'suaviza e aproxima acordos',
+  mercury:'movimenta papéis, conversas e informação'};
+function trRulerBody(h,k,d,S){
+  const bn=TB.find(t=>t[1]===k)[0], L=tlon(bn,d), spd=speedOf(bn,d);
+  const casaT=houseByRule(L,NATAL.cusps), tb=termBounds(L), tbN=NATAL.pts[k]?termBounds(NATAL.pts[k].lon):null;
+  const np=NATAL.pts[k], ru=ruledHouses(k), q=qualidade(k);
+  const lin=(a,b)=>'<div class="rgc-r"><span>'+a+'</span><b>'+b+'</b></div>';
+  const grau=(x)=>Math.floor(x)+'°';
+  const hits=transitHits(d).filter(x=>x.tKey===k).sort((a,b)=>a.orb-b.orb).slice(0,3);
+  const asp=hits.length
+    ? hits.map(x=>'<div class="rgc-asp '+x.cls+'"><i>'+x.gl+'</i>'
+        +({conj:'conjunção a',harm:x.ang===60?'sextil a':'trígono a',tens:x.ang===90?'quadratura a':'oposição a'})[x.cls]
+        +' '+x.np.nm+' natal <u>'+fmtOrb(x.orb)+'</u></div>').join('')
+    : '<div class="rgc-asp"><i>—</i>nenhum aspecto a pontos natais dentro do orbe.</div>';
+  const sintese=cap1(PT_NAME[k])+' administra '+(ru.length?casasTag(ru):'nenhuma casa')+'. '
+    +'Neste momento cruza '+casaTag(casaT)+' ('+ordinal(casaT)+' natal), em '+SIGNS[tb.sign]
+    +', no termo de '+PT_NAME[tb.lord]+' — '+(TERM_TXT[tb.lord]||'modula a entrega neste grau')+'. '
+    +(spd<0?'Retrógrado, tende a rever o que já estava em curso. ':'')
+    +'As matérias da '+ordinal(h)+' tendem a ser tratadas por '+casaTag(casaT)+'.';
+  return '<div class="rgc-b">'
+    +lin('Transita',sgOf(L)+' '+SIGNS[signOf(L)]+' '+grau(n360(L)%30)+(spd<0?' ℞':''))
+    +lin('Casa cruzada',ordinal(casaT)+' natal — '+casaTag(casaT))
+    +lin('Termo do grau',(PT_GLYPH[tb.lord]||'')+'︎ '+PT_NAME[tb.lord]+' ('+tb.from+'°–'+tb.to+'°)')
+    +(np?lin('No natal',sgOf(np.lon)+' '+SIGNS[signOf(np.lon)]+' '+grau(n360(np.lon)%30)+' · '+ordinal(np.h)):'')
+    +(tbN?lin('Termo natal',(PT_GLYPH[tbN.lord]||'')+'︎ '+PT_NAME[tbN.lord]):'')
+    +lin('Também rege',ru.filter(x=>x!==h).length?ru.filter(x=>x!==h).map(ordinal).join(' e '):'—')
+    +lin('Condição natal',q.txt||'—')
+    +'<p class="rgc-s">'+sintese+'</p>'
+    +'<div class="rgc-a"><span>aspectos aos pontos natais</span>'+asp+'</div>'
+    +'</div>';
+}
+function trRulersHTML(){
+  const d=trDate(), S=(typeof tempoState==='function')?tempoState(d):null;
+  let out='';
+  for(let h=1;h<=12;h++){
+    const k=NATAL.rulers[h]; if(!k)continue;
+    const aberto=TR_RUL_OPEN.has(h);
+    out+='<details class="rgc" data-rgh="'+h+'"'+(aberto?' open':'')+'>'
+      +'<summary><span class="rgc-h">Regente da '+h+'ª</span>'
+      +'<span class="rgc-p"><i>'+(PT_GLYPH[k]||'')+'︎</i>'+PT_NAME[k]+'</span>'
+      +'<span class="rgc-x">›</span></summary>'
+      +(aberto?trRulerBody(h,k,d,S):'')+'</details>';
+  }
+  return out;
+}
 function trCardVazio(){
   return '<article class="trcard trcard-empty">'
     +'<div class="trcard-b"><div class="kicker">como ler</div>'
@@ -244,6 +303,7 @@ function renderTrans(){
   document.querySelectorAll('#tr-view [data-trv]').forEach(b=>b.classList.toggle('on',b.dataset.trv===TR_VIEW));
   try{ $('tr-wheel').innerHTML=trWheelSVG(); }catch(e){console.error('tr wheel',e);}
   trDetalhe(); trRelevantes();
+  try{ if($('tr-rulers'))$('tr-rulers').innerHTML=trRulersHTML(); }catch(e){console.error('tr rulers',e);}
 }
 function bindTrans(){
   const w=$('p-trans'); if(!w)return;
@@ -257,6 +317,19 @@ function bindTrans(){
     const v=e.target.closest&&e.target.closest('[data-trv]');
     if(v){TR_VIEW=v.dataset.trv;renderTrans();}
   });
+  // cards de regente: o corpo é montado ao abrir e o planeta acende na roda
+  w.addEventListener('toggle',e=>{
+    const dt2=e.target; if(!dt2.classList||!dt2.classList.contains('rgc'))return;
+    const h=+dt2.dataset.rgh, k=NATAL&&NATAL.rulers[h];
+    if(dt2.open){
+      TR_RUL_OPEN.add(h);
+      if(!dt2.querySelector('.rgc-b')){
+        const d=trDate(), S=(typeof tempoState==='function')?tempoState(d):null;
+        try{dt2.insertAdjacentHTML('beforeend',trRulerBody(h,k,d,S));}catch(x){console.error('rgc',x);}
+      }
+      if(k){TR_SEL={side:'t',k};try{$('tr-wheel').innerHTML=trWheelSVG();trDetalhe();}catch(x){}}
+    } else TR_RUL_OPEN.delete(h);
+  },true);
   const dt=$('tr-date');
   if(dt)dt.addEventListener('change',function(){if(this.value){TR_CURSOR=new Date(this.value+'T12:00:00Z');renderTrans();}});
   const hj=$('tr-today');
