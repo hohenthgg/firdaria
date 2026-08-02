@@ -157,6 +157,7 @@ function boot(){
   try{bindImport();}catch(e){console.error(e);}
   try{bindDados();}catch(e){console.error(e);}
   try{bindTimeline();}catch(e){console.error(e);}
+  try{bindPreditivas();}catch(e){console.error(e);}
   try{bindTrans();}catch(e){console.error(e);}
   if(loadFromState()){
     document.getElementById('in-natal').value=STATE.natal.text;

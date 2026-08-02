@@ -202,6 +202,7 @@ function syncTempo(){
   }
   if($('tempo-exec'))$('tempo-exec').innerHTML=tempoExecCards(d);
   if($('tl-side'))$('tl-side').innerHTML=tlSideHTML(d,S);
+  try{ if(typeof renderPreditivas==='function')renderPreditivas(); }catch(e){console.error('preditivas',e);}
 }
 function bindTimeline(){
   const p=$('p-tempo'); if(!p)return;
