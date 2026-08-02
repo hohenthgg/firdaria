@@ -1336,6 +1336,84 @@ select option{background:#0d1322;color:var(--ivory)}
   line-height:1.3;overflow-wrap:anywhere;font-variant-emoji:text}
 .rvq b i{font-style:normal;font-size:.66rem;color:var(--dim)}
 .rv2-cards{display:flex;flex-direction:column;gap:9px}
+/* ============ técnicas preditivas: direções e progressões ============ */
+.pv{margin-top:var(--gap);padding-top:var(--gap);border-top:1px solid var(--line)}
+.pv-h{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:13px}
+.pv-h .kicker{margin:0}
+.pvtabs{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.pvtabs .btn{border:none;border-radius:0;background:none;padding:6px 15px;font-size:.63rem;
+  letter-spacing:.13em;text-transform:uppercase}
+.pvtabs .btn+.btn{border-left:1px solid var(--line)}
+.pvtabs .btn.on{background:rgba(220,184,119,.13);color:var(--gold)}
+.pv-cfg{margin-left:auto}
+.pv-cfg>summary{list-style:none;cursor:pointer;font-family:var(--mono);font-size:.5rem;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--dim2)}
+.pv-cfg>summary::-webkit-details-marker{display:none}
+.pv-cfg>summary::before{content:"▸ "}
+.pv-cfg[open]>summary::before{content:"▾ "}
+.pv-cfg-b{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px}
+.pv-cfg-b label{display:flex;flex-direction:column;gap:3px;font-family:var(--mono);font-size:.47rem;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--dim2)}
+.pv-cfg-b select{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;
+  padding:4px 8px;color:var(--ivory);font-family:var(--sans);font-size:.72rem;box-shadow:none}
+.pv-int{font-size:.72rem;color:var(--dim);line-height:1.5;margin:0 0 4px}
+.pv-met{font-family:var(--mono);font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim2);margin:0 0 12px}
+.pvc{background:linear-gradient(180deg,rgba(255,255,255,.038),rgba(255,255,255,.01));
+  border:1px solid var(--line);border-radius:13px;padding:12px 15px 13px}
+.pvc.main{border-color:rgba(220,184,119,.34);
+  background:linear-gradient(180deg,rgba(220,184,119,.055),rgba(255,255,255,.012));
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:0 24px;align-items:start}
+.pvc.main>.pvc-h,.pvc.main>.pvc-r,.pvc.main>.pvc-b,.pvc.main>.pv-calc{grid-column:1/-1}
+.pvc.main>.pvc-s{border-top:none;padding-top:0;margin-top:12px}
+.pvc.n-alta{border-left:2px solid rgba(220,184,119,.75)}
+.pvc.n-media{border-left:2px solid rgba(111,159,216,.6)}
+.pvc.n-contextual{border-left:2px solid rgba(255,255,255,.14)}
+.pvc-h{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:8px}
+.pvc-h b{font-size:.95rem;color:var(--ivory);font-weight:500;font-variant-emoji:text}
+.pvc.main .pvc-h b{font-family:var(--serif);font-size:1.35rem;font-weight:400}
+.pvc-n{font-family:var(--mono);font-size:.45rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--dim2);font-style:normal;margin-left:auto}
+.pv-st{font-family:var(--mono);font-size:.44rem;letter-spacing:.16em;text-transform:uppercase;
+  padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim2)}
+.pv-st.ativo{border-color:rgba(220,184,119,.5);color:var(--gold);background:rgba(220,184,119,.1)}
+.pv-st.proximo{border-color:rgba(111,159,216,.4);color:var(--blue)}
+.pvc-r{display:flex;justify-content:space-between;gap:10px;padding:4px 0;
+  border-top:1px dotted var(--line);font-size:.73rem}
+.pvc-r:first-of-type{border-top:none}
+.pvc-r span{color:var(--dim2);flex:0 0 auto}
+.pvc-r b{color:var(--ivory);font-weight:500;text-align:right;overflow-wrap:anywhere}
+.pvc-s{margin-top:9px;padding-top:8px;border-top:1px dotted var(--line)}
+.pvc-s>span{display:block;font-family:var(--mono);font-size:.44rem;letter-spacing:.19em;
+  text-transform:uppercase;color:var(--gold2);margin-bottom:4px}
+.pvc-s p{font-size:.77rem;color:var(--dim);line-height:1.55;margin:0}
+.pvc-b{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.pv-lnk{border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:999px;
+  padding:5px 12px;font-family:var(--mono);font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim);cursor:pointer;transition:.15s}
+.pv-lnk:hover{color:var(--gold);border-color:rgba(220,184,119,.45)}
+.pv-calc{margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
+.pv-cr{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:.68rem}
+.pv-cr span{color:var(--dim2);flex:0 0 auto}
+.pv-cr b{font-family:var(--mono);font-size:.65rem;color:var(--ivory);font-weight:400;
+  text-align:right;overflow-wrap:anywhere}
+.pv-nota{font-size:.63rem;color:var(--dim2);line-height:1.45;margin:8px 0 0}
+.pv-line{display:flex;align-items:center;gap:9px;margin:13px 0}
+.pv-lb{font-family:var(--mono);font-size:.45rem;letter-spacing:.12em;color:var(--dim2);flex:0 0 auto}
+.pv-track{position:relative;flex:1;height:3px;border-radius:999px;background:rgba(255,255,255,.07)}
+.pv-dot{position:absolute;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;
+  background:var(--dim2);cursor:default}
+.pv-dot.ativo{background:var(--gold);box-shadow:0 0 0 3px rgba(220,184,119,.16)}
+.pv-dot.proximo{background:var(--blue)}
+.pv-now{position:absolute;top:-6px;bottom:-6px;width:1px;background:rgba(220,184,119,.55)}
+.pv-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:10px;margin-top:12px}
+.pv-prom h4{font-family:var(--serif);font-size:1.2rem;font-weight:400;color:var(--ivory);margin:0 0 8px}
+.pv-prom p{font-size:.8rem;color:var(--dim);line-height:1.6;margin:0}
+.pv-ps{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.pv-ps>span{display:block;font-family:var(--mono);font-size:.46rem;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--gold2);margin-bottom:5px}
+@media(max-width:760px){.pv-cfg{margin-left:0;flex-basis:100%}}
+body.is-mobile .pv-cfg{margin-left:0;flex-basis:100%}
 /* ============ Trânsitos ============ */
 #p-trans{--tr:#dcb877;--tn:#e9eef8}
 .trhead{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:24px}
@@ -1622,6 +1700,24 @@ body.is-mobile .rv2-sticky{position:static}
         <div class="tl3-c" id="tl-viz"></div>
         <aside class="tl3-r" id="tl-side"></aside>
       </div>
+      <section class="pv">
+        <div class="pv-h">
+          <span class="kicker">técnicas preditivas</span>
+          <div class="pvtabs" id="pv-tabs">
+            <button class="btn on" data-pvt="dir">Direções</button>
+            <button class="btn" data-pvt="prog">Progressões</button>
+          </div>
+          <details class="pv-cfg">
+            <summary>filtros</summary>
+            <div class="pv-cfg-b">
+              <label>Chave<select id="pv-key"><option value="naibod">Naibod</option><option value="ptolomeu">Ptolomeu</option></select></label>
+              <label>Sentido<select id="pv-sent"><option value="ambas">diretas e conversas</option><option value="direta">só diretas</option><option value="conversa">só conversas</option></select></label>
+              <label>Margem<select id="pv-marg"><option value="3">±3 meses</option><option value="6" selected>±6 meses</option><option value="12">±12 meses</option></select></label>
+            </div>
+          </details>
+        </div>
+        <div id="pv-body"></div>
+      </section>
       <span id="tempo-date" hidden></span>
       <details id="tempo-more">
         <summary class="kicker" style="cursor:pointer">eventos, retrospectiva e linha do tempo ano a ano</summary>
@@ -1743,6 +1839,7 @@ body.is-mobile .rv2-sticky{position:static}
 <script src="js/oracle.js"></script>
 <script src="js/render.js"></script>
 <script src="js/timeline.js"></script>
+<script src="js/preditivas.js"></script>
 <script src="js/transitos.js"></script>
 <script src="js/main.js"></script>
 </body>
