@@ -130,7 +130,10 @@ function bindDados(){
     if(!txt.trim()||!birth){st.textContent='informe os dados do mapa e a data/hora de nascimento.';return;}
     const parsed=parseChartText(txt);
     if(!parsed.ok){st.textContent='problemas: '+parsed.problems.join('; ');return;}
+    const _la=parseFloat(document.getElementById('in-lat').value),
+          _lo=parseFloat(document.getElementById('in-lon').value);
     STATE.natal={text:txt,birth:birth+(birth.length===16?':00Z':'Z'),sect:document.getElementById('in-sect').value,name:document.getElementById('in-name').value||'mapa'};
+    if(isFinite(_la))STATE.natal.place={lat:_la,lon:isFinite(_lo)?_lo:0};
     RS_DATA={};RSMETA={angular:{},echo:{}};
     try{buildChart(parsed,STATE.natal.birth,STATE.natal.sect,STATE.natal.name);}
     catch(err){st.textContent=err.message;return;}
@@ -164,6 +167,8 @@ function boot(){
     document.getElementById('in-name').value=STATE.natal.name||'';
     document.getElementById('in-birth').value=STATE.natal.birth.slice(0,16);
     document.getElementById('in-sect').value=STATE.natal.sect||'auto';
+    if(STATE.natal.place){document.getElementById('in-lat').value=STATE.natal.place.lat;
+      document.getElementById('in-lon').value=STATE.natal.place.lon;}
     renderAll();
   } else { renderAll(); }
   renderRSList();
