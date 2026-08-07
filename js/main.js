@@ -8,6 +8,7 @@ document.getElementById('nav').addEventListener('click',e=>{
   if(b.dataset.p==='tempo') syncTempo();
   if(b.dataset.p==='rs') renderRS();
   if(b.dataset.p==='trans'){try{renderTrans();}catch(e){console.error(e);}}
+  if(b.dataset.p==='sin'){try{renderSin();}catch(e){console.error(e);}}
   if(b.dataset.p==='config') renderConfig();
   if(b.dataset.p==='perfil'){try{renderTemp();renderPers();}catch(e){console.error(e);}}
   if(b.dataset.p==='natal'){try{renderNatal();}catch(e){console.error(e);}}
@@ -68,7 +69,7 @@ function bindView(){
 /* boot */
 function renderAll(){
   const steps=[renderNatal,renderTemp,renderPers,renderRS,
-    ()=>{CURSOR=new Date();refreshNPTS();syncTempo();},renderTrans,renderLedger];
+    ()=>{CURSOR=new Date();refreshNPTS();syncTempo();},renderTrans,renderSin,renderLedger];
   steps.forEach(fn=>{try{fn();}catch(err){console.error('render falhou:',fn.name||'anon',err);}});
   document.getElementById('brand-sub').textContent=NATAL?(NATAL.meta.name+' · '+NATAL.sect+' · '+new Date(BIRTH).toISOString().slice(0,10)):'motor interpretativo tradicional';
 }
@@ -162,6 +163,7 @@ function boot(){
   try{bindTimeline();}catch(e){console.error(e);}
   try{bindPreditivas();}catch(e){console.error(e);}
   try{bindTrans();}catch(e){console.error(e);}
+  try{bindSinastria();}catch(e){console.error(e);}
   if(loadFromState()){
     document.getElementById('in-natal').value=STATE.natal.text;
     document.getElementById('in-name').value=STATE.natal.name||'';
