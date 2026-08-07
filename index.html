@@ -1414,6 +1414,97 @@ select option{background:#0d1322;color:var(--ivory)}
   text-transform:uppercase;color:var(--gold2);margin-bottom:5px}
 @media(max-width:760px){.pv-cfg{margin-left:0;flex-basis:100%}}
 body.is-mobile .pv-cfg{margin-left:0;flex-basis:100%}
+/* ============ preditivas · biografia futura ============ */
+.pv-tit h3{font-family:var(--serif);font-size:1.5rem;font-weight:400;color:var(--ivory);margin:4px 0 0;line-height:1.1}
+.pv-tit .kicker{margin:0}
+/* síntese dos próximos 18 meses */
+.pv-sin{margin:4px 0 26px}
+.pv-sin-k{font-family:var(--mono);font-size:.5rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold2);margin-bottom:6px}
+.pv-sin-i{display:flex;align-items:baseline;gap:14px;padding:8px 2px;border-bottom:1px dotted var(--line);text-decoration:none;transition:.15s}
+.pv-sin-i:hover{background:rgba(255,255,255,.025)}
+.pv-sin-i b{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--gold);font-weight:400;flex:0 0 74px}
+.pv-sin-i span{font-family:var(--serif);font-size:1.02rem;color:var(--ivory);min-width:0}
+.pv-sin-i u{margin-left:auto;width:7px;height:7px;border-radius:50%;flex:0 0 auto;text-decoration:none}
+.pv-sin-i u.principal{background:var(--gold)}
+.pv-sin-i u.desdobramento{background:var(--blue)}
+/* trilho biográfico */
+.pv-bio{position:relative;padding:2px 0 6px}
+.pv-bio::before{content:"";position:absolute;left:86px;top:6px;bottom:6px;width:1px;background:var(--line2)}
+.pvb-ano{position:relative;font-family:var(--serif);font-size:1.05rem;color:var(--dim2);
+  padding:14px 0 8px 110px;letter-spacing:.06em}
+.pvb-ano::after{content:"";position:absolute;left:110px;right:0;bottom:4px;height:1px;background:var(--line)}
+.pvb{position:relative;padding:9px 0 13px 110px}
+.pvb-m{position:absolute;left:0;top:12px;width:70px;text-align:right;
+  font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;color:var(--dim)}
+.pvb-m i{display:block;font-style:normal;font-size:.5rem;color:var(--dim2);margin-top:1px}
+.pvb-dot{position:absolute;left:86px;top:15px;transform:translate(-50%,0);width:9px;height:9px;
+  background:var(--gold);transform:translate(-50%,0) rotate(45deg);border-radius:1.5px}
+.pvb-dot.fx{width:5px;height:26px;transform:translate(-50%,0);border-radius:999px;background:rgba(111,159,216,.75)}
+.pvb.desdobramento .pvb-dot{background:var(--blue)}
+.pvb.desdobramento .pvb-dot.fx{background:rgba(111,159,216,.55)}
+.pvb.passado{opacity:.55}
+.pvb.ativo .pvb-dot{box-shadow:0 0 0 4px rgba(220,184,119,.15)}
+.pvb-t{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap}
+.pvb-t b{font-family:var(--serif);font-size:1.22rem;font-weight:400;color:var(--ivory);line-height:1.15}
+.pvb.desdobramento .pvb-t b{font-size:1.05rem}
+.pvb-t em{font-family:var(--mono);font-size:.46rem;letter-spacing:.18em;text-transform:uppercase;font-style:normal;color:var(--gold2)}
+.pvb.desdobramento .pvb-t em{color:var(--blue)}
+.pvb-w{font-size:.74rem;color:var(--dim);margin-top:2px}
+.pvb-sub{font-family:var(--mono);font-size:.52rem;letter-spacing:.09em;color:var(--dim2);margin-top:3px}
+.pv-exp{border:none;background:none;padding:2px 0;margin-top:5px;cursor:pointer;
+  font-family:var(--mono);font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gold2);transition:.15s}
+.pv-exp:hover{color:var(--gold)}
+/* expansão: o "por quê" */
+.pvb-x{margin-top:10px;padding:12px 0 2px;border-top:1px dotted var(--line);max-width:620px}
+.pvb-d{font-size:.83rem;color:var(--dim);line-height:1.6;margin:0 0 12px}
+.pv-jan{display:flex;gap:3px;flex-wrap:wrap}
+.pv-jm{font-family:var(--mono);font-size:.5rem;letter-spacing:.06em;color:var(--dim2);
+  padding:3px 6px;border-radius:4px;background:rgba(255,255,255,.025)}
+.pv-jm.in{background:rgba(220,184,119,.16);color:var(--gold)}
+.pv-jm.pico{outline:1px solid rgba(220,184,119,.6)}
+.pv-jan-p{font-family:var(--mono);font-size:.5rem;letter-spacing:.1em;color:var(--dim2);margin:4px 0 0}
+/* cadeia de evidência */
+.pv-cad{margin-top:14px}
+.pv-elo{display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:baseline}
+.pv-elo>span{font-family:var(--mono);font-size:.47rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold2);text-align:right}
+.pv-elo p{font-size:.76rem;color:var(--dim);line-height:1.5;margin:0 0 2px}
+.pv-elo p em{font-style:normal;color:var(--dim2);font-size:.9em}
+.pv-elo p b{color:var(--ivory);font-weight:500}
+.pv-elo.ev p{color:var(--ivory)}
+.pv-seta{padding-left:104px;margin:1px 0;color:var(--dim2);font-size:.65rem;text-indent:12px}
+.pv-fraco{color:var(--dim2)!important;font-style:italic}
+/* sinais secundários, quase escondidos */
+.pvb-sn{margin-top:16px}
+.pvb-sn>summary{list-style:none;cursor:pointer;font-family:var(--mono);font-size:.52rem;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--dim2);padding:6px 0}
+.pvb-sn>summary::-webkit-details-marker{display:none}
+.pvb-sn>summary::before{content:"▸ "}
+.pvb-sn[open]>summary::before{content:"▾ "}
+.pvb-sn:hover>summary{color:var(--dim)}
+.pvb-si{display:flex;align-items:baseline;gap:12px;padding:4px 0 4px 14px;font-size:.72rem;color:var(--dim2)}
+.pvb-si b{font-family:var(--mono);font-size:.55rem;font-weight:400;flex:0 0 66px;color:var(--dim2)}
+.pvb-si span{color:var(--dim);font-variant-emoji:text;min-width:0}
+.pvb-si em{margin-left:auto;font-style:normal;font-size:.62rem;flex:0 0 auto}
+@media(max-width:700px){
+  .pv-bio::before{left:14px}
+  .pvb{padding-left:34px}
+  .pvb-m{position:static;display:block;text-align:left;width:auto;margin-bottom:2px}
+  .pvb-m i{display:inline;margin-left:5px}
+  .pvb-dot{left:14px}
+  .pvb-ano{padding-left:34px}
+  .pvb-ano::after{left:34px}
+  .pv-elo{grid-template-columns:1fr}
+  .pv-elo>span{text-align:left}
+  .pv-seta{padding-left:0}}
+body.is-mobile .pv-bio::before{left:14px}
+body.is-mobile .pvb{padding-left:34px}
+body.is-mobile .pvb-m{position:static;display:block;text-align:left;width:auto;margin-bottom:2px}
+body.is-mobile .pvb-dot{left:14px}
+body.is-mobile .pvb-ano{padding-left:34px}
+body.is-mobile .pv-elo{grid-template-columns:1fr}
+body.is-mobile .pv-elo>span{text-align:left}
+body.is-mobile .pv-seta{padding-left:0}
 /* clusters e avisos das preditivas */
 .pv-warn{font-size:.7rem;line-height:1.5;color:#e6c07a;background:rgba(220,184,119,.08);
   border:1px solid rgba(220,184,119,.3);border-radius:10px;padding:9px 12px;margin:0 0 11px}
@@ -1732,11 +1823,8 @@ body.is-mobile .rv2-sticky{position:static}
       </div>
       <section class="pv">
         <div class="pv-h">
-          <span class="kicker">técnicas preditivas</span>
-          <div class="pvtabs" id="pv-tabs">
-            <button class="btn on" data-pvt="dir">Direções</button>
-            <button class="btn" data-pvt="prog">Progressões</button>
-          </div>
+          <div class="pv-tit"><span class="kicker">linha do tempo preditiva</span>
+            <h3>O que tende a acontecer, e quando</h3></div>
           <details class="pv-cfg">
             <summary>filtros</summary>
             <div class="pv-cfg-b">
