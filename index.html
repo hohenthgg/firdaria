@@ -1551,44 +1551,8 @@ body.is-mobile .pv-hoje{padding-left:34px}
 .sn-in>summary::before{content:"▸ "}
 .sn-in[open]>summary::before{content:"▾ "}
 .sn-in-b{max-width:640px;padding:10px 0 4px}
-.sn-head{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;margin:6px 0 20px}
-.snp b{display:block;font-family:var(--serif);font-size:1.35rem;font-weight:400;color:var(--ivory)}
-.snp em{display:block;font-family:var(--mono);font-size:.52rem;letter-spacing:.1em;color:var(--dim2);font-style:normal;margin:3px 0 7px}
-.snp p{font-size:.76rem;color:var(--dim);line-height:1.55;margin:0;max-width:380px}
-.snp.b{text-align:right}
-.snp.b p{margin-left:auto}
-.snp.b b{color:var(--gold)}
-.snx{font-family:var(--serif);font-size:1.6rem;color:var(--dim2);padding-top:4px}
-.sn-grid{display:grid;grid-template-columns:minmax(320px,1fr) minmax(300px,460px);gap:26px;align-items:start}
-.sn-visao{display:flex;flex-direction:column}
-.snv{display:flex;justify-content:space-between;gap:12px;padding:7px 2px;border-bottom:1px dotted var(--line);font-size:.8rem}
-.snv span{color:var(--dim)}
-.snv b{color:var(--ivory);font-weight:500;text-transform:capitalize}
-.snb{padding:11px 0 12px;border-bottom:1px dotted var(--line)}
-.snb-h{display:flex;align-items:baseline;gap:10px}
-.snb-h b{font-family:var(--serif);font-size:1.05rem;font-weight:400;color:var(--ivory)}
-.snb-h em{margin-left:auto;font-family:var(--mono);font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold2);font-style:normal}
-.snb-p{font-size:.8rem;color:var(--dim);line-height:1.55;margin:4px 0 0}
-.snb-x{margin-top:10px;padding-top:9px;border-top:1px dotted var(--line)}
-.snb-s{margin-bottom:9px}
-.snb-s>span{display:block;font-family:var(--mono);font-size:.46rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold2);margin-bottom:3px}
-.snb-s p{font-size:.72rem;color:var(--dim2);line-height:1.5;margin:0;font-variant-emoji:text}
-.sn-r #sin-wheel{width:100%;max-width:400px;margin:0 auto;display:block}
-.sn-roda>summary{list-style:none;cursor:pointer;font-family:var(--mono);font-size:.54rem;
-  letter-spacing:.18em;text-transform:uppercase;color:var(--gold2);padding:6px 0;text-align:center}
-.sn-roda>summary::-webkit-details-marker{display:none}
-.sn-roda>summary::before{content:"▸ "}
-.sn-roda[open]>summary::before{content:"▾ "}
-.sn-filtros{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
-.sn-filtros .btn{padding:4px 11px;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;border-radius:999px}
-.sn-filtros .btn.on{background:rgba(220,184,119,.13);color:var(--gold);border-color:rgba(220,184,119,.4)}
-@media(max-width:1100px){.sn-grid{grid-template-columns:1fr}.sn-r .tr2-sticky{position:static}}
-@media(max-width:760px){.sn-head{grid-template-columns:1fr}.snx{display:none}.snp.b{text-align:left}.snp.b p{margin-left:0}}
-body.is-mobile .sn-grid{grid-template-columns:1fr}
-body.is-mobile .sn-head{grid-template-columns:1fr}
-body.is-mobile .snx{display:none}
-body.is-mobile .snp.b{text-align:left}
 /* ============ arena de sinastria ============ */
+.cb-sec:first-child{margin-top:12px}
 .cb-sec{display:flex;align-items:center;justify-content:center;gap:14px;margin:42px 0 18px;
   font-family:var(--mono);font-size:.6rem;letter-spacing:.34em;text-transform:uppercase;color:var(--gold)}
 .cb-sec::before,.cb-sec::after{content:"";flex:1;height:1px;max-width:180px;
@@ -2152,7 +2116,7 @@ body.is-mobile .rv2-sticky{position:static}
     <section class="panel" id="p-sin">
       <div class="pv-h" style="margin-bottom:6px">
         <div class="pv-tit"><span class="kicker">sinastria</span>
-          <h3>Como duas pessoas funcionam juntas</h3></div>
+          <h3>A arena dos dois mapas</h3></div>
       </div>
       <div class="sn-setup">
         <details class="sn-in" id="sin-setup"><summary>Pessoa B — carregar ou trocar</summary>
@@ -2169,30 +2133,6 @@ body.is-mobile .rv2-sticky{position:static}
       </div>
       <div id="sin-body"></div>
       <div id="sin-main" hidden>
-        <div class="sn-head" id="sin-head"></div>
-        <div class="sn-grid">
-          <div class="sn-l">
-            <div class="kicker">visão geral</div>
-            <div class="sn-visao" id="sin-visao"></div>
-            <div class="kicker" style="margin-top:18px">como a relação funciona</div>
-            <div id="sin-blocos"></div>
-          </div>
-          <div class="sn-r"><div class="tr2-sticky">
-            <details class="sn-roda" id="sin-roda"><summary>sobreposição dos mapas</summary>
-            <svg id="sin-wheel"></svg>
-            <div class="sn-filtros" id="sin-filtros">
-              <button class="btn on" data-snf="principais">principais</button>
-              <button class="btn" data-snf="afetivos">afetivos</button>
-              <button class="btn" data-snf="sexuais">sexuais</button>
-              <button class="btn" data-snf="comunicacao">comunicação</button>
-              <button class="btn" data-snf="conflito">conflito</button>
-              <button class="btn" data-snf="compromisso">compromisso</button>
-              <button class="btn" data-snf="todos">todos</button>
-            </div>
-            <p class="trnote" style="margin-top:8px">A por dentro, B por fora; as linhas mostram só o que sustenta a síntese.</p>
-            </details>
-          </div></div>
-        </div>
         <div id="sin-arena"></div>
       </div>
     </section>
