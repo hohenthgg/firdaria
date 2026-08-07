@@ -1588,6 +1588,95 @@ body.is-mobile .sn-grid{grid-template-columns:1fr}
 body.is-mobile .sn-head{grid-template-columns:1fr}
 body.is-mobile .snx{display:none}
 body.is-mobile .snp.b{text-align:left}
+/* ============ arena de sinastria ============ */
+.cb-sec{display:flex;align-items:center;justify-content:center;gap:14px;margin:42px 0 18px;
+  font-family:var(--mono);font-size:.6rem;letter-spacing:.34em;text-transform:uppercase;color:var(--gold)}
+.cb-sec::before,.cb-sec::after{content:"";flex:1;height:1px;max-width:180px;
+  background:linear-gradient(90deg,transparent,var(--gold2));}
+.cb-sec::after{background:linear-gradient(90deg,var(--gold2),transparent)}
+.cb-sec span{color:var(--gold2);font-size:.5rem;letter-spacing:0}
+/* --- temperamentos em claymorphism --- */
+.clay-duel{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:stretch}
+.clay-card{position:relative;border-radius:26px;padding:22px 22px 18px;text-align:center;
+  background:linear-gradient(150deg,#161d33,#0c1122);
+  box-shadow:12px 12px 26px rgba(0,0,0,.5),-5px -5px 14px rgba(255,255,255,.045),
+    inset 1px 1px 2px rgba(255,255,255,.1),inset -3px -3px 8px rgba(0,0,0,.42)}
+.clay-card.b{background:linear-gradient(150deg,#1c1930,#110e20)}
+.clay-gl{font-size:2rem;line-height:1;width:64px;height:64px;margin:0 auto 10px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:var(--gold);
+  background:linear-gradient(150deg,#101731,#0a0f1e);
+  box-shadow:inset 3px 3px 7px rgba(0,0,0,.55),inset -2px -2px 5px rgba(255,255,255,.06),
+    5px 5px 12px rgba(0,0,0,.4)}
+.clay-nome{display:block;font-family:var(--serif);font-size:1.15rem;font-weight:500;color:var(--ivory)}
+.clay-humor{display:block;font-family:var(--mono);font-size:.56rem;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--gold);font-style:normal;margin:4px 0 14px}
+.clay-bar{display:flex;align-items:center;gap:9px;margin:8px 0;
+  font-family:var(--mono);font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim2)}
+.clay-bar span{width:44px}.clay-bar span:first-child{text-align:right}.clay-bar span:last-child{text-align:left}
+.clay-track{flex:1;height:12px;border-radius:999px;background:#080c18;overflow:hidden;
+  box-shadow:inset 2px 2px 5px rgba(0,0,0,.6),inset -1px -1px 2px rgba(255,255,255,.05)}
+.clay-fill{height:100%;border-radius:999px;background:linear-gradient(180deg,#efd7a4,var(--gold));
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.5),inset 0 -2px 3px rgba(0,0,0,.3)}
+.clay-fill.b{background:linear-gradient(180deg,#c9b6ef,#8f7cc9)}
+.clay-w{font-size:.62rem;color:var(--dim2);line-height:1.5;margin:12px 0 0}
+.clay-vs{align-self:center;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:1.3rem;color:var(--gold);
+  background:linear-gradient(150deg,#181f38,#0b101f);
+  box-shadow:8px 8px 18px rgba(0,0,0,.5),-4px -4px 10px rgba(255,255,255,.05),
+    inset 1px 1px 2px rgba(255,255,255,.1)}
+.clay-verdict{margin:18px auto 0;max-width:640px;border-radius:20px;padding:14px 22px;
+  background:linear-gradient(150deg,#131a30,#0c1122);
+  box-shadow:9px 9px 20px rgba(0,0,0,.45),-4px -4px 10px rgba(255,255,255,.04),
+    inset 1px 1px 2px rgba(255,255,255,.08),inset -2px -2px 6px rgba(0,0,0,.4)}
+.clay-verdict p{margin:0;font-family:var(--serif);font-size:.98rem;font-style:italic;
+  color:var(--ivory);line-height:1.6;text-align:center}
+/* --- cartas de batalha (gótico-medieval) --- */
+.cb-duel{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch}
+.cb-vs{align-self:center;font-family:var(--serif);font-size:1.2rem;font-style:italic;color:var(--gold2)}
+.cb-card{position:relative;border:1px solid var(--gold2);border-radius:4px;padding:16px 16px 12px;
+  background:linear-gradient(170deg,rgba(220,184,119,.06),rgba(11,16,32,0) 40%),var(--panel);
+  box-shadow:0 0 0 4px var(--panel),0 0 0 5px rgba(220,184,119,.28),0 14px 30px rgba(0,0,0,.45)}
+.cb-card::before,.cb-card::after{content:"✦";position:absolute;font-size:.55rem;color:var(--gold2)}
+.cb-card::before{top:4px;left:7px}.cb-card::after{bottom:4px;right:7px}
+.cb-card.b{background:linear-gradient(170deg,rgba(143,124,201,.08),rgba(11,16,32,0) 40%),var(--panel)}
+.cb-crest{display:flex;align-items:center;gap:12px;padding-bottom:10px;margin-bottom:10px;
+  border-bottom:1px solid rgba(220,184,119,.25)}
+.cb-glyph{font-family:var(--serif);font-size:2rem;line-height:1;color:var(--gold);width:48px;height:48px;
+  flex:0 0 48px;display:flex;align-items:center;justify-content:center;border:1px solid var(--gold2);
+  border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(220,184,119,.16),transparent 70%)}
+.cb-card.b .cb-glyph{color:#b7a4e3;border-color:#6f5fa3;
+  background:radial-gradient(circle at 35% 30%,rgba(143,124,201,.18),transparent 70%)}
+.cb-tit b{display:block;font-family:var(--serif);font-size:1.2rem;font-weight:500;color:var(--ivory)}
+.cb-tit em{display:block;font-family:var(--mono);font-size:.5rem;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--gold2);font-style:normal;margin-top:2px}
+.cb-force{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--gold);
+  border:1px solid var(--gold2);border-radius:3px;padding:4px 8px;white-space:nowrap}
+.cb-card.b .cb-force{color:#b7a4e3;border-color:#6f5fa3}
+.cb-row{margin:8px 0}
+.cb-row span{display:block;font-family:var(--mono);font-size:.48rem;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--gold2);margin-bottom:3px}
+.cb-row p{margin:0;font-size:.76rem;color:var(--dim);line-height:1.55}
+.cb-row.alt{border-top:1px dotted var(--line);padding-top:8px}
+.cb-verdict{margin-top:14px;border:1px solid var(--gold2);border-radius:4px;padding:12px 18px;
+  background:linear-gradient(90deg,rgba(220,184,119,.07),transparent 50%,rgba(143,124,201,.07))}
+.cb-verdict p{margin:0;font-family:var(--serif);font-size:.96rem;font-style:italic;
+  color:var(--ivory);line-height:1.6;text-align:center}
+/* --- grade de manifestação cruzada --- */
+.cb-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+.cb-colh{font-family:var(--serif);font-size:1.02rem;color:var(--gold);text-align:center;
+  padding:7px 0;margin-bottom:10px;border-top:1px solid var(--gold2);border-bottom:1px solid var(--gold2)}
+.cb-colh.b{color:#b7a4e3;border-color:#6f5fa3}
+.cb-mini{display:flex;gap:11px;align-items:flex-start;padding:9px 10px;margin-bottom:7px;
+  border:1px solid var(--line2);border-left:2px solid var(--gold2);border-radius:3px;background:rgba(255,255,255,.015)}
+.cb-mini.b{border-left-color:#6f5fa3}
+.cb-mini .g{font-family:var(--serif);font-size:1.25rem;line-height:1.15;color:var(--gold);flex:0 0 auto}
+.cb-mini.b .g{color:#b7a4e3}
+.cb-mini b{display:block;font-size:.68rem;font-weight:500;color:var(--ivory);letter-spacing:.02em}
+.cb-mini p{margin:2px 0 0;font-size:.68rem;color:var(--dim2);line-height:1.45}
+@media(max-width:860px){.clay-duel{grid-template-columns:1fr}.clay-vs{margin:0 auto}
+  .cb-duel{grid-template-columns:1fr}.cb-vs{text-align:center}.cb-grid{grid-template-columns:1fr}}
+body.is-mobile .clay-duel,body.is-mobile .cb-duel,body.is-mobile .cb-grid{grid-template-columns:1fr}
+body.is-mobile .clay-vs{margin:0 auto}
 /* ============ tipologias clicáveis + drawers ============ */
 .pf-t.clic{cursor:pointer;text-align:left;transition:.16s;border:1px solid var(--line);background:rgba(255,255,255,.02)}
 .pf-t.clic:hover{border-color:rgba(220,184,119,.45);background:rgba(220,184,119,.05)}
@@ -2104,6 +2193,7 @@ body.is-mobile .rv2-sticky{position:static}
             </details>
           </div></div>
         </div>
+        <div id="sin-arena"></div>
       </div>
     </section>
 
