@@ -553,7 +553,7 @@ function pvTitulo(it){
   if(it.tipo!=='dir')return it.titulo;
   const P=pvPapeis(it);
   const alvo = it.sig.ang ? ('ao '+P.significador.nome)
-             : (pvArtigo(it.sig.pl)+P.significador.nome);
+             : ((it.sig.pl==='sun'?'ao ':it.sig.pl==='moon'?'à ':'a ')+P.significador.nome);
   const dir = pvPart(it.prom.pl);
   const asp = it.prom.A===0 ? dir : (dir+' em '+it.prom.aspNome);
   return (PT_GLYPH[it.prom.pl]||'')+'\uFE0E '+PT_NAME[it.prom.pl]+' '+asp+' '+alvo
@@ -669,95 +669,261 @@ function pvCalcHTML(it){
       +' já começa a participar, mas o ingresso só é declarado no cruzamento geométrico da cúspide.</p>'):'')
     +'</div>';
 }
-function pvItemHTML(it,i,agora,principal){
-  const id='pv-'+PV_TAB+'-'+i;
-  const per=(it.tipo==='prog'&&it.classe==='casa')
-    ? (()=>{const j=pvJanelaCasa(it.mover,it.casaNova,it.anos);
-            return pvMesAno(j.ini)+' – '+pvMesAno(j.fim);})()
-    : (pvIdadeTxt(it.anos)+' · '+pvMesAno(it.data)+' ±'+PV_MARG+' meses');
-  let h='<article class="pvc'+(principal?' main':'')+' n-'+it.nivel.replace('é','e')+'">'
-    +'<header class="pvc-h"><b>'+pvTitulo(it)+'</b>'
-    +'<span class="pv-st '+pvEstado(it,agora)+'">'+({ativo:'ativo',proximo:'próximo',passado:'passado'}[pvEstado(it,agora)])+'</span>'
-    +'<em class="pvc-n">'+it.nivel+'</em></header>'
-    +'<div class="pvc-r"><span>Período</span><b>'+per+'</b></div>';
-  if(principal){
-    pvLeitura(it).slice(1).forEach(([k,v])=>{h+='<div class="pvc-s"><span>'+k+'</span><p>'+v+'</p></div>';});
-    h+='<div class="pvc-s"><span>Confirmações</span><p>'
-      +(it.conf.length?it.conf.map(c=>c.k+' <i>('+c.via+')</i> — '+c.txt).join('<br>')
-        :'nenhuma repetição temática nas técnicas anuais')+'</p></div>';
-  } else {
-    h+='<div class="pvc-r"><span>Campo</span><b>'+(it.env.papeis.significador.casa
-        ?cap1(casaTag(it.env.papeis.significador.casa)):cap1(it.env.papeis.significador.nome))+'</b></div>'
-      +'<div class="pvc-r"><span>Promessa</span><b>'+(it.promessa?it.promessa.pr.t:'—')+'</b></div>';
+/* ============================================================
+   CAMADA 4 — ACONTECIMENTOS (biografia futura)
+   promessa natal + ativação + confirmações → evento datável.
+   Esta camada só LÊ as anteriores: nenhum número é alterado aqui.
+   ============================================================ */
+/* vocabulário de eventos por casa atingida — literal, mas condicional.
+   s/ds: contato suave ou conjunção · t/dt: contato tenso */
+const PV_EVT={
+ 1:{s:'Nova fase pessoal',t:'Redefinição pessoal sob pressão',
+    ds:'Mudança visível de postura, de corpo ou de direção pessoal.',
+    dt:'O modo de se apresentar e de conduzir a própria vida tende a ser revisto sob pressão.'},
+ 2:{s:'Novo patamar financeiro',t:'Reorganização financeira sob aperto',
+    ds:'Dinheiro próprio tende a ganhar novo patamar ou nova estrutura.',
+    dt:'Orçamento e recursos próprios tendem a exigir corte, revisão e novo arranjo.'},
+ 3:{s:'Novo ciclo de estudos, escrita ou trajetos',t:'Sobrecarga de papéis, estudos e trajetos',
+    ds:'Curso, publicação, contrato ou rotina nova de comunicação e deslocamentos.',
+    dt:'Prazos, documentos e comunicação tendem a concentrar o esforço do período.'},
+ 4:{s:'Mudança de residência ou da base familiar',t:'Tensão doméstica ou mudança de base',
+    ds:'Casa nova, reforma ou reorganização concreta da vida doméstica e familiar.',
+    dt:'A base doméstica tende a ser mexida — mudança, obra ou renegociação familiar.'},
+ 5:{s:'Romance, filho ou criação ganhando corpo',t:'Prova nos afetos, filhos ou criações',
+    ds:'Início de romance, filhos ou uma criação importante saindo do papel.',
+    dt:'Romance, filhos ou uma criação importante tendem a passar por teste e ajuste.'},
+ 6:{s:'Novo regime de trabalho e rotina',t:'Rotina e corpo exigindo ajuste',
+    ds:'Mudança concreta no dia a dia de trabalho, na equipe ou nos hábitos de saúde.',
+    dt:'Carga de trabalho e cuidado com o corpo tendem a impor limites novos.'},
+ 7:{s:'Início ou formalização de um vínculo',t:'Redefinição de um vínculo importante',
+    ds:'Entrada de uma pessoa nova ou formalização de relacionamento ou sociedade.',
+    dt:'Um vínculo importante — afetivo ou societário — tende a ser renegociado.'},
+ 8:{s:'Reorganização de recursos compartilhados',t:'Aperto em dívidas e recursos de terceiros',
+    ds:'Herança, financiamento, sociedade ou dívida tende a mudar de figura.',
+    dt:'Dívidas, partilhas e recursos de terceiros tendem a concentrar a tensão.'},
+ 9:{s:'Viagem longa, formação ou virada de convicções',t:'Choque de convicções ou revés longe da base',
+    ds:'Estrangeiro, estudos superiores ou fé tendem a ganhar papel decisivo.',
+    dt:'Planos ligados a longe — viagem, formação, publicação — tendem a ser revistos.'},
+ 10:{s:'Mudança profissional',t:'Virada profissional sob pressão',
+    ds:'Saída de função, promoção ou entrada em nova direção de carreira.',
+    dt:'Posição e reputação tendem a ser reestruturadas — troca de função ou cobrança pública.'},
+ 11:{s:'Novo grupo, aliança ou apoio decisivo',t:'Reconfiguração de amizades e apoios',
+    ds:'Um grupo, um amigo ou um apoio novo tende a abrir caminho concreto.',
+    dt:'Alianças e apoios tendem a ser filtrados; alguns saem para outros entrarem.'},
+ 12:{s:'Fase de bastidores e preparação',t:'Desgaste silencioso pedindo pausa',
+    ds:'Trabalho interno, projeto reservado ou retirada estratégica de cena.',
+    dt:'O período tende a pedir recolhimento e encerramento do que corre por fora.'}};
+
+function pvAvaliaContato(x,idade){
+  const p=pvPromessa(x), e=pvEnvolvidos(x), st=pvEstrutural(x), conf=pvConfirmacoes(x,false);
+  return Object.assign({},x,{promessa:p,env:e,estr:st,conf,nivel:pvRelevancia(x,p,conf),
+    _rank:(p?p.sc:0)+st.motivos.length+(st.alvoVital?2:0)+(st.duro?1:0),
+    _dist:Math.abs(x.anos-idade)});
+}
+function pvCampoDe(C){
+  const p=C.principal;
+  return p.env.papeis.significador.casa||p.env.casasSig[0]||p.env.casas[0]||null;
+}
+/* hierarquia de certeza: EVENTO PRINCIPAL · DESDOBRAMENTO PROVÁVEL · SINAL */
+function pvTierCluster(C){
+  const temDir=C.grupo.some(g=>g.tipo==='dir'), temProg=C.grupo.some(g=>g.tipo==='prog');
+  const prom=C.principal.promessa;
+  const confP=Math.max(0,...C.grupo.map(g=>g.conf.filter(c=>c.via==='planeta').length));
+  const confT=Math.max(0,...C.grupo.map(g=>g.conf.length));
+  const pp=prom&&prom.porPlaneta;
+  if(pp&&((temDir&&temProg)||confP>=2||(prom.forte&&confP>=1)))return 'principal';
+  if((pp&&(confT>=1||(temDir&&temProg)))||C.nivel==='alta')return 'desdobramento';
+  return 'sinal';
+}
+let PV_EVT_CACHE=null;
+function pvEventos(){
+  const idade=ageAt(CURSOR);
+  const ck=pvFingerprint()+'§ev§'+PV_MARG+'§'+Math.round(idade*24);
+  if(PV_EVT_CACHE&&PV_EVT_CACHE.ck===ck)return PV_EVT_CACHE.ev;
+  const j0=Math.max(0,idade-1.5), j1=idade+3.5;
+  const dirs=direcoesPrimarias().filter(x=>x.anos>=j0&&x.anos<=j1);
+  const progs=progressoesSecundarias(Math.max(0,j0-1),Math.min(100,j1+1))
+    .filter(x=>x.anos>=j0&&x.anos<=j1);
+  const todos=dirs.concat(progs).map(x=>pvAvaliaContato(x,idade));
+  const ev=pvClusters(todos,0.7).map((C,ix)=>{
+    const tier=pvTierCluster(C);
+    const campo=pvCampoDe(C)||1, cls=C.principal.env.papeis.cls, tenso=cls==='tens';
+    const V=PV_EVT[campo]||PV_EVT[1];
+    const temDir=C.grupo.some(g=>g.tipo==='dir'), temProg=C.grupo.some(g=>g.tipo==='prog');
+    // janela exibida: a incerteza do MÉTODO do contato principal, não o
+    // espalhamento do cluster — as ativações individuais ficam datadas na cadeia
+    const marg=C.principal.tipo==='dir'?PV_MARG/12:1/12;
+    let dIni=new Date(BIRTH+(C.principal.anos-marg)*365.2425*DAY);
+    let dFim=new Date(BIRTH+(C.principal.anos+marg)*365.2425*DAY);
+    let faixa=false;
+    if(C.principal.tipo==='prog'&&C.principal.classe==='casa'){
+      const j=pvJanelaCasa(C.principal.mover,C.principal.casaNova,C.principal.anos);
+      dIni=j.ini; dFim=j.fim; faixa=true;
+    }
+    const titulo = tier==='sinal' ? cap1(casaTag(campo)) : (tenso?V.t:V.s);
+    const desc = (tier==='desdobramento'?'Tendência provável: ':'')+(tenso?V.dt:V.ds);
+    const nEvid=C.grupo.length+C.principal.conf.length;
+    return {id:'pvev-'+ix, C, tier, campo, cls, titulo, desc, temDir, temProg, faixa, nEvid,
+      ini:C.ini, fim:C.fim, pico:C.principal.anos,
+      dIni, dFim, dPico:C.principal.data};
+  });
+  ev.sort((a,b)=>a.pico-b.pico);
+  PV_EVT_CACHE={ck,ev};
+  return ev;
+}
+
+/* ============================================================
+   RENDER — biografia futura navegável
+   ============================================================ */
+let PV_CALC=null;
+function pvMesCurto(d){return MESES[d.getUTCMonth()].toUpperCase();}
+function pvJanelaTxt(ev){
+  const a=ev.dIni, b=ev.dFim;
+  if(a.getUTCFullYear()===b.getUTCFullYear()){
+    if(a.getUTCMonth()===b.getUTCMonth())return pvMesAno(a);
+    return MESL[a.getUTCMonth()]+'–'+MESL[b.getUTCMonth()]+' de '+a.getUTCFullYear();
   }
-  h+='<div class="pvc-b"><button class="pv-lnk" data-pvcalc="'+id+'">Ver cálculo</button>'
-    +(it.promessa?('<button class="pv-lnk" data-pvprom="'+it.promessa.pr.id+'">Ver promessa natal</button>'):'')
-    +'</div>'+(PV_OPEN===id?pvCalcHTML(it):'')+'</article>';
+  return pvMesAno(a)+' – '+pvMesAno(b);
+}
+function pvPicoTxt(ev){
+  return ev.C.principal.tipo==='prog'?fdate(ev.dPico):pvMesAno(ev.dPico);
+}
+/* barra da janela temporal: meses, preenchidos dentro da janela, pico marcado */
+function pvBarraJanela(ev){
+  const m0=Date.UTC(ev.dIni.getUTCFullYear(),ev.dIni.getUTCMonth()-1,1);
+  const mTot=Math.min(14,Math.max(4,Math.round((ev.dFim-ev.dIni)/DAY/30.44)+3));
+  const mesKey=d=>d.getUTCFullYear()*12+d.getUTCMonth();
+  const k0=mesKey(ev.dIni), k1=mesKey(ev.dFim), kp=mesKey(ev.dPico);
+  let c='';
+  for(let i=0;i<mTot;i++){
+    const d=new Date(m0); d.setUTCMonth(d.getUTCMonth()+i);
+    const k=mesKey(d), dentro=k>=k0&&k<=k1, pico=k===kp;
+    c+='<span class="pv-jm'+(dentro?' in':'')+(pico?' pico':'')+'">'+MESES[d.getUTCMonth()]+'</span>';
+  }
+  return '<div class="pv-jan">'+c+'</div><div class="pv-jan-p">pico: '+pvPicoTxt(ev).toLowerCase()+'</div>';
+}
+/* cadeia de evidência: promessa → ativação → confirmação → evento */
+function pvCadeiaHTML(ev){
+  const P=ev.C.principal, prom=P.promessa;
+  const elo=(k,corpo)=>'<div class="pv-elo"><span>'+k+'</span><div>'+corpo+'</div></div>';
+  const seta='<div class="pv-seta">↓</div>';
+  const ativ=ev.C.grupo.map(g=>{
+    const quando=g.tipo==='prog'?fdate(g.data):pvMesAno(g.data);
+    return '<p>'+pvTitulo(g)+' <em>('+(g.tipo==='dir'?'direção primária':'progressão')+' · '+quando+')</em></p>';
+  }).join('');
+  const conf=P.conf.length
+    ? P.conf.map(c=>'<p>'+cap1(c.k)+' <em>('+c.via+')</em> — '+c.txt+'</p>').join('')
+    : '<p class="pv-fraco">sem confirmação anual — por isso o evento não sobe de nível.</p>';
+  return '<div class="pv-cad">'
+    +elo('promessa natal', prom
+      ? '<p>'+prom.pr.t+' — '+PT_NAME[prom.pr.pl]+' rege '+(prom.pr.ruled||[]).map(ordinal).join(' e ')
+        +' e ocupa a '+ordinal(prom.pr.occ)+'.</p>'
+      : '<p class="pv-fraco">sem promessa natal claramente correspondente — leitura rebaixada.</p>')
+    +seta+elo('ativação',ativ)
+    +seta+elo('confirmação',conf)
+    +seta+'<div class="pv-elo ev"><span>evento</span><div><p><b>'+ev.titulo+'</b> — '+pvJanelaTxt(ev)+'</p></div></div>'
+    +'</div>';
+}
+function pvSubtec(ev){
+  const P=ev.C.principal.env.papeis;
+  const t=[];
+  if(P.promissor.pl)t.push(PT_NAME[P.promissor.pl]);
+  if(ev.campo)t.push('casa '+ev.campo);
+  if(ev.temDir)t.push('direção primária');
+  if(ev.temProg)t.push('progressão');
+  return t.join(' · ');
+}
+function pvEventoHTML(ev,agora){
+  const aberto=PV_OPEN===ev.id;
+  const P=ev.C.principal;
+  const st=pvEstado({data:ev.dPico},agora);
+  const tierLb={principal:'evento principal',desdobramento:'desdobramento provável',sinal:'sinal'}[ev.tier];
+  let h='<article class="pvb '+ev.tier+' '+st+'" id="'+ev.id+'">'
+    +'<span class="pvb-m">'+pvMesCurto(ev.dPico)+'</span>'
+    +'<span class="pvb-dot'+(ev.faixa?' fx':'')+'"></span>'
+    +'<div class="pvb-c">'
+    +'<div class="pvb-t"><b>'+ev.titulo+'</b><em>'+tierLb+'</em></div>'
+    +'<div class="pvb-w">'+(ev.faixa
+        ? (pvMesAno(ev.dIni)+' → '+pvMesAno(ev.dFim))
+        : pvJanelaTxt(ev))+'</div>'
+    +'<div class="pvb-sub">'+pvSubtec(ev)+'</div>'
+    +'<button class="pv-exp" data-pvev="'+ev.id+'">'+ev.nEvid+' evidência'+(ev.nEvid>1?'s':'')
+      +' astrológica'+(ev.nEvid>1?'s':'')+(aberto?' ↑':' ↓')+'</button>';
+  if(aberto){
+    h+='<div class="pvb-x">'
+      +'<p class="pvb-d">'+ev.desc+'</p>'
+      +pvBarraJanela(ev)
+      +pvCadeiaHTML(ev)
+      +'<div class="pvc-b">'
+      +'<button class="pv-lnk" data-pvcalc="'+ev.id+'">Ver cálculo técnico</button>'
+      +(P.promessa?('<button class="pv-lnk" data-pvprom="'+P.promessa.pr.id+'">Ver promessa natal</button>'):'')
+      +'</div>'
+      +(PV_CALC===ev.id?pvCalcHTML(P):'')
+      +'</div>';
+  }
+  h+='</div></article>';
   return h;
-}
-function pvClusterHTML(C,agora){
-  const peso={alta:0,'média':1,contextual:2};
-  return '<article class="pvcl n-'+C.nivel.replace('é','e')+'">'
-    +'<header class="pvcl-h"><b>'+pvClusterNome(C)+'</b>'
-    +'<em>'+(C.grupo.length>1?(pvIdadeTxt(C.ini)+' – '+pvIdadeTxt(C.fim)):pvIdadeTxt(C.ini))+'</em></header>'
-    +'<div class="pvcl-b">'+C.grupo.slice().sort((a,b)=>peso[a.nivel]-peso[b.nivel]).map(g=>
-      '<div class="pvcl-i"><span class="pv-st '+pvEstado(g,agora)+'"></span>'
-      +'<b>'+pvTitulo(g)+'</b><em>'+pvIdadeTxt(g.anos)+'</em>'
-      +'<u class="n-'+g.nivel.replace('é','e')+'">'+g.nivel+'</u></div>').join('')
-    +'</div></article>';
-}
-function pvLinhaHTML(lista,idade,agora){
-  if(!lista.length)return '';
-  const jan=PV_TAB==='dir'?10:8, a0=idade-jan, a1=idade+jan;
-  const pos=a=>Math.max(0,Math.min(100,(a-a0)/(a1-a0)*100));
-  const pts=lista.slice(0,16).map(x=>'<i class="pv-dot '+pvEstado(x,agora)+'" style="left:'
-    +pos(x.anos).toFixed(2)+'%" title="'+pvTitulo(x).replace(/"/g,'')+' — '+pvIdadeTxt(x.anos)+'"></i>').join('');
-  return '<div class="pv-line"><span class="pv-lb">'+Math.round(a0)+' anos</span>'
-    +'<div class="pv-track">'+pts+'<span class="pv-now" style="left:'+pos(idade).toFixed(2)+'%"></span></div>'
-    +'<span class="pv-lb">'+Math.round(a1)+' anos</span></div>';
 }
 function renderPreditivas(){
   const el=$('pv-body'); if(!el)return;
   if(typeof NATAL==='undefined'||!NATAL){el.innerHTML='';return;}
-  document.querySelectorAll('#pv-tabs [data-pvt]').forEach(b=>b.classList.toggle('on',b.dataset.pvt===PV_TAB));
-  const mt=$('pv-metodo'); if(mt)mt.parentElement.style.display=PV_TAB==='dir'?'':'none';
-  const st=$('pv-sent'); if(st)st.parentElement.style.display=PV_TAB==='dir'?'':'none';
-  let R; try{R=pvItens();}catch(e){console.error('preditivas',e);
+  let ev; try{ev=pvEventos();}catch(e){console.error('preditivas',e);
     el.innerHTML='<p class="note">não foi possível calcular as técnicas preditivas.</p>';return;}
-  if(!R.lista.length){el.innerHTML='<p class="note">nenhum contato dentro da janela desta data.</p>';return;}
-  const top=R.lista.slice(0,3).map(x=>{const conf=pvConfirmacoes(x,true);
-    return Object.assign({},x,{conf,nivel:pvRelevancia(x,x.promessa,conf)});});
+  const agora=CURSOR, idade=ageAt(agora);
+  const vis=ev.filter(x=>x.tier!=='sinal');
+  const sinais=ev.filter(x=>x.tier==='sinal');
   const F=pvFrame();
-  const nota=PV_TAB==='dir'
-    ? 'Direções primárias — cronologia da manifestação de promessas natais. O significador indica o campo atingido; o promissor, a natureza e a origem da ativação.'
-    : 'Progressões secundárias — maturação interna e mudança de orientação. Ingressos são declarados só no cruzamento geométrico da cúspide.';
-  const met=PV_TAB==='dir'
-    ? PV_MET[PV_METODO].curto+' · chave '+PV_KEYS[PV_KEY].lab+' · '
-      +({ambas:'diretas e conversas',direta:'só diretas',conversa:'só conversas'}[PV_SENT])
-      +' · margem ±'+PV_MARG+' meses'
-    : '1 dia = 1 ano · ângulos progredidos por arco solar em longitude · refinamento por bisseção';
-  el.innerHTML=
-    (F.inferida?'<p class="pv-warn">Latitude do nascimento ausente: foi inferida do Ascendente e do MC, com menor confiabilidade. Informe o local na aba Dados para direções confiáveis.</p>':'')
-    +'<p class="pv-int">'+nota+'</p>'
-    +'<p class="pv-met">'+met+' · latitude '+(Math.round(F.phi*100)/100)+'°</p>'
-    +pvItemHTML(top[0],0,R.agora,true)
-    +pvLinhaHTML(R.lista,R.idade,R.agora)
-    +(R.clusters.filter(c=>c.grupo.length>1).length
-      ? '<div class="pv-clh">períodos temáticos</div><div class="pv-cls">'
-        +R.clusters.filter(c=>c.grupo.length>1).slice(0,2).map(c=>pvClusterHTML(c,R.agora)).join('')+'</div>'
-      : '')
-    +'<div class="pv-list">'+top.slice(1,3).map((x,i)=>pvItemHTML(x,i+1,R.agora,false)).join('')+'</div>';
+  const met=PV_MET[PV_METODO].curto+' · '+PV_KEYS[PV_KEY].lab
+    +' · '+({ambas:'diretas e conversas',direta:'só diretas',conversa:'só conversas'}[PV_SENT])
+    +' · progressões 1 dia = 1 ano · ±'+PV_MARG+' meses · lat '+(Math.round(F.phi*100)/100)+'°';
+  let h=(F.inferida?'<p class="pv-warn">Latitude do nascimento ausente: inferida do Asc/MC, com menor confiabilidade. Informe o local na aba Dados.</p>':'')
+    +'<p class="pv-met">'+met+'</p>';
+  /* síntese: os eventos principais dos próximos 18 meses */
+  const prox=vis.filter(x=>x.pico>=idade-0.08&&x.pico<=idade+1.55);
+  h+='<div class="pv-sin"><div class="pv-sin-k">próximos 18 meses</div>'
+    +(prox.length?prox.map(x=>'<a class="pv-sin-i" href="#" data-pvgo="'+x.id+'">'
+        +'<b>'+pvMesCurto(x.dPico)+' '+x.dPico.getUTCFullYear()+'</b><span>'+x.titulo+'</span>'
+        +'<u class="'+x.tier+'"></u></a>').join('')
+      :'<p class="pv-fraco">nenhum evento com convergência suficiente nos próximos 18 meses — os contatos existentes ficam como sinais, abaixo.</p>')
+    +'</div>';
+  /* biografia cronológica */
+  if(vis.length){
+    h+='<div class="pv-bio">'; let ano=null;
+    vis.forEach(x=>{const y=x.dPico.getUTCFullYear();
+      if(y!==ano){h+='<div class="pvb-ano">'+y+'</div>';ano=y;}
+      h+=pvEventoHTML(x,agora);});
+    h+='</div>';
+  }
+  if(sinais.length){
+    h+='<details class="pvb-sn"'+(PV_SINAIS?' open':'')+' id="pv-sinais"><summary>'+sinais.length
+      +' sina'+(sinais.length>1?'is':'l')+' secundário'+(sinais.length>1?'s':'')
+      +' — ativações sem convergência para previsão literal</summary>'
+      +sinais.map(x=>'<div class="pvb-si"><b>'+pvMesCurto(x.dPico)+' '+x.dPico.getUTCFullYear()+'</b>'
+        +'<span>'+pvTitulo(x.C.principal)+'</span><em>'+cap1(casaTag(x.campo))+'</em></div>').join('')
+      +'</details>';
+  }
+  el.innerHTML=h;
 }
+let PV_SINAIS=false;
 function bindPreditivas(){
   const w=$('p-tempo'); if(!w)return;
   w.addEventListener('click',e=>{
-    const t=e.target.closest&&e.target.closest('[data-pvt]');
-    if(t){PV_TAB=t.dataset.pvt;PV_OPEN=null;renderPreditivas();return;}
+    const g=e.target.closest&&e.target.closest('[data-pvgo]');
+    if(g){e.preventDefault();
+      const alvo=document.getElementById(g.dataset.pvgo);
+      if(alvo){PV_OPEN=g.dataset.pvgo;renderPreditivas();
+        const a2=document.getElementById(g.dataset.pvgo);
+        if(a2)a2.scrollIntoView({behavior:'smooth',block:'center'});}
+      return;}
+    const x=e.target.closest&&e.target.closest('[data-pvev]');
+    if(x){PV_OPEN=(PV_OPEN===x.dataset.pvev)?null:x.dataset.pvev;PV_CALC=null;renderPreditivas();return;}
     const c=e.target.closest&&e.target.closest('[data-pvcalc]');
-    if(c){PV_OPEN=(PV_OPEN===c.dataset.pvcalc)?null:c.dataset.pvcalc;renderPreditivas();return;}
+    if(c){PV_CALC=(PV_CALC===c.dataset.pvcalc)?null:c.dataset.pvcalc;renderPreditivas();return;}
+    const sn=e.target.closest&&e.target.closest('#pv-sinais summary');
+    if(sn){PV_SINAIS=!PV_SINAIS;}
     const p=e.target.closest&&e.target.closest('[data-pvprom]');
     if(p){
-      const pr=(typeof PROMESSAS!=='undefined'?PROMESSAS:[]).find(x=>x.id===p.dataset.pvprom);
+      const pr=(typeof PROMESSAS!=='undefined'?PROMESSAS:[]).find(q=>q.id===p.dataset.pvprom);
       if(pr&&typeof tlDrawer==='function')tlDrawer('Promessa natal',
         '<div class="pv-prom"><h4>'+pr.t+'</h4><p>'+pr.fat+'</p>'
         +'<div class="pv-ps"><span>testemunhos</span><p>'+pr.testemunhos.join('<br>')+'</p></div>'
@@ -769,5 +935,5 @@ function bindPreditivas(){
   [['pv-metodo',v=>PV_METODO=v],['pv-key',v=>PV_KEY=v],['pv-sent',v=>PV_SENT=v],
    ['pv-marg',v=>PV_MARG=+v]].forEach(([id,set])=>{
     const s=$(id); if(!s)return;
-    s.addEventListener('change',function(){set(this.value);PV_OPEN=null;renderPreditivas();});});
+    s.addEventListener('change',function(){set(this.value);PV_OPEN=null;PV_CALC=null;renderPreditivas();});});
 }
