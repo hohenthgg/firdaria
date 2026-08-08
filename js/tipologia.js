@@ -259,20 +259,20 @@ function ennFiguraSVG(tipo,asa){
   const W=190,C=W/2,R=76;
   const pos=n=>{const a=(-90+(n%9)*40)*Math.PI/180;return [C+R*Math.cos(a),C+R*Math.sin(a)];};
   let s='<svg viewBox="0 0 '+W+' '+W+'" class="enn-fig">';
-  s+='<circle cx="'+C+'" cy="'+C+'" r="'+R+'" fill="none" stroke="rgba(233,238,248,.18)"/>';
+  s+='<circle cx="'+C+'" cy="'+C+'" r="'+R+'" fill="none" stroke="rgba(45,37,24,.18)"/>';
   const liga=(a,b,st,w)=>{const [x1,y1]=pos(a),[x2,y2]=pos(b);
     s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+st+'" stroke-width="'+(w||1)+'"/>';};
-  [[9,3],[3,6],[6,9]].forEach(([a,b])=>liga(a,b,'rgba(233,238,248,.14)'));
-  [[1,4],[4,2],[2,8],[8,5],[5,7],[7,1]].forEach(([a,b])=>liga(a,b,'rgba(233,238,248,.14)'));
+  [[9,3],[3,6],[6,9]].forEach(([a,b])=>liga(a,b,'rgba(45,37,24,.14)'));
+  [[1,4],[4,2],[2,8],[8,5],[5,7],[7,1]].forEach(([a,b])=>liga(a,b,'rgba(45,37,24,.14)'));
   const [gi,gd]=ENN_INT[tipo]||[];
-  if(gi)liga(tipo,gi,'rgba(220,184,119,.75)',1.6);
-  if(gd)liga(tipo,gd,'rgba(201,120,120,.6)',1.3);
+  if(gi)liga(tipo,gi,'rgba(138,109,58,.75)',1.6);
+  if(gd)liga(tipo,gd,'rgba(154,75,63,.6)',1.3);
   for(let n=1;n<=9;n++){const [x,y]=pos(n);
     const on=n===tipo, w=n===asa;
-    s+='<circle cx="'+x+'" cy="'+y+'" r="'+(on?11:8)+'" fill="'+(on?'rgba(201,143,90,.2)':'#0a0f1d')+'" '
-      +'stroke="'+(on?'rgba(201,143,90,.9)':w?'rgba(201,143,90,.5)':'rgba(233,238,248,.25)')+'"/>'
+    s+='<circle cx="'+x+'" cy="'+y+'" r="'+(on?11:8)+'" fill="'+(on?'rgba(140,95,50,.2)':'#e4d9bb')+'" '
+      +'stroke="'+(on?'rgba(140,95,50,.9)':w?'rgba(140,95,50,.5)':'rgba(45,37,24,.25)')+'"/>'
       +'<text x="'+x+'" y="'+(y+3.5)+'" text-anchor="middle" font-size="'+(on?11:9)+'" '
-      +'fill="'+(on?'#e6c07a':'rgba(233,238,248,.6)')+'" font-family="IBM Plex Mono">'+n+'</text>';}
+      +'fill="'+(on?'#a5813f':'rgba(45,37,24,.6)')+'" font-family="IBM Plex Mono">'+n+'</text>';}
   s+='</svg>';
   return s;
 }

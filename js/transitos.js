@@ -6,8 +6,8 @@ let TR_CURSOR=new Date();
 let TR_VIEW='both';                    // 'natal' | 'trans' | 'both'
 let TR_SEL=null;                       // {side:'n'|'t', k:'sun'|'asc'|'mc'}
 
-const TR_COL={nat:'233,238,248', tra:'220,184,119'};   // marfim = natal · ouro = trânsito
-const TR_ASPCOL={harm:'111,159,216', tens:'201,120,120', conj:'220,184,119'};
+const TR_COL={nat:'43,35,22', tra:'138,109,58'};   // marfim = natal · ouro = trânsito
+const TR_ASPCOL={harm:'58,74,128', tens:'154,75,63', conj:'138,109,58'};
 
 function trDate(){return TR_CURSOR;}
 function trLons(d){                    // longitudes transitantes do momento
@@ -47,27 +47,27 @@ function trWheelSVG(){
   const verNat=TR_VIEW!=='trans', verTra=TR_VIEW!=='natal';
   let s='<defs><filter id="trg" x="-60%" y="-60%" width="220%" height="220%">'
     +'<feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
-    +'<radialGradient id="trc"><stop offset="0%" stop-color="#0a0e1a"/><stop offset="100%" stop-color="#05070e"/></radialGradient></defs>';
+    +'<radialGradient id="trc"><stop offset="0%" stop-color="#e4d9bb"/><stop offset="100%" stop-color="#ddd0ae"/></radialGradient></defs>';
   const circ=(r,st,w)=>'<circle cx="'+CX+'" cy="'+CY+'" r="'+r+'" fill="none" stroke="'+st+'" stroke-width="'+(w||1)+'"/>';
-  s+=circ(rZod,'rgba(255,255,255,.13)')+circ(rZin,'rgba(255,255,255,.09)')
-    +circ(rHoO,'rgba(255,255,255,.055)')+circ(rHoI,'rgba(255,255,255,.055)');
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rAsp+'" fill="url(#trc)" stroke="rgba(255,255,255,.045)"/>';
+  s+=circ(rZod,'rgba(58,47,30,.32)')+circ(rZin,'rgba(58,47,30,.22)')
+    +circ(rHoO,'rgba(58,47,30,.15)')+circ(rHoI,'rgba(58,47,30,.15)');
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rAsp+'" fill="url(#trc)" stroke="rgba(58,47,30,.12)"/>';
 
   /* faixa zodiacal */
   for(let i=0;i<12;i++){
     const [x1,y1]=P(i*30,rZod), [x2,y2]=P(i*30,rZin);
-    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(255,255,255,.10)"/>';
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(58,47,30,.26)"/>';
     const [gx,gy]=P(i*30+15,(rZod+rZin)/2), f=fs(15,10);
-    s+='<text x="'+gx+'" y="'+(gy+f*0.35)+'" text-anchor="middle" font-size="'+f+'" fill="rgba(233,238,248,.6)">'+(SIGN_GLYPHS[i]||'')+'︎</text>';
+    s+='<text x="'+gx+'" y="'+(gy+f*0.35)+'" text-anchor="middle" font-size="'+f+'" fill="rgba(45,37,24,.75)">'+(SIGN_GLYPHS[i]||'')+'︎</text>';
   }
   /* cúspides e números das casas do mapa natal */
   for(let h=0;h<12;h++){
     const L=NATAL.cusps[h], eixo=(h%3===0);
     const [x1,y1]=P(L,rAsp), [x2,y2]=P(L,eixo?rZin:rHoO);
-    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(255,255,255,'+(eixo?'.24':'.07')+')" stroke-width="'+(eixo?1.2:1)+'"/>';
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(58,47,30,'+(eixo?'.5':'.16')+')" stroke-width="'+(eixo?1.2:1)+'"/>';
     const meio=L+(n360(NATAL.cusps[(h+1)%12]-L)||30)/2;
     const [mx,my]=P(meio,(rHoO+rHoI)/2), f=fs(11,8);
-    s+='<text x="'+mx+'" y="'+(my+f*0.35)+'" text-anchor="middle" font-size="'+f+'" font-family="IBM Plex Mono" fill="rgba(233,238,248,.38)">'+(h+1)+'</text>';
+    s+='<text x="'+mx+'" y="'+(my+f*0.35)+'" text-anchor="middle" font-size="'+f+'" font-family="IBM Plex Mono" fill="rgba(45,37,24,.55)">'+(h+1)+'</text>';
   }
   /* aspectos entre planetas natais — as linhas do miolo */
   if(verNat){
@@ -90,7 +90,7 @@ function trWheelSVG(){
     const grau=Math.floor(n360(lon)%30);
     return '<g class="trpl'+(on?' on':'')+'" data-tp="'+side+':'+k+'" style="cursor:pointer">'
       +'<line x1="'+tx+'" y1="'+ty+'" x2="'+t2x+'" y2="'+t2y+'" stroke="rgba('+col+',.22)"/>'
-      +'<circle cx="'+x+'" cy="'+y+'" r="'+rd+'" fill="#070b14" stroke="rgba('+col+','+(on?'.9':'.42')+')" stroke-width="'+(on?1.6:1)+'"'+(on?' filter="url(#trg)"':'')+'/>'
+      +'<circle cx="'+x+'" cy="'+y+'" r="'+rd+'" fill="#ddd0ae" stroke="rgba('+col+','+(on?'.9':'.42')+')" stroke-width="'+(on?1.6:1)+'"'+(on?' filter="url(#trg)"':'')+'/>'
       +'<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" fill="rgba('+col+','+(on?'1':'.9')+')" style="pointer-events:none">'+(PT_GLYPH[k]||'')+'︎</text>'
       +'<text x="'+x+'" y="'+(y+rd+fs(9,7))+'" text-anchor="middle" font-size="'+fs(7.5,6)+'" font-family="IBM Plex Mono" fill="rgba('+col+',.45)" style="pointer-events:none">'+grau+'°</text>'
       +'<title>'+PT_NAME[k]+' '+(side==='t'?'em trânsito':'natal')+' · '+zfmt(lon)+'</title></g>';
@@ -113,7 +113,7 @@ function trWheelSVG(){
       const [x,y]=P(L,rZod+fs(11,8)), f=fs(8.5,6.5);
       const on=key&&TR_SEL&&TR_SEL.side==='n'&&TR_SEL.k===key;
       s+='<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" font-family="IBM Plex Mono" '
-        +'letter-spacing="'+Math.max(.8,1.4*u)+'" fill="rgba(233,238,248,'+(on?'.9':'.45')+')"'
+        +'letter-spacing="'+Math.max(.8,1.4*u)+'" fill="rgba(45,37,24,'+(on?'.95':'.6')+')"'
         +(key?(' class="trpl'+(on?' on':'')+'" data-tp="n:'+key+'" style="cursor:pointer"'):'')+'>'+nm+'</text>';
     });
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
@@ -297,23 +297,10 @@ function trDetalhe(){
   try{ el.innerHTML=TR_SEL.side==='t'?trCardTransito(TR_SEL.k):trCardNatal(TR_SEL.k); }
   catch(e){console.error('tr card',e);el.innerHTML='<p class="note">não foi possível montar a leitura deste ponto.</p>';}
 }
-/* lista curta dos trânsitos que importam agora */
-function trRelevantes(){
-  const el=$('tr-rel'); if(!el)return;
-  const d=trDate(), rel=(typeof transitosRelevantes==='function')?transitosRelevantes(d,5):[];
-  if(!rel.length){el.innerHTML='<p class="note">nenhum trânsito de prioridade alta nesta data.</p>';return;}
-  const S=tempoState(d);
-  el.innerHTML=rel.map(h=>{
-    const T=transitoTexto(h,d,S);
-    return '<button class="trchip '+h.cls+'" data-tp="t:'+h.tKey+'">'
-      +'<span class="trchip-g">'+(PT_GLYPH[h.tKey]||'')+'︎<i>'+h.gl+'</i>'+(h.np.g||'')+'︎</span>'
-      +'<span class="trchip-b"><b>'+T.titulo+'</b><em>'+T.efeito+'</em></span></button>';}).join('');
-}
 function renderTrans(){
   if(typeof NATAL==='undefined'||!NATAL){
     if($('tr-detail'))$('tr-detail').innerHTML=emptyState();
     if($('tr-wheel'))$('tr-wheel').innerHTML='';
-    if($('tr-rel'))$('tr-rel').innerHTML='';
     return;
   }
   refreshNPTS();
@@ -321,7 +308,7 @@ function renderTrans(){
   const st=$('tr-stamp'); if(st)st.textContent=fdate(TR_CURSOR);
   document.querySelectorAll('#tr-view [data-trv]').forEach(b=>b.classList.toggle('on',b.dataset.trv===TR_VIEW));
   try{ $('tr-wheel').innerHTML=trWheelSVG(); }catch(e){console.error('tr wheel',e);}
-  trDetalhe(); trRelevantes();
+  trDetalhe();
   try{ if($('tr-rulers'))$('tr-rulers').innerHTML=trRulersHTML(); trCarta(); }
   catch(e){console.error('tr rulers',e);}
 }
