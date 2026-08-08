@@ -111,13 +111,9 @@ function renderHit(h,d,withOrient){
 /* ================= MAPA NATAL + camadas + promessas ================= */
 let ACTIVE_PROM=null;
 function renderNatal(){
-  const el=$('natal-simple'); if(!el)return;
-  if(typeof NATAL==='undefined'||!NATAL){el.innerHTML=emptyState();if($('natal-proms'))$('natal-proms').innerHTML='';return;}
-  /* cards compactos: cada planeta como núcleo interno (natal.js) */
-  try{ el.innerHTML=Object.keys(PT_NAME).map(k=>natalCardHTML(k)).join(''); }
-  catch(err){ console.error('natal cards',err); el.innerHTML=''; }
-  // promessas — muito resumidas
+  if(typeof renderNatalTab==='function'){try{renderNatalTab();}catch(e){console.error('natal',e);}}
   const pel=$('natal-proms'); if(!pel)return;
+  if(typeof NATAL==='undefined'||!NATAL){pel.innerHTML='';return;}
   const now=new Date();
   pel.innerHTML=(typeof PROMESSAS!=='undefined'?PROMESSAS:[]).map(pr=>{
     const st=(typeof promiseState==='function')?promiseState(pr,now):{estado:'latente'};

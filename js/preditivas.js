@@ -1010,71 +1010,97 @@ function pvSubtec(ev){
   return t.join(' · ');
 }
 /* ============================================================
-   A CORDA ARTICULADA — a biografia não é uma linha contínua de 90 nós.
-   Ela se dobra em segmentos por década de vida; cada segmento é uma
-   junta que abre e fecha. O passado remoto fica recolhido (mostrando
-   só a contagem e o evento mais forte); a década corrente e o futuro
-   vêm abertos. Assim a leitura cabe na tela sem perder nenhum evento.
+   RÉGUA + FEED + ZOOM SEMÂNTICO
+
+   A linha do tempo não cresce em comprimento quando se quer ver
+   mais: ela troca de ESCALA. Cada escala responde a uma pergunta
+   diferente e mostra outro nível de detalhe.
+
+     vida   — só os marcos biográficos centrais
+     10a    — grandes processos e marcos
+     3a     — eventos e progressões relevantes
+     1a     — meses, janelas e a precisão possível
    ============================================================ */
-let PV_SEG={};                       // {chave: true} — segmentos abertos à força
-function pvSegKey(a){return 'd'+(Math.floor(a/10)*10);}
-function pvSegmentos(vis,idade){
-  const g={};
-  vis.forEach(x=>{const k=pvSegKey(Math.max(0,x.pico)); (g[k]=g[k]||[]).push(x);});
-  const atual=pvSegKey(idade);
-  return Object.keys(g).sort((a,b)=>+a.slice(1)-+b.slice(1)).map(k=>{
-    const de=+k.slice(1), lista=g[k];
-    const fut=lista.some(x=>x.pico>=idade);
-    const forte=lista.slice().sort((a,b)=>
-      ({principal:0,desdobramento:1,sinal:2}[a.tier]-{principal:0,desdobramento:1,sinal:2}[b.tier])
-      ||(b.nEvid||0)-(a.nEvid||0))[0];
-    return {k,de,ate:de+9,lista,atual:k===atual,futuro:fut&&k!==atual,
-      passado:!fut&&k!==atual,forte,
-      anos:[lista[0].dPico.getUTCFullYear(),lista[lista.length-1].dPico.getUTCFullYear()],
-      nPrinc:lista.filter(x=>x.tier==='principal').length};
+let PV_ESC=(function(){try{return localStorage.getItem('agx_pvesc')||'3a';}catch(e){return '3a';}})();
+let PV_ANO=null;                       // ano focal da régua (null = ano corrente)
+const PV_ESCALAS=[
+  {id:'1a', lab:'1 ano',  anos:1,  tiers:['principal','desdobramento'], meses:true},
+  {id:'3a', lab:'3 anos', anos:3,  tiers:['principal','desdobramento'], meses:false},
+  {id:'10a',lab:'10 anos',anos:10, tiers:['principal'],                 meses:false},
+  {id:'vida',lab:'Vida',  anos:999,tiers:['principal'],                 meses:false, soMarcos:true}
+];
+const pvEsc=()=>PV_ESCALAS.find(e=>e.id===PV_ESC)||PV_ESCALAS[1];
+
+/* filtra os eventos conforme a escala — menos escala, mais seleção */
+function pvNaEscala(vis,idade){
+  const E=pvEsc();
+  const foco=PV_ANO!=null?PV_ANO:new Date().getUTCFullYear();
+  let out=vis.filter(x=>E.tiers.includes(x.tier));
+  if(E.id!=='vida'){
+    const meia=E.anos/2;
+    out=out.filter(x=>{const y=x.dPico.getUTCFullYear();
+      return y>=foco-Math.floor(meia)&&y<=foco+Math.ceil(meia);});
+  }
+  if(E.soMarcos){
+    /* na vida inteira só cabem os de maior lastro: ordena por evidências
+       e guarda no máximo um por biênio, para a linha não engrossar */
+    const porBienio={};
+    out.slice().sort((a,b)=>(b.nEvid||0)-(a.nEvid||0)).forEach(x=>{
+      const bi=Math.floor(x.dPico.getUTCFullYear()/2);
+      if(!porBienio[bi])porBienio[bi]=x;
+    });
+    out=Object.values(porBienio).sort((a,b)=>a.pico-b.pico);
+  }
+  return out;
+}
+/* a régua: anos navegáveis, com HOJE marcado */
+function pvReguaHTML(vis,idade){
+  const E=pvEsc(), hoje=new Date().getUTCFullYear();
+  const foco=PV_ANO!=null?PV_ANO:hoje;
+  const anos=vis.map(x=>x.dPico.getUTCFullYear());
+  const min=Math.min(hoje,...anos), max=Math.max(hoje,...anos);
+  let corpo;
+  if(E.id==='vida'){
+    corpo='<span class="pvru-all">'+min+' – '+max+' · vida inteira</span>';
+  } else {
+    const meia=Math.floor(E.anos/2), ini=Math.max(min,foco-meia), fim=Math.min(max,foco+Math.ceil(E.anos/2));
+    const cels=[];
+    for(let y=ini;y<=fim;y++){
+      const n=vis.filter(x=>x.dPico.getUTCFullYear()===y).length;
+      cels.push('<button class="pvru-y'+(y===foco?' on':'')+(y===hoje?' hoje':'')+'" data-pvano="'+y+'">'
+        +'<b>'+y+'</b>'+(n?('<i>'+Math.min(n,5)+'</i>'):'<i class="z"></i>')+'</button>');
+    }
+    corpo=cels.join('');
+  }
+  return '<div class="pvru">'
+    +'<button class="pvru-nav" data-pvstep="-1" aria-label="antes">‹</button>'
+    +'<div class="pvru-t">'+corpo+'</div>'
+    +'<button class="pvru-nav" data-pvstep="1" aria-label="depois">›</button>'
+    +'</div>'
+    +'<div class="pvru-b">'
+      +'<div class="seg pv-seg">'+PV_ESCALAS.map(e=>'<button class="'+(e.id===PV_ESC?'on':'')
+        +'" data-pvesc="'+e.id+'">'+e.lab+'</button>').join('')+'</div>'
+      +'<button class="pvru-hoje" data-pvhoje>● Hoje</button>'
+    +'</div>';
+}
+/* o feed: eventos em coluna, agrupados por mês/ano conforme a escala */
+function pvFeedHTML(vis,idade,agora){
+  const E=pvEsc(), sel=pvNaEscala(vis,idade);
+  if(!sel.length)return '<p class="pv-fraco pv-vazio">Nenhum evento nesta escala. Amplie para 10 anos ou Vida.</p>';
+  let h='<div class="pv-feed">', rot=null, hojePosto=false;
+  sel.forEach(x=>{
+    if(!hojePosto&&x.pico>=idade){
+      h+='<div class="pv-hoje"><span>hoje</span></div>'; hojePosto=true; rot=null;
+    }
+    const y=x.dPico.getUTCFullYear();
+    const r=E.meses?(pvMesCurto(x.dPico)+' '+y):(''+y);
+    if(r!==rot){h+='<div class="pvf-r">'+r+'</div>';rot=r;}
+    h+=pvEventoHTML(x,agora,x.pico<idade);
   });
+  return h+'</div>';
 }
 function pvCordaHTML(vis,idade,agora){
-  const segs=pvSegmentos(vis,idade);
-  const max=Math.max(1,...segs.map(s=>s.lista.length));
-  /* régua articulada: uma pastilha por segmento, densidade por altura */
-  let r='<div class="pv-regua">'+segs.map(s=>{
-    const alt=Math.round(18+(s.lista.length/max)*26);
-    return '<button class="pvr'+(s.atual?' now':'')+(s.futuro?' fut':'')+'" data-pvseg="'+s.k+'" '
-      +'title="'+s.lista.length+' eventos entre '+s.anos[0]+' e '+s.anos[1]+'">'
-      +'<i style="height:'+alt+'px"></i><b>'+s.de+'</b></button>';
-  }).join('<span class="pvr-j">·</span>')+'</div>';
-  let h='<div class="pv-bio">';
-  let hojePosto=false;
-  segs.forEach(s=>{
-    const aberto=PV_SEG[s.k]!==undefined?PV_SEG[s.k]:(!s.passado);
-    h+='<section class="pvseg'+(aberto?' open':'')+(s.atual?' now':'')+'" id="seg-'+s.k+'">'
-      +'<button class="pvseg-h" data-pvseg="'+s.k+'">'
-        +'<span class="pvseg-a">'+s.de+'–'+s.ate+' anos</span>'
-        +'<span class="pvseg-y">'+(s.anos[0]===s.anos[1]?s.anos[0]:(s.anos[0]+'–'+s.anos[1]))+'</span>'
-        +'<span class="pvseg-n">'+s.lista.length+(s.nPrinc?(' · '+s.nPrinc+' principa'+(s.nPrinc>1?'is':'l')):'')+'</span>'
-        +(aberto?'':'<span class="pvseg-r">'+(s.forte?s.forte.titulo:'')+'</span>')
-        +'<span class="pvseg-c">'+(aberto?'▾':'▸')+'</span></button>';
-    if(aberto){
-      h+='<div class="pvseg-b">'; let ano=null;
-      s.lista.forEach(x=>{
-        if(!hojePosto&&x.pico>=idade){
-          h+='<div class="pv-hoje"><span>hoje — '+pvMesAno(agora).toLowerCase()+'</span></div>';
-          hojePosto=true; ano=null;
-        }
-        const y=x.dPico.getUTCFullYear();
-        if(y!==ano){h+='<div class="pvb-ano">'+y+'</div>';ano=y;}
-        h+=pvEventoHTML(x,agora,x.pico<idade);
-      });
-      h+='</div>';
-    } else if(!hojePosto&&s.lista.some(x=>x.pico>=idade)){
-      h+='<div class="pv-hoje"><span>hoje — '+pvMesAno(agora).toLowerCase()+'</span></div>';
-      hojePosto=true;
-    }
-    h+='</section>';
-  });
-  if(!hojePosto)h+='<div class="pv-hoje"><span>hoje — '+pvMesAno(agora).toLowerCase()+'</span></div>';
-  return r+h+'</div>';
+  return pvReguaHTML(vis,idade)+pvFeedHTML(vis,idade,agora);
 }
 function pvEventoHTML(ev,agora,passado){
   const aberto=PV_OPEN===ev.id;
@@ -1184,16 +1210,17 @@ function bindPreditivas(){
         const a2=document.getElementById(g.dataset.pvgo);
         if(a2)a2.scrollIntoView({behavior:'smooth',block:'center'});}
       return;}
-    /* juntas da corda: abre e fecha um segmento de década */
-    const sg=e.target.closest&&e.target.closest('[data-pvseg]');
-    if(sg){const k=sg.dataset.pvseg;
-      const el=document.getElementById('seg-'+k);
-      const abertoAgora=el?el.classList.contains('open'):false;
-      PV_SEG[k]=!abertoAgora;
-      renderPreditivas();
-      if(PV_SEG[k]){const a=document.getElementById('seg-'+k);
-        if(a)a.scrollIntoView({behavior:'smooth',block:'start'});}
-      return;}
+    /* régua: escala, ano focal e volta para hoje */
+    const es=e.target.closest&&e.target.closest('[data-pvesc]');
+    if(es){PV_ESC=es.dataset.pvesc;try{localStorage.setItem('agx_pvesc',PV_ESC);}catch(x){}
+      PV_ANO=null;renderPreditivas();return;}
+    const an=e.target.closest&&e.target.closest('[data-pvano]');
+    if(an){PV_ANO=+an.dataset.pvano;renderPreditivas();return;}
+    const st2=e.target.closest&&e.target.closest('[data-pvstep]');
+    if(st2){const E=pvEsc(), base=PV_ANO!=null?PV_ANO:new Date().getUTCFullYear();
+      PV_ANO=base+(+st2.dataset.pvstep)*Math.max(1,Math.round(E.anos/2));
+      renderPreditivas();return;}
+    if(e.target.closest&&e.target.closest('[data-pvhoje]')){PV_ANO=null;renderPreditivas();return;}
     const x=e.target.closest&&e.target.closest('[data-pvev]');
     if(x){PV_OPEN=(PV_OPEN===x.dataset.pvev)?null:x.dataset.pvev;PV_CALC=null;renderPreditivas();return;}
     const c=e.target.closest&&e.target.closest('[data-pvcalc]');
