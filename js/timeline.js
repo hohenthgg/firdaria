@@ -105,59 +105,9 @@ function tempoExecCards(d){
   return out.join('');
 }
 
-/* ---------- coluna direita: síntese curta do momento ---------- */
-function tlTema(S){
-  return cap1(casaTag(S.profHouse))+(PT_NAME[S.mk]?(' · agenda de '+PT_NAME[S.mk]):'');
-}
-function tlAparece(S){
-  const R=S.rev;
-  if(R)return cap1(casaTag(R.ascNatalHouse))+' ('+ordinal(R.ascNatalHouse)+' natal)';
-  return S.occLord?(cap1(casaTag(S.occLord))+' ('+ordinal(S.occLord)+' natal)'):'—';
-}
-function tlPromessasAtivas(d,S){
-  return (typeof PROMESSAS!=='undefined'?PROMESSAS:[])
-    .map(pr=>({pr,st:promiseState(pr,d,S)}))
-    .filter(x=>x.st.estado==='ativada').slice(0,2).map(x=>x.pr.t);
-}
-function tlCondicao(S){
-  const q=qualidade(S.lord);
-  const v={boa:'tende a entregar',condicional:'entrega conforme os apoios',travada:'exige mais esforço e tempo'}[q.nivel]||'condição não avaliável';
-  return cap1(PT_NAME[S.lord]||'—')+' '+v;
-}
-/* casas realmente acionadas no período, com o motivo de cada uma */
-function tlCasasAtivadas(d,S){
-  const m={};
-  const add=(h,motivo)=>{if(!h)return;(m[h]=m[h]||[]).push(motivo);};
-  add(S.profHouse,'casa do ano');
-  S.rulesMk.forEach(h=>add(h,'firdária'));
-  S.rulesSk.forEach(h=>add(h,'subfirdária'));
-  S.rulesLord.forEach(h=>add(h,'Senhor do Ano'));
-  if(S.rev)add(S.rev.ascNatalHouse,'ambiente do retorno');
-  return Object.keys(m).map(Number).sort((a,b)=>m[b].length-m[a].length||a-b)
-    .map(h=>({h,motivos:[...new Set(m[h])]}));
-}
+/* ---------- coluna direita: só a chamada de leitura longa ---------- */
 function tlSideHTML(d,S){
-  const linha=(k,v)=>'<div class="tls-r"><span>'+k+'</span><b>'+v+'</b></div>';
-  const proms=tlPromessasAtivas(d,S);
-  let out='<section class="tls"><div class="kicker">síntese do momento</div>'
-    +linha('Tema dominante',tlTema(S))
-    +linha('Como tende a aparecer',tlAparece(S))
-    +linha('Promessas mais ativadas',proms.length?proms.join(' · '):'nenhuma em convergência agora')
-    +linha('Condição do período',tlCondicao(S))
-    +'</section>';
-  const casas=tlCasasAtivadas(d,S);
-  const rank=planetRanking(d,S).slice(0,4);
-  out+='<section class="tls"><div class="kicker">casas ativadas</div><div class="tlch">'
-    +casas.map(c=>'<span class="tlc'+(c.h===S.profHouse?' on':'')+'" title="'+c.motivos.join(' · ')+'">'
-      +'<b>'+c.h+'ª</b>'+casaTag(c.h)+'</span>').join('')
-    +'</div>'
-    +'<div class="tls-sep"></div><div class="kicker">convergências principais</div>'
-    +rank.map(r=>'<div class="tlb"><span>'+(PT_GLYPH[r.k]||'')+'︎ '+PT_NAME[r.k]+'</span>'
-      +'<i><em style="width:'+r.p+'%"></em></i><u>'+r.p+'%</u></div>').join('')
-    +'<p class="tls-n">Convergência interna entre técnicas: ordena o que olhar primeiro, não é probabilidade de evento.</p>'
-    +'</section>'
-    +'<button class="ia-btn sm" id="tl-ia">✦ Analisar com IA</button>';
-  return out;
+  return '<button class="ia-btn sm" id="tl-ia">✦ Analisar com IA</button>';
 }
 
 /* ---------- drawer lateral: leitura longa fora do fluxo da página ---------- */

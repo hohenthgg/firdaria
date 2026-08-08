@@ -182,7 +182,7 @@ function natalWheel(sel){
     if(on){
       const [cx2,cy2]=P(p.lon,R1);
       s+='<line x1="'+x+'" y1="'+y+'" x2="'+cx2+'" y2="'+cy2+'" stroke="var(--gold2)" stroke-width=".7" opacity=".7"/>';
-      s+='<circle cx="'+x+'" cy="'+y+'" r="17" fill="rgba(233,236,240,.06)" stroke="var(--ivory)" stroke-width="1"/>';
+      s+='<circle cx="'+x+'" cy="'+y+'" r="17" fill="rgba(45,37,24,.06)" stroke="var(--ivory)" stroke-width="1"/>';
     }
     s+='<text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" font-size="'+(on?17:12)+'" font-family="Cormorant Garamond" fill="'+(on?'var(--ivory2)':'var(--dim)')+'">'+p.g+'</text>';
   });
@@ -283,8 +283,8 @@ function drawCord(){
   if(typeof NATAL==='undefined'||!NATAL){svg.innerHTML='';return;}
   const CX=W/2, CY=H/2, R=W/2-(mob?14:20);
   const TAU=Math.PI*2;
-  const C_INK='#eaf0fa', C_DIM='#98a5bd', C_DIM2='#6b7793', C_LINE='rgba(255,255,255,.09)', C_SOFT='rgba(255,255,255,.020)';
-  const AU='220,184,119';
+  const C_INK='#2b2416', C_DIM='#5c5340', C_DIM2='#7c7157', C_LINE='rgba(58,47,30,.22)', C_SOFT='rgba(58,47,30,.020)';
+  const AU='138,109,58';
   const S=tempoState(CURSOR); if(!S){svg.innerHTML='';return;}
   const P=(ang,r)=>[CX+r*Math.sin(ang), CY-r*Math.cos(ang)];
   const u=R/320;                                          // escala tipográfica única
@@ -316,7 +316,7 @@ function drawCord(){
       +'A'+rr+' '+rr+' 0 0 1 '+x1+' '+y1+'Z';
   };
   let s='<defs>'
-    +'<radialGradient id="corefill"><stop offset="0%" stop-color="#0c1120"/><stop offset="100%" stop-color="#06090f"/></radialGradient></defs>';
+    +'<radialGradient id="corefill"><stop offset="0%" stop-color="#e4d9bb"/><stop offset="100%" stop-color="#ddd0ae"/></radialGradient></defs>';
   // anéis finos, com folga generosa entre camadas
   const w1=R*0.118, gap=R*0.068;
   const rF=[R, R-w1], rS=[R-w1-gap, R-2*w1-gap], rP=[R-2*w1-2*gap, R-3*w1-2*gap];
@@ -329,7 +329,7 @@ function drawCord(){
   // rótulo da camada: pequeno, na periferia da faixa, sobre recorte do fundo
   const label=(txt,r)=>{
     const [x,y]=P(0,r), f=fs(8,6.5), ls=Math.max(1.4,1.9*u), w=txt.length*(f*0.62+ls)+f*1.5, h=f+5*u+3;
-    return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="'+(h/2)+'" fill="#04060d"/>'
+    return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="'+(h/2)+'" fill="#ddd0ae"/>'
       +'<text x="'+(x+ls/2)+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" '
       +'font-family="IBM Plex Mono" letter-spacing="'+ls+'" fill="'+C_DIM2+'">'+txt+'</text>';
   };
@@ -390,7 +390,7 @@ function drawCord(){
 
   /* ---------- núcleo · idade · retorno · casa profectada · Senhor do Ano ---------- */
   const REV=S.rev;
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="url(#corefill)" stroke="rgba(255,255,255,.08)" '
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="url(#corefill)" stroke="rgba(58,47,30,.08)" '
     +'data-layer="revolucao" style="cursor:pointer"/>';
   const idade=Math.floor(S.age), frac=(S.age-idade);
   const fAge=fs(30,17), fKick=fs(7,6), fM=fs(8.5,6.8);
@@ -399,7 +399,7 @@ function drawCord(){
   s+='<text x="'+CX+'" y="'+(CY0-fAge*0.04)+'" text-anchor="middle" font-size="'+fAge+'" font-family="Cormorant Garamond" fill="'+C_INK+'" style="pointer-events:none">'
     +idade+','+Math.floor(frac*10)+'</text>';
   const yDiv=CY0+fAge*0.30, wDiv=rCore*0.62;
-  s+='<line x1="'+(CX-wDiv/2)+'" y1="'+yDiv+'" x2="'+(CX+wDiv/2)+'" y2="'+yDiv+'" stroke="rgba(255,255,255,.10)"/>';
+  s+='<line x1="'+(CX-wDiv/2)+'" y1="'+yDiv+'" x2="'+(CX+wDiv/2)+'" y2="'+yDiv+'" stroke="rgba(58,47,30,.26)"/>';
   const mono=(y,txt,col)=>'<text x="'+CX+'" y="'+y+'" text-anchor="middle" font-size="'+fM+'" font-family="IBM Plex Mono" '
     +'letter-spacing="'+Math.max(.5,.9*u)+'" fill="'+col+'" style="pointer-events:none">'+txt+'</text>';
   s+=mono(yDiv+fM*1.7,(REV?(REV.sigla+' '+REV.start.getUTCFullYear()):'SEM RETORNO'),C_DIM);
@@ -428,21 +428,21 @@ function mandalaTempo(d){
   const fFrac=(f.from!=null&&f.len)?((age-f.from)/f.len):0;
   const sFrac=(f.subStart&&f.subEnd)?((d.getTime()-f.subStart)/(f.subEnd-f.subStart)):0;
   const yFrac=age-Math.floor(age);
-  const T='rgba(255,255,255,.08)';
+  const T='rgba(58,47,30,.08)';
   let s='<svg viewBox="0 0 300 300" class="tmandala"><defs>'
-    +'<filter id="mglow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#9fd6e6" flood-opacity=".5"/></filter></defs>';
-  s+=ring(132,15,fFrac,'#cfd6dd',T);
-  s+=ring(108,13,sFrac,'#9fd6e6',T);
-  s+=ring(86,11,yFrac,'#c9b78a',T);
+    +'<filter id="mglow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#3d6a80" flood-opacity=".5"/></filter></defs>';
+  s+=ring(132,15,fFrac,'#4a4030',T);
+  s+=ring(108,13,sFrac,'#3d6a80',T);
+  s+=ring(86,11,yFrac,'#93794a',T);
   // rótulos dos anéis (glifos)
   const gl=(r,txt,col)=>'<text x="'+C+'" y="'+(C-r+5)+'" text-anchor="middle" font-size="13" font-family="Cormorant Garamond" fill="'+col+'">'+txt+'</text>';
-  s+=gl(132,PT_GLYPH[f.majorKey]||'','#cfd6dd');
-  s+=gl(108,PT_GLYPH[f.subKey]||'','#9fd6e6');
-  s+=gl(86,''+p.houseN,'#c9b78a');
+  s+=gl(132,PT_GLYPH[f.majorKey]||'','#4a4030');
+  s+=gl(108,PT_GLYPH[f.subKey]||'','#3d6a80');
+  s+=gl(86,''+p.houseN,'#93794a');
   // centro: Senhor do Ano + casa + RS
-  s+='<text x="'+C+'" y="'+(C-16)+'" text-anchor="middle" font-size="34" font-family="Cormorant Garamond" fill="#fff">'+PT_GLYPH[p.lordKey]+'</text>';
+  s+='<text x="'+C+'" y="'+(C-16)+'" text-anchor="middle" font-size="34" font-family="Cormorant Garamond" fill="#2b2416">'+PT_GLYPH[p.lordKey]+'</text>';
   s+='<text x="'+C+'" y="'+(C+6)+'" text-anchor="middle" font-size="10" font-family="IBM Plex Mono" letter-spacing="1" fill="var(--dim)">SENHOR DO ANO</text>';
-  s+='<text x="'+C+'" y="'+(C+24)+'" text-anchor="middle" font-size="11" font-family="Inter" fill="#fff">Casa '+p.houseN+' · '+p.sign+'</text>';
+  s+='<text x="'+C+'" y="'+(C+24)+'" text-anchor="middle" font-size="11" font-family="Inter" fill="#2b2416">Casa '+p.houseN+' · '+p.sign+'</text>';
   if(rs&&rs.raw&&rs.raw.asc!=null){const sg=signOf(rs.raw.asc);
     s+='<text x="'+C+'" y="'+(C+40)+'" text-anchor="middle" font-size="10" font-family="IBM Plex Mono" fill="var(--neon)">RS: Asc '+SIGNS[sg]+'</text>';}
   s+='</svg>';
@@ -783,29 +783,29 @@ function rsWheelSVG(R,S){
   const fs=(v,min)=>Math.max(min==null?6.5:min,Math.round(v*u*10)/10);
   const rZod=M-fs(26,16), rZin=rZod-fs(24,16), rPl=rZin-fs(26,18),
         rHou=rPl-fs(26,18), rHin=Math.round(M*0.31), rCore=rHin;
-  const GR='127,201,160';                              // verde do retorno
+  const GR='76,122,95';                              // verde do retorno
   const ang=L=>180+(L-R.ascLon);                       // ASC à esquerda
   const P=(L,r)=>{const a=ang(L)*RAD;return [CX+r*Math.cos(a), CY-r*Math.sin(a)];};
   let s='<defs><filter id="rsg" x="-50%" y="-50%" width="200%" height="200%">'
     +'<feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
-    +'<radialGradient id="rsc"><stop offset="0%" stop-color="#0a1310"/><stop offset="100%" stop-color="#05080b"/></radialGradient></defs>';
+    +'<radialGradient id="rsc"><stop offset="0%" stop-color="#e4d9bb"/><stop offset="100%" stop-color="#ddd0ae"/></radialGradient></defs>';
   const circ=(r,st,w)=>'<circle cx="'+CX+'" cy="'+CY+'" r="'+r+'" fill="none" stroke="'+st+'" stroke-width="'+(w||1)+'"/>';
   // apenas dois trilhos: a faixa zodiacal e o limite interno das casas
-  s+=circ(rZod,'rgba(255,255,255,.13)')+circ(rZin,'rgba(255,255,255,.09)');
+  s+=circ(rZod,'rgba(58,47,30,.32)')+circ(rZin,'rgba(58,47,30,.22)');
   // divisões dos signos (só as 12 fronteiras, sem ticks de grau)
   for(let i=0;i<12;i++){const L=i*30, [x1,y1]=P(L,rZod), [x2,y2]=P(L,rZin);
-    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(255,255,255,.10)"/>';}
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(58,47,30,.26)"/>';}
   // glifos dos signos no meio da faixa
   for(let i=0;i<12;i++){const L=i*30+15, [x,y]=P(L,(rZod+rZin)/2), f=fs(14,10);
-    s+='<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" fill="rgba(226,236,232,.62)">'+(SIGN_GLYPHS[i]||'')+'︎</text>';}
+    s+='<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" fill="rgba(45,37,24,.62)">'+(SIGN_GLYPHS[i]||'')+'︎</text>';}
   // cúspides: eixos marcados, demais apenas insinuadas
   for(let h=0;h<12;h++){
     const L=R.chart.cusps[h], ax=(h%3===0);
     const [x1,y1]=P(L,rHin), [x2,y2]=P(L,ax?rZin:rHou);
-    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(255,255,255,'+(ax?'.24':'.07')+')" stroke-width="'+(ax?1.2:1)+'"/>';
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(58,47,30,'+(ax?'.5':'.16')+')" stroke-width="'+(ax?1.2:1)+'"/>';
     const Lm=R.chart.cusps[h]+adiff(R.chart.cusps[h],R.chart.cusps[(h+1)%12])/2;
     const [mx,my]=P(Lm,rHin+fs(11,8)), f=fs(10,7.5);
-    s+='<text x="'+mx+'" y="'+(my+f*0.35)+'" text-anchor="middle" font-size="'+f+'" font-family="IBM Plex Mono" fill="rgba(226,236,232,.40)">'+(h+1)+'</text>';}
+    s+='<text x="'+mx+'" y="'+(my+f*0.35)+'" text-anchor="middle" font-size="'+f+'" font-family="IBM Plex Mono" fill="rgba(45,37,24,.40)">'+(h+1)+'</text>';}
   // arco verde na casa mais ativada — único acento do desenho
   const rank=rsHousesRank(R);
   if(rank.length){const h=rank[0].h-1, L0=R.chart.cusps[h], L1=R.chart.cusps[(h+1)%12];
@@ -816,17 +816,17 @@ function rsWheelSVG(R,S){
   REV_PL.forEach(k=>{ if(!R.chart.pts[k])return;
     const L=R.chart.pts[k].lon, [x,y]=P(L,rPl), on=k===R.planetKey||k===R.ascRuler;
     const rd=fs(11.5,8), f=fs(12,9);
-    s+='<circle cx="'+x+'" cy="'+y+'" r="'+rd+'" fill="#08100d" stroke="rgba('+GR+','+(on?'.7':'.2')+')"'+(on?' filter="url(#rsg)"':'')+'/>'
-      +'<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" fill="'+(on?'#a8e6c4':'rgba(226,236,232,.66)')+'">'+(PT_GLYPH[k]||'')+'︎</text>';});
+    s+='<circle cx="'+x+'" cy="'+y+'" r="'+rd+'" fill="#e4d9bb" stroke="rgba('+GR+','+(on?'.7':'.2')+')"'+(on?' filter="url(#rsg)"':'')+'/>'
+      +'<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" fill="'+(on?'#4c7a5f':'rgba(45,37,24,.66)')+'">'+(PT_GLYPH[k]||'')+'︎</text>';});
   // ângulos: apenas os nomes, na periferia
   [['ASC',R.ascLon],['MC',R.chart.mc],['DSC',n360(R.ascLon+180)],['IC',n360(R.chart.mc+180)]].forEach(([nm,L])=>{
     const [x,y]=P(L,rZod+fs(13,9)), f=fs(8.5,6.5);
-    s+='<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(.8,1.4*u)+'" fill="rgba(226,236,232,.45)">'+nm+'</text>';});
+    s+='<text x="'+x+'" y="'+(y+f*0.35)+'" text-anchor="middle" font-size="'+f+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(.8,1.4*u)+'" fill="rgba(45,37,24,.45)">'+nm+'</text>';});
   // núcleo enxuto: glifo do planeta do retorno e seu nome
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="url(#rsc)" stroke="rgba(255,255,255,.06)"/>';
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rCore+'" fill="url(#rsc)" stroke="rgba(58,47,30,.06)"/>';
   const fG=fs(46,24), fN=fs(10.5,8);
-  s+='<text x="'+CX+'" y="'+(CY+fG*0.14)+'" text-anchor="middle" font-size="'+fG+'" fill="#a8e6c4">'+(PT_GLYPH[R.planetKey]||'')+'︎</text>';
-  s+='<text x="'+CX+'" y="'+(CY+fG*0.14+fN*2.1)+'" text-anchor="middle" font-size="'+fN+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(1.2,2*u)+'" fill="rgba(226,236,232,.55)">'+PT_NAME[R.planetKey].toUpperCase()+'</text>';
+  s+='<text x="'+CX+'" y="'+(CY+fG*0.14)+'" text-anchor="middle" font-size="'+fG+'" fill="#4c7a5f">'+(PT_GLYPH[R.planetKey]||'')+'︎</text>';
+  s+='<text x="'+CX+'" y="'+(CY+fG*0.14+fN*2.1)+'" text-anchor="middle" font-size="'+fN+'" font-family="IBM Plex Mono" letter-spacing="'+Math.max(1.2,2*u)+'" fill="rgba(45,37,24,.55)">'+PT_NAME[R.planetKey].toUpperCase()+'</text>';
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   return s;
 }
@@ -942,34 +942,34 @@ function transWheelSVG(d,hits){
   let s='<defs>'
     +'<filter id="nglow" x="-70%" y="-70%" width="240%" height="240%">'
     +'<feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
-    +'<radialGradient id="halo"><stop offset="0%" stop-color="rgba(255,255,255,.30)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient>'
-    +'<radialGradient id="nodefill"><stop offset="0%" stop-color="#111a2c"/><stop offset="100%" stop-color="#070b14"/></radialGradient>'
+    +'<radialGradient id="halo"><stop offset="0%" stop-color="rgba(58,47,30,.30)"/><stop offset="100%" stop-color="rgba(58,47,30,0)"/></radialGradient>'
+    +'<radialGradient id="nodefill"><stop offset="0%" stop-color="#eae0c6"/><stop offset="100%" stop-color="#ddd0ae"/></radialGradient>'
     +'</defs>';
   // teia: liga cada nó ao anel central
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+R+'" fill="none" stroke="rgba(255,255,255,.06)"/>';
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+R+'" fill="none" stroke="rgba(58,47,30,.06)"/>';
   ORDER.forEach(k=>{const [x,y]=pos[k];
-    s+='<line x1="'+CX+'" y1="'+CY+'" x2="'+x+'" y2="'+y+'" stroke="rgba(255,255,255,'+((cnt[k]||0)?'.13':'.05')+')" stroke-width="1"/>';});
+    s+='<line x1="'+CX+'" y1="'+CY+'" x2="'+x+'" y2="'+y+'" stroke="rgba(58,47,30,'+((cnt[k]||0)?'.3':'.12')+')" stroke-width="1"/>';});
   // núcleo
   const rc=R*0.52;
   s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(rc+16)+'" fill="url(#halo)"/>';
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rc+'" fill="#05080f" stroke="rgba(255,255,255,.16)"/>';
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(rc-7)+'" fill="none" stroke="rgba(255,255,255,.06)"/>';
-  s+='<text x="'+CX+'" y="'+(CY-6)+'" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" letter-spacing="2.6" fill="#8e9bb4">'
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rc+'" fill="#ddd0ae" stroke="rgba(58,47,30,.16)"/>';
+  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(rc-7)+'" fill="none" stroke="rgba(58,47,30,.06)"/>';
+  s+='<text x="'+CX+'" y="'+(CY-6)+'" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" letter-spacing="2.6" fill="#6a5f49">'
     +(sel?'TRÂNSITO SELECIONADO':'SELECIONE UM TRÂNSITO')+'</text>';
-  s+='<text x="'+CX+'" y="'+(CY+16)+'" text-anchor="middle" font-size="12" font-family="Inter" fill="'+(sel?'#e9eef8':'#6b7793')+'">'
+  s+='<text x="'+CX+'" y="'+(CY+16)+'" text-anchor="middle" font-size="12" font-family="Inter" fill="'+(sel?'#2b2416':'#7c7157')+'">'
     +(sel?(PT_NAME[sel.tKey]+' '+sel.gl+' '+sel.np.nm):'Explore as ativações')+'</text>';
-  if(!sel)s+='<text x="'+CX+'" y="'+(CY+34)+'" text-anchor="middle" font-size="12" font-family="Inter" fill="#6b7793">planetárias do momento.</text>';
+  if(!sel)s+='<text x="'+CX+'" y="'+(CY+34)+'" text-anchor="middle" font-size="12" font-family="Inter" fill="#7c7157">planetárias do momento.</text>';
   // nós
   ORDER.forEach(k=>{
     const [x,y]=pos[k], n=cnt[k]||0, on=sel&&sel.tKey===k, has=n>0, r=on?30:26;
     s+='<g data-trxpl="'+k+'" style="cursor:pointer">';
     if(on) s+='<circle cx="'+x+'" cy="'+y+'" r="'+(r+13)+'" fill="url(#halo)"/>';
     s+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="url(#nodefill)" '
-      +'stroke="'+(on?'rgba(255,255,255,.92)':(has?'rgba(255,255,255,.30)':'rgba(255,255,255,.11)'))+'" '
+      +'stroke="'+(on?'rgba(253,249,238,.92)':(has?'rgba(58,47,30,.30)':'rgba(58,47,30,.11)'))+'" '
       +'stroke-width="'+(on?1.8:1.1)+'"'+(on?' filter="url(#nglow)"':'')+'/>'
-      +'<text x="'+x+'" y="'+(y+6)+'" text-anchor="middle" font-size="18" font-family="Inter" fill="'+(has?'#e9eef8':'#4a5570')+'" style="pointer-events:none">'+(PT_GLYPH[k]||'')+'︎</text>'
-      +'<text x="'+x+'" y="'+(y+r+16)+'" text-anchor="middle" font-size="10.5" font-family="Inter" fill="'+(has?'#9aa6bd':'#4a5570')+'" style="pointer-events:none">'+PT_NAME[k]+'</text>';
-    if(n) s+='<circle cx="'+(x+20)+'" cy="'+(y-18)+'" r="9" fill="#0d1424" stroke="rgba(220,184,119,.55)"/>'
+      +'<text x="'+x+'" y="'+(y+6)+'" text-anchor="middle" font-size="18" font-family="Inter" fill="'+(has?'#2b2416':'#565b74')+'" style="pointer-events:none">'+(PT_GLYPH[k]||'')+'︎</text>'
+      +'<text x="'+x+'" y="'+(y+r+16)+'" text-anchor="middle" font-size="10.5" font-family="Inter" fill="'+(has?'#5c5340':'#565b74')+'" style="pointer-events:none">'+PT_NAME[k]+'</text>';
+    if(n) s+='<circle cx="'+(x+20)+'" cy="'+(y-18)+'" r="9" fill="#e4d9bb" stroke="rgba(138,109,58,.55)"/>'
       +'<text x="'+(x+20)+'" y="'+(y-14.5)+'" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="var(--gold)" style="pointer-events:none">'+n+'</text>';
     s+='</g>';
   });
@@ -1187,7 +1187,7 @@ function temperament(){return TEMPER_CACHE||(TEMPER_CACHE=temperEngine());}
 const QICON={quente:'🜂',frio:'🜄',seco:'🜃','úmido':'🜁'};
 function temperDiagram(T,size){
   const W=size||460, C=W/2, R=W/2-76, TAU=Math.PI*2;
-  const AU='220,184,119', BL='111,159,216';
+  const AU='138,109,58', BL='58,74,128';
   // eixos: quente(topo) · seco(direita) · frio(baixo) · úmido(esquerda)
   const v={quente:T.quente,seco:T.seco,frio:T.frio,'úmido':T.umido};
   const ordem=['quente','seco','frio','úmido'];
@@ -1198,13 +1198,13 @@ function temperDiagram(T,size){
     +'<stop offset="0%" stop-color="rgba('+AU+',.55)"/><stop offset="100%" stop-color="rgba('+AU+',.20)"/></linearGradient></defs>';
   // anéis concêntricos discretos
   [1,.78,.56,.34].forEach((f,i)=>{s+='<circle cx="'+C+'" cy="'+C+'" r="'+(R*f)+'" fill="none" '
-    +'stroke="rgba(255,255,255,'+(i===0?'.14':'.05')+')"'+(i===0?'':' stroke-dasharray="2 6"')+'/>';});
+    +'stroke="rgba(58,47,30,'+(i===0?'.32':'.12')+')"'+(i===0?'':' stroke-dasharray="2 6"')+'/>';});
   // arco dourado externo (assinatura visual)
   s+='<circle cx="'+C+'" cy="'+C+'" r="'+(R+16)+'" fill="none" stroke="rgba('+AU+',.30)" stroke-width="1.2" '
     +'stroke-dasharray="'+(TAU*(R+16)*.62)+' '+(TAU*(R+16))+'" transform="rotate(-118 '+C+' '+C+')"/>';
   // cruz dos eixos
-  s+='<line x1="'+C+'" y1="'+(C-R)+'" x2="'+C+'" y2="'+(C+R)+'" stroke="rgba(255,255,255,.07)"/>'
-    +'<line x1="'+(C-R)+'" y1="'+C+'" x2="'+(C+R)+'" y2="'+C+'" stroke="rgba(255,255,255,.07)"/>';
+  s+='<line x1="'+C+'" y1="'+(C-R)+'" x2="'+C+'" y2="'+(C+R)+'" stroke="rgba(58,47,30,.07)"/>'
+    +'<line x1="'+(C-R)+'" y1="'+C+'" x2="'+(C+R)+'" y2="'+C+'" stroke="rgba(58,47,30,.07)"/>';
   // polígono das quatro qualidades
   const pts=ordem.map((q,i)=>P(i,R*Math.max(.08,v[q]/100)).join(',')).join(' ');
   s+='<polygon points="'+pts+'" fill="url(#tdfill)" stroke="rgba('+AU+',.9)" stroke-width="1.4" filter="url(#tdglow)"/>';
@@ -1213,8 +1213,8 @@ function temperDiagram(T,size){
   // nós rotulados
   ordem.forEach((q,i)=>{
     const [x,y]=P(i,R), quente=(q==='quente'||q==='seco');
-    const col=q==='quente'?'#d98a6a':q==='frio'?'#7fa8d8':q==='seco'?'#dcb877':'#7fc8d8';
-    s+='<circle cx="'+x+'" cy="'+y+'" r="19" fill="#0a0f1c" stroke="rgba(255,255,255,.16)"/>'
+    const col=q==='quente'?'#9a4b3f':q==='frio'?'#41528a':q==='seco'?'#8a6d3a':'#3d6a80';
+    s+='<circle cx="'+x+'" cy="'+y+'" r="19" fill="#e4d9bb" stroke="rgba(58,47,30,.16)"/>'
       +'<text x="'+x+'" y="'+(y+6)+'" text-anchor="middle" font-size="16" fill="'+col+'">'+QICON[q]+'</text>';
     const [lx,ly]=P(i,R+(i%2?52:42));
     s+='<text x="'+lx+'" y="'+(ly+4)+'" text-anchor="middle" font-size="11" font-family="Inter" '
@@ -1230,7 +1230,7 @@ function renderTemp(){
     +'<span class="qcd-n">'+q.toUpperCase()+'</span></div>'
     +'<b>'+v+'%</b><div class="qcd-t"><i style="width:'+v+'%;background:'+cor+'"></i></div></div>';
   const donut=(v)=>{const r=26,c=2*Math.PI*r;
-    return '<svg class="vdonut" viewBox="0 0 64 64"><circle cx="32" cy="32" r="'+r+'" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/>'
+    return '<svg class="vdonut" viewBox="0 0 64 64"><circle cx="32" cy="32" r="'+r+'" fill="none" stroke="rgba(58,47,30,.08)" stroke-width="3"/>'
       +'<circle cx="32" cy="32" r="'+r+'" fill="none" stroke="var(--gold)" stroke-width="3" stroke-linecap="round" '
       +'stroke-dasharray="'+(c*v/100)+' '+c+'" transform="rotate(-90 32 32)"/>'
       +'<text x="32" y="36" text-anchor="middle" font-size="14" font-family="Inter" fill="var(--gold)">'+v+'%</text></svg>';};
@@ -1251,8 +1251,8 @@ function renderTemp(){
     +'<div class="pfh-c">'+temperDiagram(T)+'</div>'
     // coluna 3 — qualidades + veredito
     +'<div class="pfh-r">'
-      +'<div class="qcds">'+qcard('quente',T.quente,'#d98a6a')+qcard('seco',T.seco,'#dcb877')
-        +qcard('frio',T.frio,'#7fa8d8')+qcard('úmido',T.umido,'#7fc8d8')+'</div>'
+      +'<div class="qcds">'+qcard('quente',T.quente,'#9a4b3f')+qcard('seco',T.seco,'#8a6d3a')
+        +qcard('frio',T.frio,'#41528a')+qcard('úmido',T.umido,'#3d6a80')+'</div>'
       +'<div class="vcard"><div class="vc-h"><span class="pf-k" style="margin:0">veredito</span><span class="vc-s">⚖</span></div>'
         +'<div class="vc-b"><div><b>Predomínio '+T.humor+'</b>'
           +'<em>'+cap1(T.poloH)+' e '+T.poloD+' (quente '+T.quente+'% · seco '+T.seco+'%)</em></div>'
@@ -1276,10 +1276,10 @@ function quickReadHTML(T,A){
 /* 5 · os 48 eixos — cartões de família + trilhos ao abrir */
 const FAM_ORDEM=['físico','emocional','mental','comportamental'];
 const FAM_INFO={
- 'físico':{t:'Físico',i:'🜂',d:'Força, energia, resistência, vitalidade e estrutura corporal.',c:'#8fbf9a'},
- 'emocional':{t:'Emocional',i:'♡',d:'Sensibilidade, reatividade, equilíbrio e expressividade.',c:'#d98a8a'},
- 'mental':{t:'Mental',i:'◈',d:'Raciocínio, clareza, foco, aprendizado e memória.',c:'#8fa8d8'},
- 'comportamental':{t:'Comportamental',i:'✦',d:'Ações, hábitos, disciplina, adaptação e decisões.',c:'#dcb877'}};
+ 'físico':{t:'Físico',i:'🜂',d:'Força, energia, resistência, vitalidade e estrutura corporal.',c:'#4c7a5f'},
+ 'emocional':{t:'Emocional',i:'♡',d:'Sensibilidade, reatividade, equilíbrio e expressividade.',c:'#9a4b3f'},
+ 'mental':{t:'Mental',i:'◈',d:'Raciocínio, clareza, foco, aprendizado e memória.',c:'#41528a'},
+ 'comportamental':{t:'Comportamental',i:'✦',d:'Ações, hábitos, disciplina, adaptação e decisões.',c:'#8a6d3a'}};
 let AX_FAM=null;
 function axisCardHTML(a){
   const esq=a.pos>=50, polo=esq?a.poloA:a.poloB, v=esq?a.pos:100-a.pos;
