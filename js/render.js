@@ -113,22 +113,9 @@ let ACTIVE_PROM=null;
 function renderNatal(){
   const el=$('natal-simple'); if(!el)return;
   if(typeof NATAL==='undefined'||!NATAL){el.innerHTML=emptyState();if($('natal-proms'))$('natal-proms').innerHTML='';return;}
-  const frase=(k,ru,occ)=>{
-    if(!ru.length)return 'Sem regência de casa neste mapa.';
-    if(ru.length===1&&ru[0]===occ)
-      return 'O nativo tende a fazer de '+casaTag(occ)+' o campo central da própria vida.';
-    if(ru.includes(occ))
-      return 'O nativo tende a viver '+casasTag(ru)+' como um mesmo campo, realizado em '+casaTag(occ)+'.';
-    return 'O nativo tende a realizar '+casasTag(ru)+' por meio de '+casaTag(occ)+'.';
-  };
-  el.innerHTML=Object.keys(PT_NAME).map(k=>{
-    const p=NATAL.pts[k]; if(!p)return '';
-    const ru=ruledHouses(k);
-    return '<div class="nsc"><span class="nsc-g">'+(PT_GLYPH[k]||'')+'︎</span>'
-      +'<div class="nsc-b"><b>'+PT_NAME[k]+'</b>'
-      +'<em>rege a '+(ru.map(h=>h+'ª').join(' e a ')||'—')+' · está na casa '+p.h+'</em>'
-      +'<p>'+frase(k,ru,p.h)+'</p></div></div>';
-  }).join('');
+  /* cards compactos: cada planeta como núcleo interno (natal.js) */
+  try{ el.innerHTML=Object.keys(PT_NAME).map(k=>natalCardHTML(k)).join(''); }
+  catch(err){ console.error('natal cards',err); el.innerHTML=''; }
   // promessas — muito resumidas
   const pel=$('natal-proms'); if(!pel)return;
   const now=new Date();
@@ -542,7 +529,7 @@ document.addEventListener('click',e=>{
   const close=e.target.closest&&e.target.closest('[data-tpclose]');
   if(close){TP_LAYER=null;if(typeof syncTempo==='function')syncTempo();return;}
   const rv=e.target.closest&&e.target.closest('[data-rev]');
-  if(rv){revSetKind(rv.dataset.rev);syncTempo();if(typeof renderTrans==='function')try{renderTrans();}catch(x){}return;}
+  if(rv){revSetKind(rv.dataset.rev);syncTempo();return;}
   const card=e.target.closest&&e.target.closest('#tempo-exec [data-layer]');
   if(card){TP_LAYER=(TP_LAYER===card.dataset.layer)?null:card.dataset.layer;syncTempo();
     const det=document.getElementById('tempo-detail');if(det&&TP_LAYER)det.scrollIntoView({behavior:'smooth',block:'nearest'});}
@@ -776,6 +763,7 @@ function rsKeyAspects(R){
 }
 const ASP_TXT={conj:'fusão direta dos temas',harm:'facilidade e fluxo entre os temas',tens:'atrito que exige ajuste'};
 /* ---------- roda zodiacal ---------- */
+const ROMANO_RV=['','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
 function rsWheelSVG(R,S){
   const svg=$('rs-wheel'); const W=(svg&&svg.clientWidth)||620, mob=W<520;
   const H=W, CX=W/2, CY=H/2, RAD=Math.PI/180;
@@ -859,21 +847,28 @@ function renderRS(){
   if(pv)pv.onclick=()=>rsStep(-1); if(nx)nx.onclick=()=>rsStep(1);
   // painel comparativo: revolução × natal
   const rulerNat=NATAL.pts[R.ascRuler];
-  const q=(k,v,wide)=>'<div class="rvq'+(wide?' rvq-w':'')+'"><span>'+k+'</span><b>'+v+'</b></div>';
+  /* cada quadradinho carrega o seu glifo: planeta, signo ou numeral da casa */
+  const pg=k=>'<u class="rvq-g">'+(PT_GLYPH[k]||'')+'︎</u>';
+  const sg=L=>'<u class="rvq-g">'+sgOf(L)+'</u>';
+  const hg=h=>'<u class="rvq-g rvq-h">'+(ROMANO_RV[h]||h)+'</u>';
+  const q=(g,k,v,wide)=>'<div class="rvq'+(wide?' rvq-w':'')+'">'+(g||'')
+    +'<div class="rvq-t"><span>'+k+'</span><b>'+v+'</b></div></div>';
+  const revRul=R.chart&&R.chart.rulers?R.chart.rulers[1]:R.ascRuler;
   $('rs-cmp').innerHTML=
     '<section class="rvmini"><div class="kicker">mapa da revolução</div><div class="rvqs">'
-     +q('Ascendente',sgOf(R.ascLon)+' '+R.ascSignNm+' <i>'+Math.floor(n360(R.ascLon)%30)+'°</i>')
-     +q('Regente do Asc',PT_NAME[R.ascRuler])
-     +q('Planeta do retorno',PT_NAME[R.planetKey]
+     +q(sg(R.ascLon),'Ascendente',R.ascSignNm+' <i>'+Math.floor(n360(R.ascLon)%30)+'°</i>')
+     +q(pg(R.ascRuler),'Regente do Asc',PT_NAME[R.ascRuler]
+        +(R.ascRulerRevHouse?(' <i>· casa '+R.ascRulerRevHouse+'</i>'):''))
+     +q(pg(R.planetKey),'Planeta do retorno',PT_NAME[R.planetKey]
         +(R.planetRevHouse?(' <i>· casa '+R.planetRevHouse+' no mapa da revolução</i>'):''),true)
-     +q('Vigência',fdate(R.start)+(R.end?(' – '+fdate(R.end)):''),true)
+     +q('<u class="rvq-g">✦</u>','Vigência',fdate(R.start)+(R.end?(' – '+fdate(R.end)):''),true)
     +'</div></section>'
     +'<section class="rvmini"><div class="kicker">onde isso vai no natal</div><div class="rvqs">'
-     +q('Asc do retorno','casa '+R.ascNatalHouse+' natal')
-     +q('Regente no natal',rulerNat?('casa '+rulerNat.h+' <i>'+(rulerNat.dig||'')+'</i>'):'—')
-     +(S?q('Profecção','casa '+S.profHouse):'')
-     +(S?q('Senhor do ano',PT_NAME[S.lord]):'')
-     +q('Matéria',cap1(HOUSE_THEME[R.ascNatalHouse]),true)
+     +q(hg(R.ascNatalHouse),'Asc do retorno','casa '+R.ascNatalHouse+' natal')
+     +q(pg(R.ascRuler),'Regente no natal',rulerNat?('casa '+rulerNat.h+' <i>'+(rulerNat.dig||'')+'</i>'):'—')
+     +(S?q(hg(S.profHouse),'Profecção','casa '+S.profHouse):'')
+     +(S?q(pg(S.lord),'Senhor do ano',PT_NAME[S.lord]):'')
+     +q(hg(R.ascNatalHouse),'Matéria',cap1(HOUSE_THEME[R.ascNatalHouse]),true)
     +'</div></section>';
   // cards clicáveis: cada elemento do retorno
   const escopo=S?(' Dentro da firdária de '+(PT_NAME[S.mk]||'—')+(S.sk?(' / '+PT_NAME[S.sk]):'')
@@ -925,219 +920,6 @@ document.addEventListener('click',e=>{
   const c=e.target.closest('#rs-cmp-chk-btn');
   if(c){RS_CMP=!RS_CMP;c.classList.toggle('on',RS_CMP);renderRS();return;}
 });
-
-/* ================= TRÂNSITOS ================= */
-let TMODE='hoje', TRX_SEL=null, TRX_FILTER=null;
-const AREAS={identidade:[1],dinheiro:[2,8],estudos:[3,9],'residência':[4],criatividade:[5],'saúde e rotina':[6],relacionamentos:[7],carreira:[10],grupos:[11],'assuntos privados':[12]};
-function transDate(){const v=$('trans-pick').value;return v?new Date(v+'T12:00:00Z'):new Date();}
-
-/* --- roda de planetas: nós clicáveis com contagem de contatos --- */
-function transWheelSVG(d,hits){
-  const W=560,H=420,CX=W/2,CY=H/2,R=Math.min(W,H)/2-52;
-  const ORDER=['sun','moon','mercury','venus','mars','jupiter','saturn'];
-  const cnt={}; hits.forEach(h=>cnt[h.tKey]=(cnt[h.tKey]||0)+1);
-  const sel=TRX_SEL!=null&&hits[TRX_SEL]?hits[TRX_SEL]:null;
-  const pos={};
-  ORDER.forEach((k,i)=>{const a=(i/ORDER.length)*Math.PI*2;pos[k]=[CX+R*Math.sin(a),CY-R*Math.cos(a)];});
-  let s='<defs>'
-    +'<filter id="nglow" x="-70%" y="-70%" width="240%" height="240%">'
-    +'<feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
-    +'<radialGradient id="halo"><stop offset="0%" stop-color="rgba(255,255,255,0.465)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient>'
-    +'<radialGradient id="nodefill"><stop offset="0%" stop-color="#111a2c"/><stop offset="100%" stop-color="#070b14"/></radialGradient>'
-    +'</defs>';
-  // teia: liga cada nó ao anel central
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+R+'" fill="none" stroke="rgba(255,255,255,0.093)"/>';
-  ORDER.forEach(k=>{const [x,y]=pos[k];
-    s+='<line x1="'+CX+'" y1="'+CY+'" x2="'+x+'" y2="'+y+'" stroke="rgba(255,255,255,'+((cnt[k]||0)?'.3':'.12')+')" stroke-width="1"/>';});
-  // núcleo
-  const rc=R*0.52;
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(rc+16)+'" fill="url(#halo)"/>';
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+rc+'" fill="#05080f" stroke="rgba(255,255,255,0.248)"/>';
-  s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(rc-7)+'" fill="none" stroke="rgba(255,255,255,0.093)"/>';
-  s+='<text x="'+CX+'" y="'+(CY-6)+'" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" letter-spacing="2.6" fill="#8e9bb4">'
-    +(sel?'TRÂNSITO SELECIONADO':'SELECIONE UM TRÂNSITO')+'</text>';
-  s+='<text x="'+CX+'" y="'+(CY+16)+'" text-anchor="middle" font-size="12" font-family="Inter" fill="'+(sel?'#e9eef8':'#6b7793')+'">'
-    +(sel?(PT_NAME[sel.tKey]+' '+sel.gl+' '+sel.np.nm):'Explore as ativações')+'</text>';
-  if(!sel)s+='<text x="'+CX+'" y="'+(CY+34)+'" text-anchor="middle" font-size="12" font-family="Inter" fill="#6b7793">planetárias do momento.</text>';
-  // nós
-  ORDER.forEach(k=>{
-    const [x,y]=pos[k], n=cnt[k]||0, on=sel&&sel.tKey===k, has=n>0, r=on?30:26;
-    s+='<g data-trxpl="'+k+'" style="cursor:pointer">';
-    if(on) s+='<circle cx="'+x+'" cy="'+y+'" r="'+(r+13)+'" fill="url(#halo)"/>';
-    s+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="url(#nodefill)" '
-      +'stroke="'+(on?'rgba(255,255,255,1.0)':(has?'rgba(255,255,255,0.465)':'rgba(255,255,255,0.171)'))+'" '
-      +'stroke-width="'+(on?1.8:1.1)+'"'+(on?' filter="url(#nglow)"':'')+'/>'
-      +'<text x="'+x+'" y="'+(y+6)+'" text-anchor="middle" font-size="18" font-family="Inter" fill="'+(has?'#e9eef8':'#4a5570')+'" style="pointer-events:none">'+(PT_GLYPH[k]||'')+'︎</text>'
-      +'<text x="'+x+'" y="'+(y+r+16)+'" text-anchor="middle" font-size="10.5" font-family="Inter" fill="'+(has?'#9aa6bd':'#4a5570')+'" style="pointer-events:none">'+PT_NAME[k]+'</text>';
-    if(n) s+='<circle cx="'+(x+20)+'" cy="'+(y-18)+'" r="9" fill="#0d1424" stroke="rgba(240,207,142,0.853)"/>'
-      +'<text x="'+(x+20)+'" y="'+(y-14.5)+'" text-anchor="middle" font-size="9" font-family="IBM Plex Mono" fill="var(--gold)" style="pointer-events:none">'+n+'</text>';
-    s+='</g>';
-  });
-  return '<svg id="trans-wheel" viewBox="0 0 '+W+' '+H+'">'+s+'</svg>';
-}
-/* --- cartão de detalhe curto de um trânsito --- */
-function transDetailHTML(hit,d,S){
-  if(!hit)return '<div class="card trx-empty"><div class="kicker">detalhe</div>'
-    +'<p>Escolha um planeta na roda ou um trânsito na lista para ver o detalhe.</p></div>';
-  const T=transitoTexto(hit,d,S);
-  const dur=Math.max(1,Math.round((T.janela.end-T.janela.start)/DAY));
-  return '<div class="card trxcard">'
-    +'<div class="trx-h"><span class="trx-g">'+(PT_GLYPH[hit.tKey]||'')+'︎</span>'
-      +'<div><div class="trx-t">'+T.titulo+'</div>'
-      +'<div class="trx-sub">'+hit.orb.toFixed(1)+'° · '+(T.lento?'contexto (planeta lento)':'disparador (planeta rápido)')+' · casa '+hit.np.h+'</div></div>'
-      +'<span class="tag '+(hit.cls==='tens'?'red':hit.cls==='harm'?'green':'')+'">'+({conj:'conjunção',harm:'harmônico',tens:'tenso'})[hit.cls]+'</span></div>'
-    +'<div class="trx-chips"><span>'+fmtOrb(hit.orb)+'</span>'
-      +'<span>'+SIGN_ELEM[signOf(hit.lon)]+'</span><span>'+SIGN_MODE[signOf(hit.lon)]+'</span></div>'
-    +'<p class="trx-ef">'+T.efeito+'</p>'
-    +(function(){const o=orient(hit,d);
-      return '<p class="trx-fav"><b>Favorece:</b> '+(o.fav.slice(0,2).join('; ')||'—')+'.</p>'
-           +'<p class="trx-cau"><b>Exige cautela:</b> '+(o.cau.slice(0,2).join('; ')||'—')+'.</p>';})()
-    +'<div class="trx-sec"><span>Área da vida ativada</span><p>'
-      +cap1(casasTag(ruledHouses(hit.nk).slice(0,2)))+(hit.np.h?(' · casa '+hit.np.h):'')+'</p></div>'
-    +'<div class="trx-sec"><span>Por que importa agora</span><p>'+T.porque+'</p></div>'
-    +'<div class="trx-win">'
-      +'<div><span>Início</span>'+fdate(T.janela.start)+'</div>'
-      +'<div><span>Pico</span>'+fdate(T.janela.peak)+'</div>'
-      +'<div><span>Término</span>'+fdate(T.janela.end)+'</div>'
-      +'<div><span>Duração</span>'+dur+' dias</div></div>'
-    +(typeof fundamentoHTML==='function'?fundamentoHTML(['transito','regencia','ritmo','alvo'],[T.tecnico]):'')
-    +'<div class="trx-acts"><button class="btn" data-trxmap>Ver no mapa</button>'
-      +'<button class="btn" data-trxwin>Janela completa</button></div>'
-    +'</div>';
-}
-/* --- barra lateral: por planeta e por tema --- */
-function transSideHTML(d,all){
-  const cnt={}; all.forEach(h=>cnt[h.tKey]=(cnt[h.tKey]||0)+1);
-  const pls=['sun','moon','mercury','venus','mars','jupiter','saturn'];
-  let s='<div class="trx-k">Planetas</div>';
-  s+='<button class="trx-i'+(TRX_FILTER?'':' on')+'" data-trxf=""><span class="ti-g">◎</span>'
-    +'<span class="ti-n">Todos</span><span class="ti-c">'+all.length+'</span></button>';
-  pls.forEach(k=>{ s+='<button class="trx-i'+(TRX_FILTER==='pl:'+k?' on':'')+'" data-trxf="pl:'+k+'">'
-    +'<span class="ti-g">'+(PT_GLYPH[k]||'')+'︎</span><span class="ti-n">'+PT_NAME[k]+'</span>'
-    +'<span class="ti-c">'+(cnt[k]||0)+'</span></button>';});
-  s+='<div class="trx-tot"><span>Total de trânsitos</span><b>'+all.length+'</b></div>';
-  return s;
-}
-/* --- vista principal: só os 3–5 trânsitos realmente relevantes --- */
-const AREA_TEMAS=[['Comunicação',[3],'✉'],['Estudos',[9],'✎'],['Expansão',[9,11],'✈'],
-  ['Relacionamentos',[7],'♡'],['Ação',[1,6],'✦'],['Estrutura',[10],'⌂']];
-function renderTransHoje(d){
-  const S=tempoState(d);
-  let rel=transitosRelevantes(d,5);
-  const all=transitHits(d).map(h=>Object.assign(h,{pri:transitPriority(h,d,S)}));
-  if(TRX_FILTER&&TRX_FILTER.startsWith('pl:')){
-    const k=TRX_FILTER.slice(3);
-    rel=all.filter(h=>h.tKey===k).sort((a,b)=>b.pri.score-a.pri.score||a.orb-b.orb).slice(0,5);
-  }
-  if(TRX_SEL==null||!rel[TRX_SEL])TRX_SEL=rel.length?0:null;
-  const sel=TRX_SEL!=null?rel[TRX_SEL]:null;
-  const apl=h=>{const w=hitWindow(h,d);return w.peak>=d?'aplicando':'separando';};
-  const lista=rel.map((h,i)=>{const T=transitoTexto(h,d,S);
-    return '<button class="trx-row '+h.cls+(i===TRX_SEL?' on':'')+'" data-trxi="'+i+'">'
-      +'<span class="tr-g">'+(PT_GLYPH[h.tKey]||'')+'︎</span>'
-      +'<span class="tr-t">'+T.titulo.replace(' natal','')+'</span>'
-      +'<span class="tr-m">'+fmtOrb(h.orb)+'</span>'
-      +'<span class="tr-s">'+apl(h).toUpperCase()+'</span>'
-      +'<span class="tr-x">⌄</span></button>';}).join('')
-    ||'<p class="note">Nenhum trânsito atinge o limiar de relevância nesta data.</p>';
-  // blocos inferiores
-  const relev=rel.slice(0,3).map((h,i)=>{const T=transitoTexto(h,d,S);
-    const dd=Math.round((T.janela.peak-d)/DAY);
-    return '<div class="trb"><span class="trb-n">'+(i+1)+'</span>'
-      +'<b>'+PT_NAME[h.tKey]+' '+h.gl+' '+h.np.nm+'</b>'
-      +'<span class="trb-d">'+fdate(T.janela.peak).replace(/ \d{4}$/,'')+'</span>'
-      +'<em class="trb-t">'+(dd===0?'HOJE':dd>0?('EM '+dd+'D'):('HÁ '+(-dd)+'D'))+'</em></div>';}).join('')
-    ||'<p class="note">—</p>';
-  const assunt='<div class="ass">'+AREA_TEMAS.map(([nm,hs,ic])=>{
-    const n=rel.filter(h=>[h.np.h].concat(ruledHouses(h.nk)).some(x=>hs.includes(x))).length;
-    return '<div class="ass-i'+(n?' on':'')+'"><span class="ass-g">'+ic+'</span><b>'+nm+'</b>'
-      +'<span class="ass-d">'+[0,1,2,3,4].map(i=>'<i'+(i<Math.min(5,n*2)?' class="on"':'')+'></i>').join('')+'</span></div>';
-  }).join('')+'</div>';
-  const agenda=rel.slice(0,3).map(h=>{const T=transitoTexto(h,d,S);
-    return '<div class="agd"><span class="agd-d">'+fdate(T.janela.peak).replace(/ \d{4}$/,'').toUpperCase()+'</span>'
-      +'<b>'+PT_NAME[h.tKey]+' '+h.gl+' '+h.np.nm+'</b>'
-      +'<em class="agd-t '+h.cls+'">'+(h.cls==='tens'?'TENSÃO':'EXATO')+'</em></div>';}).join('')
-    ||'<p class="note">—</p>';
-  return '<div class="trx">'
-    +'<aside class="trx-side">'+transSideHTML(d,all.filter(h=>h.pri.score>=3))+'</aside>'
-    +'<div class="trx-mid">'+transWheelSVG(d,rel)+'<div class="trx-list">'+lista+'</div></div>'
-    +'<div class="trx-det">'+transDetailHTML(sel,d,S)+'</div>'
-    +'</div>'
-    +'<div class="trx-bottom">'
-      +'<div class="card trx-blk"><div class="kicker">☆ trânsitos mais relevantes</div>'+relev
-        +'<button class="trx-more" data-trxall>Ver todos os trânsitos ›</button></div>'
-      +'<div class="card trx-blk"><div class="kicker">✦ assuntos ativados</div>'+assunt+'</div>'
-      +'<div class="card trx-blk"><div class="kicker">◷ agenda crítica</div>'+agenda
-        +'<button class="trx-more" data-trx30>Ver agenda completa ›</button></div>'
-    +'</div>'
-    +'<p class="note trx-foot">✦ Os trânsitos mostram tendências do céu corrente sobre o mapa natal — use como guia de consciência, não como previsão fechada.</p>';
-}
-function renderTrans(){
-  if(typeof NATAL==='undefined'||!NATAL){$('trans-body').innerHTML=emptyState();return;}
-  $('trans-eph').textContent='· efemérides: '+(usingAE?'Astronomy Engine':'longitudes médias (aprox.)');
-  const d=transDate();
-  let html='';
-  if(TMODE==='hoje') html=renderTransHoje(d);
-  if(TMODE==='30d'){
-    const ev=scanEvents(d,30);
-    html='<h3>Próximos 30 dias a partir de '+fdate(d)+'</h3>';
-    const fav=ev.filter(e=>e.cls==='harm'),ten=ev.filter(e=>e.cls==='tens');
-    html+='<div class="grid2"><div class="card"><div class="kicker">janelas favoráveis</div>'+(fav.slice(0,8).map(e=>'<div class="evrow harm"><span class="d">'+fdate(e.d)+'</span><span class="t">'+e.txt+'</span></div>').join('')||'—')+'</div>'
-      +'<div class="card"><div class="kicker">períodos tensos</div>'+(ten.slice(0,8).map(e=>'<div class="evrow tens"><span class="d">'+fdate(e.d)+'</span><span class="t">'+e.txt+'</span></div>').join('')||'—')+'</div></div>';
-    html+='<div class="card"><div class="kicker">cronologia: exatos, ingressos, estações, lunações, passagens</div>'
-      +ev.map(e=>'<div class="evrow '+e.cls+'"><span class="d">'+fdate(e.d)+'</span><span class="t">'+e.txt+'</span></div>').join('')+'</div>';
-  }
-  if(TMODE==='planeta') html='<div class="toolrow"><select id="tp-sel">'+TB.map(t=>'<option value="'+t[1]+'">'+t[2]+' '+PT_NAME[t[1]]+'</option>').join('')+'</select></div><div id="tp-out"></div>';
-  if(TMODE==='area')    html='<div class="toolrow"><select id="ta-sel">'+Object.keys(AREAS).map(a=>'<option>'+a+'</option>').join('')+'</select></div><div id="ta-out"></div>';
-  $('trans-body').innerHTML=html;
-  if(TMODE==='planeta'){$('tp-sel').onchange=()=>renderTransPlanet(d);renderTransPlanet(d);}
-  if(TMODE==='area'){$('ta-sel').onchange=()=>renderTransArea(d);renderTransArea(d);}
-}
-/* interações da aba de trânsitos */
-document.addEventListener('click',e=>{
-  if(!e.target.closest)return;
-  const f=e.target.closest('[data-trxf]');
-  if(f){TRX_FILTER=f.dataset.trxf||null;TRX_SEL=null;renderTrans();return;}
-  const row=e.target.closest('[data-trxi]');
-  if(row){TRX_SEL=+row.dataset.trxi;renderTrans();return;}
-  const pl=e.target.closest('[data-trxpl]');
-  if(pl){TRX_FILTER='pl:'+pl.dataset.trxpl;TRX_SEL=null;renderTrans();return;}
-});
-function renderTransPlanet(d){
-  const key=$('tp-sel').value, bn=TB.find(t=>t[1]===key)[0], g=TB.find(t=>t[1]===key)[2];
-  const L=tlon(bn,d), house=houseOfLon(L), spd=speedOf(bn,d);
-  const hits=scoredHits(d,0).filter(h=>h.tKey===key);
-  const age=ageAt(d), f=firdAt(age), p=profAt(age);
-  const roles=[];
-  if(key===f.majorKey)roles.push('senhor da firdária maior');
-  if(key===f.subKey)roles.push('senhor da sub-firdária');
-  if(key===p.lordKey)roles.push('Senhor do Ano');
-  if(ruledHouses(key).includes(p.houseN))roles.push('rege a casa profectada');
-  // próximas ativações 90d
-  const nexts=[];
-  for(let i=1;i<=90&&nexts.length<5;i++){
-    const dd=new Date(d.getTime()+i*DAY);
-    transitHits(dd).filter(h=>h.tKey===key&&h.orb<0.3).forEach(h=>{
-      const k2=h.gl+h.np.nm; if(!nexts.find(n=>n.k===k2)) nexts.push({k:k2,d:dd,h});
-    });
-  }
-  $('tp-out').innerHTML='<div class="card"><div class="kicker">'+g+' '+PT_NAME[key]+' em '+fdate(d)+'</div>'
-    +'<p style="font-size:.85rem"><b style="color:var(--ivory)">'+zfmt(L)+'</b> · transita a <b>casa natal '+house+'</b> ('+HOUSE_SIG[house].s+') · '+(spd<0?'retrógrado':'direto')
-    +(roles.length?(' · <span class="tag gold">'+roles.join(' · ')+'</span>'):'')+'</p>'
-    +'<h4>Aspectos ao natal agora</h4>'+(hits.map(h=>renderHit(h,d,false)).join('')||'<p>nenhum em orbe.</p>')
-    +'<h4>Próximas ativações exatas (90 dias)</h4>'+(nexts.map(n=>'<div class="evrow info"><span class="d">'+fdate(n.d)+'</span><span class="t">'+g+' '+n.h.gl+' '+n.h.np.g+' '+n.h.np.nm+' natal — toca também as casas '+(ruledHouses(n.h.nk).join(', ')||'—')+'</span></div>').join('')||'<p>—</p>')
-    +'</div>';
-}
-function renderTransArea(d){
-  const area=$('ta-sel').value, houses=AREAS[area];
-  const hits=scoredHits(d,0).filter(h=>{
-    const touched=[h.np.h].concat(ruledHouses(h.nk));
-    return houses.some(x=>touched.includes(x));
-  }).slice(0,6);
-  $('ta-out').innerHTML='<div class="card"><div class="kicker">'+area+' · casas '+houses.join(', ')+' · '+fdate(d)+'</div>'
-    +'<p style="font-size:.8rem">'+houses.map(h=>'casa '+h+': '+HOUSE_SIG[h].s).join(' · ')+'</p>'
-    +(hits.map(h=>renderHit(h,d,true)).join('')||'<p>nenhuma ativação relevante nesta área hoje.</p>')+'</div>';
-}
 
 /* ================= ELETIVA ================= */
 function renderEletivaInit(){
