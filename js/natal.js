@@ -104,6 +104,15 @@ function natalCasa(N){
 function natalSigno(N){
   return {t:SIGNS[N.s],d:cap1(PL_MODO_EL[SIGN_ELEM[N.s]])+'.'};
 }
+/* Barbault: trecho visível (abertura da Psicologia) + íntegra sob demanda */
+function natalBarb(s){
+  const T=(typeof BARB_SIGNO!=='undefined')?BARB_SIGNO[s]:null; if(!T)return null;
+  const i=T.indexOf('Psicologia:');
+  let exc=i>=0?T.slice(i+11):T;
+  const fim=exc.search(/[.!?]\s+[A-ZÀ-Ú][^.!?]*[.!?]\s/);
+  exc=exc.slice(0, exc.indexOf('.', 380)>0?exc.indexOf('.',380)+1:420).trim();
+  return {exc,integra:T};
+}
 
 /* ---------- render: chips + painel único ---------- */
 let NX_SEL=null, NX_DET=null;
@@ -129,8 +138,20 @@ function natalPainelHTML(k){
     +'</header>'
     +'<p class="npan-n">'+cap1(N.nat.n)+' — '+N.nat.d+'.</p>'
     +bloco(R.t,R.d)+bloco(C.t,C.d)+bloco(S.t,S.d)
+    +(function(){const B=natalBarb(N.s); if(!B)return '';
+      return '<div class="npan-ps barb"><span>'+SIGNS[N.s]+' segundo Barbault</span>'
+        +'<p>'+B.exc+'</p>'
+        +'<details class="np-int"><summary>Barbault, na íntegra</summary>'
+        +'<div class="np-txt">'+B.integra.split(/\n\n+/).map(x=>'<p>'+x.replace(/\n/g,' ')+'</p>').join('')+'</div></details></div>';})()
     +(N.camadas?('<div class="npan-ps"><span>leitura psicológica'
-      +(N.camadas.psi.titulo?(' · '+N.camadas.psi.titulo):'')+'</span><p>'+N.camadas.psi.texto+'</p></div>'):'')
+      +(N.camadas.psi.titulo?(' · '+N.camadas.psi.titulo):'')+'</span>'
+      +'<p>'+N.camadas.sintese+'</p>'
+      +'<p class="np-sub">'+N.camadas.psi.texto+'</p>'
+      +(typeof OL_TEXTO!=='undefined'&&OL_TEXTO[N.casa]&&OL_TEXTO[N.casa][N.k]
+        ?('<details class="np-int"><summary>'+PT_NAME[N.k]+' na casa '+N.casa+' — o texto integral</summary>'
+          +'<div class="np-txt">'+OL_TEXTO[N.casa][N.k].split(/\n\n+/).map(x=>'<p>'+x.replace(/\n/g,' ')+'</p>').join('')+'</div></details>')
+        :'')
+      +'</div>'):'')
     +'<button class="npan-x" data-nxdet="'+k+'">Estrutura natal <i>'+(NX_DET===k?'⌄':'›')+'</i></button>'
     +(NX_DET===k?natalEstruturaHTML(N):'')
     +'</article>';

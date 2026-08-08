@@ -112,16 +112,6 @@ function renderHit(h,d,withOrient){
 let ACTIVE_PROM=null;
 function renderNatal(){
   if(typeof renderNatalTab==='function'){try{renderNatalTab();}catch(e){console.error('natal',e);}}
-  const pel=$('natal-proms'); if(!pel)return;
-  if(typeof NATAL==='undefined'||!NATAL){pel.innerHTML='';return;}
-  const now=new Date();
-  pel.innerHTML=(typeof PROMESSAS!=='undefined'?PROMESSAS:[]).map(pr=>{
-    const st=(typeof promiseState==='function')?promiseState(pr,now):{estado:'latente'};
-    const cls={ativada:'alta','disponível':'moderada',latente:'latente'}[st.estado]||'latente';
-    return '<div class="nsp"><span class="nsp-t">'+pr.t+'</span>'
-      +'<span class="nsp-m">'+(PT_GLYPH[pr.pl]||'')+'︎ '+PT_NAME[pr.pl]+' · casas '+(pr.casas||[]).map(h=>h+'ª').join(', ')+'</span>'
-      +'<span class="pp-lv '+cls+'">'+st.estado+'</span></div>';
-  }).join('')||'<p class="note">nenhuma promessa detectada.</p>';
 }
 function manifestFor(k){
   const M={sun:'cargos de frente, autoria assinada, avaliação pública do próprio nome; saúde ligada a coração e vitalidade',
@@ -1109,26 +1099,7 @@ function renderPers(){
     +'<div class="pf-cr"><span>Sustentação astrológica</span>'+C.sust+' — '+C.test.length+' testemunhos repetidos.</div>'
     +'<p class="pf-aviso">Esta seção descreve tendências constitucionais da tradição. Não diagnostica, não prevê enfermidades e não substitui avaliação médica. Trate como suscetibilidade tradicional que merece atenção, nunca como conclusão clínica.</p>'
     +'</div></details>';
-  // 7 · correspondências tipológicas
-  const Y=typology(A);
-  if(Y)html+='<div class="card pf-tipo"><div class="kicker">correspondências tipológicas</div>'
-    +'<p class="note" style="margin-top:0">Aproximações derivadas do padrão GLOBAL dos 48 eixos — nunca de um signo ou planeta isolado.</p>'
-    +'<div class="pf-tgrid">'
-     +'<button class="pf-t clic" data-tip="mbti"><span class="pf-k">MBTI</span><b>'+Y.mbti+'</b>'
-      +'<em>'+((typeof MBTI_FRASE!=='undefined'&&MBTI_FRASE[Y.mbti])||'')+'</em>'
-      +'<i>estimativa principal · alternativa: '+Y.mbtiAlt+'</i><u>Ver perfil →</u></button>'
-     +'<button class="pf-t clic" data-tip="enn"><span class="pf-k">Eneagrama</span><b>Tipo '+Y.enn+' · '+ENN_NOME[Y.enn]+'</b>'
-      +'<em>'+((typeof ENN!=='undefined'&&ENN[Y.enn])?ENN[Y.enn].frase:'')+'</em>'
-      +'<i>estimativa principal · alternativa: tipo '+Y.ennAlt+'</i><u>Ver perfil →</u></button>'
-     +'<button class="pf-t clic" data-tip="soc"><span class="pf-k">Sociônica</span><b>'+Y.soc+' · '+(SOC_NOME[Y.soc]||'—')+'</b>'
-      +'<em>'+((typeof SOC_FRASE!=='undefined'&&SOC_FRASE[Y.soc])||'')+'</em>'
-      +'<i>estimativa principal · alternativa: '+Y.socAlt+'</i><u>Ver perfil →</u></button>'
-    +'</div>'
-    +'<div class="pf-cr"><span>Eixos que sustentam a aproximação</span>'+(Y.sust.join(' · ')||'—')+'</div>'
-    +'<div class="pf-cr"><span>Divergências que impedem certeza</span>'
-      +(Y.diverg.length?Y.diverg.join('; ')+'.':'as quatro dicotomias estão suficientemente definidas, mas a correspondência segue sendo aproximação.')+'</div>'
-    +'<p class="note">Dimensões agregadas: E '+Y.dims.E+'% · N '+Y.dims.N+'% · F '+Y.dims.F+'% · J '+Y.dims.J+'%.</p>'
-    +'</div>';
+  // correspondências tipológicas migraram para a aba Tipologias
   // 8 · fundamento técnico geral
   html+='<details class="card pf-fund"><summary><span class="kicker" style="margin:0">fundamento técnico</span><b>pesos, testemunhos e regras usados</b></summary>'
     +'<div class="pf-cb">'
