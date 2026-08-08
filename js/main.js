@@ -11,7 +11,8 @@ function irPara(p){
   if(p==='rs') renderRS();
   if(p==='sin'){try{renderSin();}catch(e){console.error(e);}}
   if(p==='config') renderConfig();
-  if(p==='perfil'){try{renderTemp();renderPers();}catch(e){console.error(e);}}
+  if(p==='perfil'){try{renderSaude();renderTemp();renderPers();}catch(e){console.error(e);}}
+  if(p==='tipos'){try{renderTipos();}catch(e){console.error(e);}}
   if(p==='natal'){try{renderNatal();}catch(e){console.error(e);}}
 }
 ['nav','bnav'].forEach(id=>{
@@ -73,7 +74,7 @@ function applyView(){
   const mob = m==='mobile' || (m==='auto' && VIEW_MQ.matches);
   document.body.classList.toggle('is-mobile',mob);
   document.querySelectorAll('#view-switch [data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===m));
-  try{if(typeof TL_MODE!=='undefined'&&TL_MODE==='orbita')drawCord();}catch(e){}
+
 }
 function setView(m){localStorage.setItem('ag_view',m);applyView();}
 function bindView(){
@@ -87,7 +88,7 @@ function bindView(){
 }
 /* boot */
 function renderAll(){
-  const steps=[renderNatal,renderTemp,renderPers,renderRS,
+  const steps=[renderNatal,renderSaude,renderTemp,renderPers,renderRS,
     ()=>{CURSOR=new Date();refreshNPTS();syncTempo();},renderSin,renderLedger];
   steps.forEach(fn=>{try{fn();}catch(err){console.error('render falhou:',fn.name||'anon',err);}});
   document.getElementById('brand-sub').textContent=NATAL?(NATAL.meta.name+' · '+NATAL.sect+' · '+new Date(BIRTH).toISOString().slice(0,10)):'motor interpretativo tradicional';
@@ -183,6 +184,7 @@ function boot(){
   try{bindPreditivas();}catch(e){console.error(e);}
   try{bindSinastria();}catch(e){console.error(e);}
   try{bindNatal();}catch(e){console.error(e);}
+  try{bindTipos();}catch(e){console.error(e);}
   if(loadFromState()){
     document.getElementById('in-natal').value=STATE.natal.text;
     document.getElementById('in-name').value=STATE.natal.name||'';

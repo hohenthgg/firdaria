@@ -4,8 +4,7 @@
    Três colunas: técnicas · visualização · síntese do momento
    A leitura longa (IA e detalhe técnico) vai para um drawer lateral.
    ============================================================ */
-let TL_MODE=(function(){try{return localStorage.getItem('agx_tlmode')||'sintese';}catch(e){return 'sintese';}})();
-function tlSetMode(m){TL_MODE=m;try{localStorage.setItem('agx_tlmode',m);}catch(e){}syncTempo();}
+/* visão única: Síntese (a Órbita foi removida) */
 
 /* glifo de signo como ícone de texto: o seletor de variação impede o emoji */
 function sgGlyph(idx){return (SIGN_GLYPHS[idx]||'')+'\uFE0E';}
@@ -65,8 +64,9 @@ function tlTracksHTML(d,S){
   const R=S.rev;
   if(R&&R.end){
     const dur=R.end-R.start, pos=(d.getTime()-R.start.getTime())/dur*100, at=Math.floor(pos/100*12);
+    const s0=signOf(R.ascLon);
     let s4='';
-    for(let i=0;i<12;i++)s4+=seg(1,'',i===at,null,null);
+    for(let i=0;i<12;i++)s4+=seg(1,sgGlyph((s0+i)%12),i===at,null,SIGNS[(s0+i)%12]);
     out+=faixa('Revolução',sgOf(R.ascLon)+' '+R.ascSignNm,
       fdate(R.start)+' – '+fdate(R.end), s4, pos);
   } else {
@@ -140,16 +140,8 @@ function syncTempo(){
       sel.innerHTML=revKinds().map(k=>'<option value="'+k.id+'">'+k.label+'</option>').join('');
       sel.dataset.built='1'; sel.onchange=()=>{revSetKind(sel.value);syncTempo();}; }
     sel.value=REV_SEL; }
-  document.querySelectorAll('#tl-mode [data-tlm]').forEach(b=>b.classList.toggle('on',b.dataset.tlm===TL_MODE));
   const viz=$('tl-viz');
-  if(viz){
-    if(TL_MODE==='orbita'){
-      viz.innerHTML='<div class="tl-orbit"><svg id="cord"></svg></div>';
-      try{drawCord();}catch(e){console.error('cord',e);}
-    } else {
-      try{viz.innerHTML=tlTracksHTML(d,S);}catch(e){console.error('tracks',e);viz.innerHTML='';}
-    }
-  }
+  if(viz){try{viz.innerHTML=tlTracksHTML(d,S);}catch(e){console.error('tracks',e);viz.innerHTML='';}}
   if($('tempo-exec'))$('tempo-exec').innerHTML=tempoExecCards(d);
   if($('tl-side'))$('tl-side').innerHTML=tlSideHTML(d,S);
   try{ if(typeof renderPreditivas==='function')renderPreditivas(); }catch(e){console.error('preditivas',e);}
@@ -157,8 +149,6 @@ function syncTempo(){
 function bindTimeline(){
   const p=$('p-tempo'); if(!p)return;
   p.addEventListener('click',e=>{
-    const m=e.target.closest&&e.target.closest('[data-tlm]');
-    if(m){tlSetMode(m.dataset.tlm);return;}
     const g=e.target.closest&&e.target.closest('[data-goto]');
     const lay=e.target.closest&&e.target.closest('[data-layer]');
     // setores da mandala e segmentos das faixas navegam no tempo
@@ -175,5 +165,4 @@ function bindTimeline(){
   const dr=$('tl-drawer');
   if(dr)dr.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-drwclose]'))tlDrawerClose();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')tlDrawerClose();});
-  window.addEventListener('resize',()=>{try{if(TL_MODE==='orbita'&&$('p-tempo').classList.contains('on'))drawCord();}catch(e){}});
 }
