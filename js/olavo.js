@@ -113,25 +113,73 @@ const OL_SINTESE={
       jupiter:'Age como se tivesse o poder de amoldar a seus propósitos o que se passa nos bastidores.',
       saturn:'É impelido a integrar nos seus esquemas consolidados — ou a amoldá-los a — o que vem de fora do seu espaço vital.'}
 };
-/* rótulo da inteligência solar por casa — o único que o material nomeia */
-const OL_INTEL={1:'autônoma',2:'realista',3:'associativa',4:'afetiva',5:'operativa',6:'funcional',
-  7:'dialógica',8:'crítica',9:'doutrinal',10:'hierárquica',11:'estratégica',12:'oblíqua'};
+/* Nomenclatura do próprio material. Só o Sol recebe nome explícito
+   ("Inteligência Intuitiva X"); para os demais o app não inventa
+   rótulo nem atribui invenção ao autor. */
+const OL_INTEL={1:'Autônoma',2:'Realista',3:'Associativa',4:'Afetiva',5:'Operativa',6:'Funcional',
+  7:'Dialógica',8:'Crítica',9:'Doutrinal',10:'Hierárquica',11:'Estratégica',12:'Oblíqua'};
+/* os rótulos que constam literalmente do material impresso */
+const OL_INTEL_FONTE={1:'Inteligência Intuitiva Autônoma',2:'Inteligência Intuitiva Realista',
+  11:'Inteligência Intuitiva Estratégica'};
 
 /* o material só cobre estes seis */
 const olavoTem=k=>!!OL_MODO[k];
-/* a leitura psicológica crua: modo do planeta × campo da casa ocupada */
+
+/* ============================================================
+   DUAS CAMADAS — e não uma substituição.
+
+   camada A (psicológica) : a casa OCUPADA descreve a estrutura
+                            psíquica, o modo de funcionamento.
+   camada B (conteúdo)    : as casas REGIDAS dizem qual matéria
+                            concreta esse planeta carrega.
+   síntese                : o conteúdo de B passa a operar dentro
+                            do modo de A. Nunca "os estudos viram
+                            apoteose" — e sim "os estudos passam a
+                            ser conduzidos por uma lógica de
+                            projeto e de imagem futura".
+   ============================================================ */
+function olavoCamadas(k,hOcup,regidas){
+  if(!olavoTem(k))return null;
+  const M=OL_MODO[k], C=OL_CAMPO[hOcup];
+  if(!M||!C)return null;
+  const psi={
+    titulo:OL_INTEL_FONTE[hOcup]&&k==='sun'?OL_INTEL_FONTE[hOcup]:null,
+    campo:C.c, desc:C.d,
+    texto:cap1(M.v)+' '+C.c+'.',
+    fonte:OL_SINTESE[hOcup]?OL_SINTESE[hOcup][k]:null
+  };
+  const conteudo=regidas&&regidas.length?{
+    casas:regidas,
+    texto:cap1(lista(regidas.map(h=>HOUSE_TAG[h])))+' '+(regidas.length>1?'são':'é')
+      +' a matéria concreta que '+PT_NAME[k]+' administra neste mapa.'
+  }:{casas:[],texto:PT_NAME[k]+' não administra casa alguma neste mapa: age só pelo modo, sem matéria própria.'};
+  return {psi,conteudo,sintese:olavoSintese(k,hOcup,regidas)};
+}
+/* a fusão — o conteúdo entra no modo, sem virar profecia */
+const OL_FUSAO={
+  1 :'passam a ser tratados como extensão da própria imagem: o nativo se reconhece por eles',
+  2 :'passam a ser avaliados pelo que rendem de concreto e palpável',
+  3 :'passam a circular como assunto de conversa, estudo e troca imediata',
+  4 :'passam a se enraizar no fundo íntimo, ligados à origem e ao que não se justifica',
+  5 :'passam a ser exercidos como demonstração de capacidade e como criação própria',
+  6 :'passam a ser administrados como obrigação diária, sob a lógica do serviço e do ajuste',
+  7 :'passam a ser negociados com outro: dependem de acordo, contrato ou confronto',
+  8 :'passam a depender do que não se controla — de terceiros, de partilhas e de mudanças de regime',
+  9 :'passam a ser organizados por uma doutrina: entram no quadro geral de sentido',
+  10:'passam a ser expostos publicamente e medidos pela posição que conferem',
+  11:'passam a ser incorporados a um projeto de longo prazo e à imagem futura que o nativo pretende construir',
+  12:'passam a operar fora de vista, em bastidor, sem reconhecimento imediato'};
+function olavoSintese(k,hOcup,regidas){
+  const F=OL_FUSAO[hOcup];
+  if(!regidas||!regidas.length)
+    return cap1(OL_MODO[k].v)+' '+OL_CAMPO[hOcup].c+' — sem matéria administrada, isso fica no modo de operar, não em um assunto definido.';
+  const mat=lista(regidas.map(h=>HOUSE_TAG[h]));
+  const pl=regidas.length>1||/\se\s/.test(mat);
+  return cap1(mat)+' — matéria que '+PT_NAME[k]+' administra — '
+    +(pl?F:F.replace(/^passam /,'passa '))+'.';
+}
+/* compatibilidade: a leitura crua do material, sem modulação */
 function olavoBruto(k,h){
   if(!olavoTem(k)||!OL_SINTESE[h])return null;
   return OL_SINTESE[h][k]||null;
-}
-/* a leitura modulada: o mesmo modo, mas o campo trocado pelo que o planeta
-   realmente rege neste mapa. É aqui que a casa deixa de ser genérica. */
-function olavoModulado(k,hOcup,regidas){
-  const M=OL_MODO[k], C=OL_CAMPO[hOcup];
-  if(!M||!C)return null;
-  if(!regidas||!regidas.length)
-    return cap1(M.v)+' '+C.c+'.';
-  const alvo=(typeof casasTag==='function')?casasTag(regidas):regidas.map(h=>h+'ª').join(' e a ');
-  return cap1(M.v)+' '+C.c+' — e, como '+(regidas.length>1?'rege':'rege')+' '+alvo
-    +', é '+alvo+' que '+(regidas.length>1?'entram':'entra')+' nesse regime.';
 }

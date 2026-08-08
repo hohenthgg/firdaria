@@ -1,17 +1,37 @@
 /* ============================================================
    MAIN.JS — navegação, boot, ligação dos controles
    ============================================================ */
-document.getElementById('nav').addEventListener('click',e=>{
-  const b=e.target.closest('button'); if(!b)return;
-  document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x===b));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+b.dataset.p));
-  if(b.dataset.p==='tempo') syncTempo();
-  if(b.dataset.p==='rs') renderRS();
-  if(b.dataset.p==='sin'){try{renderSin();}catch(e){console.error(e);}}
-  if(b.dataset.p==='config') renderConfig();
-  if(b.dataset.p==='perfil'){try{renderTemp();renderPers();}catch(e){console.error(e);}}
-  if(b.dataset.p==='natal'){try{renderNatal();}catch(e){console.error(e);}}
+/* ---- navegação: sidebar (desktop), bottom nav (mobile) e folha ⋯ ---- */
+function irPara(p){
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
+  document.querySelectorAll('#bnav button').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));
+  window.scrollTo({top:0,behavior:'instant'});
+  if(p==='tempo') syncTempo();
+  if(p==='rs') renderRS();
+  if(p==='sin'){try{renderSin();}catch(e){console.error(e);}}
+  if(p==='config') renderConfig();
+  if(p==='perfil'){try{renderTemp();renderPers();}catch(e){console.error(e);}}
+  if(p==='natal'){try{renderNatal();}catch(e){console.error(e);}}
+}
+['nav','bnav'].forEach(id=>{
+  const el=document.getElementById(id); if(!el)return;
+  el.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.p)irPara(b.dataset.p);});
 });
+/* folha administrativa */
+function admOpen(v){const s=document.getElementById('adm-sheet'); if(!s)return;
+  s.hidden=!v; document.body.classList.toggle('sheet-open',v);}
+(function(){
+  const mb=document.getElementById('tb-more'); if(mb)mb.onclick=()=>admOpen(true);
+  const sh=document.getElementById('adm-sheet'); if(!sh)return;
+  sh.addEventListener('click',e=>{
+    if(e.target.closest('[data-admclose]')||e.target===sh.querySelector('.sheet-bk')){admOpen(false);return;}
+    if(e.target.closest('[data-admprint]')){admOpen(false);setTimeout(()=>window.print(),120);return;}
+    const b=e.target.closest('.sheet-i[data-p]');
+    if(b){admOpen(false);irPara(b.dataset.p);return;}
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')admOpen(false);});
+})();
 /* Tempo */
 document.getElementById('tempo-pick').addEventListener('change',function(){
   if(this.value){CURSOR=new Date(this.value+'T12:00:00Z');syncTempo();}
