@@ -1009,6 +1009,73 @@ function pvSubtec(ev){
   if(ev.temProg)t.push('progressão');
   return t.join(' · ');
 }
+/* ============================================================
+   A CORDA ARTICULADA — a biografia não é uma linha contínua de 90 nós.
+   Ela se dobra em segmentos por década de vida; cada segmento é uma
+   junta que abre e fecha. O passado remoto fica recolhido (mostrando
+   só a contagem e o evento mais forte); a década corrente e o futuro
+   vêm abertos. Assim a leitura cabe na tela sem perder nenhum evento.
+   ============================================================ */
+let PV_SEG={};                       // {chave: true} — segmentos abertos à força
+function pvSegKey(a){return 'd'+(Math.floor(a/10)*10);}
+function pvSegmentos(vis,idade){
+  const g={};
+  vis.forEach(x=>{const k=pvSegKey(Math.max(0,x.pico)); (g[k]=g[k]||[]).push(x);});
+  const atual=pvSegKey(idade);
+  return Object.keys(g).sort((a,b)=>+a.slice(1)-+b.slice(1)).map(k=>{
+    const de=+k.slice(1), lista=g[k];
+    const fut=lista.some(x=>x.pico>=idade);
+    const forte=lista.slice().sort((a,b)=>
+      ({principal:0,desdobramento:1,sinal:2}[a.tier]-{principal:0,desdobramento:1,sinal:2}[b.tier])
+      ||(b.nEvid||0)-(a.nEvid||0))[0];
+    return {k,de,ate:de+9,lista,atual:k===atual,futuro:fut&&k!==atual,
+      passado:!fut&&k!==atual,forte,
+      anos:[lista[0].dPico.getUTCFullYear(),lista[lista.length-1].dPico.getUTCFullYear()],
+      nPrinc:lista.filter(x=>x.tier==='principal').length};
+  });
+}
+function pvCordaHTML(vis,idade,agora){
+  const segs=pvSegmentos(vis,idade);
+  const max=Math.max(1,...segs.map(s=>s.lista.length));
+  /* régua articulada: uma pastilha por segmento, densidade por altura */
+  let r='<div class="pv-regua">'+segs.map(s=>{
+    const alt=Math.round(18+(s.lista.length/max)*26);
+    return '<button class="pvr'+(s.atual?' now':'')+(s.futuro?' fut':'')+'" data-pvseg="'+s.k+'" '
+      +'title="'+s.lista.length+' eventos entre '+s.anos[0]+' e '+s.anos[1]+'">'
+      +'<i style="height:'+alt+'px"></i><b>'+s.de+'</b></button>';
+  }).join('<span class="pvr-j">·</span>')+'</div>';
+  let h='<div class="pv-bio">';
+  let hojePosto=false;
+  segs.forEach(s=>{
+    const aberto=PV_SEG[s.k]!==undefined?PV_SEG[s.k]:(!s.passado);
+    h+='<section class="pvseg'+(aberto?' open':'')+(s.atual?' now':'')+'" id="seg-'+s.k+'">'
+      +'<button class="pvseg-h" data-pvseg="'+s.k+'">'
+        +'<span class="pvseg-a">'+s.de+'–'+s.ate+' anos</span>'
+        +'<span class="pvseg-y">'+(s.anos[0]===s.anos[1]?s.anos[0]:(s.anos[0]+'–'+s.anos[1]))+'</span>'
+        +'<span class="pvseg-n">'+s.lista.length+(s.nPrinc?(' · '+s.nPrinc+' principa'+(s.nPrinc>1?'is':'l')):'')+'</span>'
+        +(aberto?'':'<span class="pvseg-r">'+(s.forte?s.forte.titulo:'')+'</span>')
+        +'<span class="pvseg-c">'+(aberto?'▾':'▸')+'</span></button>';
+    if(aberto){
+      h+='<div class="pvseg-b">'; let ano=null;
+      s.lista.forEach(x=>{
+        if(!hojePosto&&x.pico>=idade){
+          h+='<div class="pv-hoje"><span>hoje — '+pvMesAno(agora).toLowerCase()+'</span></div>';
+          hojePosto=true; ano=null;
+        }
+        const y=x.dPico.getUTCFullYear();
+        if(y!==ano){h+='<div class="pvb-ano">'+y+'</div>';ano=y;}
+        h+=pvEventoHTML(x,agora,x.pico<idade);
+      });
+      h+='</div>';
+    } else if(!hojePosto&&s.lista.some(x=>x.pico>=idade)){
+      h+='<div class="pv-hoje"><span>hoje — '+pvMesAno(agora).toLowerCase()+'</span></div>';
+      hojePosto=true;
+    }
+    h+='</section>';
+  });
+  if(!hojePosto)h+='<div class="pv-hoje"><span>hoje — '+pvMesAno(agora).toLowerCase()+'</span></div>';
+  return r+h+'</div>';
+}
 function pvEventoHTML(ev,agora,passado){
   const aberto=PV_OPEN===ev.id;
   const P=ev.C.principal;
@@ -1095,20 +1162,7 @@ function renderPreditivas(){
         +'<u class="'+x.tier+'"></u></a>').join('')
       :'<p class="pv-fraco">nenhum evento com convergência suficiente nos próximos 18 meses.</p>')
     +'</div>';
-  if(vis.length){
-    h+='<div class="pv-bio">'; let ano=null, hojePosto=false;
-    vis.forEach(x=>{
-      if(!hojePosto&&x.pico>=idade){
-        h+='<div class="pv-hoje"><span>hoje — '+pvMesAno(agora).toLowerCase()+'</span></div>';
-        hojePosto=true; ano=null;
-      }
-      const y=x.dPico.getUTCFullYear();
-      if(y!==ano){h+='<div class="pvb-ano">'+y+'</div>';ano=y;}
-      h+=pvEventoHTML(x,agora,x.pico<idade);
-    });
-    if(!hojePosto)h+='<div class="pv-hoje"><span>hoje — '+pvMesAno(agora).toLowerCase()+'</span></div>';
-    h+='</div>';
-  }
+  if(vis.length)h+=pvCordaHTML(vis,idade,agora);
   if(sinais.length){
     h+='<details class="pvb-sn"'+(PV_SINAIS?' open':'')+' id="pv-sinais"><summary>'+sinais.length
       +' sina'+(sinais.length>1?'is':'l')+' secundário'+(sinais.length>1?'s':'')
@@ -1129,6 +1183,16 @@ function bindPreditivas(){
       if(alvo){PV_OPEN=g.dataset.pvgo;renderPreditivas();
         const a2=document.getElementById(g.dataset.pvgo);
         if(a2)a2.scrollIntoView({behavior:'smooth',block:'center'});}
+      return;}
+    /* juntas da corda: abre e fecha um segmento de década */
+    const sg=e.target.closest&&e.target.closest('[data-pvseg]');
+    if(sg){const k=sg.dataset.pvseg;
+      const el=document.getElementById('seg-'+k);
+      const abertoAgora=el?el.classList.contains('open'):false;
+      PV_SEG[k]=!abertoAgora;
+      renderPreditivas();
+      if(PV_SEG[k]){const a=document.getElementById('seg-'+k);
+        if(a)a.scrollIntoView({behavior:'smooth',block:'start'});}
       return;}
     const x=e.target.closest&&e.target.closest('[data-pvev]');
     if(x){PV_OPEN=(PV_OPEN===x.dataset.pvev)?null:x.dataset.pvev;PV_CALC=null;renderPreditivas();return;}
