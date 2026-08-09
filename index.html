@@ -108,6 +108,27 @@ a{color:var(--acc);text-decoration:none}
 .side nav button.on{color:var(--ivory2);background:var(--panel);font-weight:550}
 .side .foot{padding:10px 4px 0;border-top:1px solid var(--line)}
 
+/* sidebar recolhível */
+.side{transition:width .22s ease,flex-basis .22s ease}
+.side-min{position:absolute;top:18px;right:-11px;width:22px;height:22px;border-radius:50%;
+  background:var(--panel);border:1px solid var(--line2);color:var(--dim);font-size:.72rem;line-height:1;
+  cursor:pointer;z-index:5;transition:.2s}
+.side-min:hover{color:var(--ivory)}
+.brand{position:relative}
+.side nav button i{font-style:normal;width:20px;display:inline-block;text-align:center;
+  margin-right:9px;color:var(--dim2);font-variant-emoji:text}
+.side nav button.on i{color:var(--acc)}
+body.nav-min .side{width:62px;flex:0 0 62px;padding-left:7px;padding-right:7px}
+body.nav-min .brand h1,body.nav-min .side nav button span,body.nav-min .side .foot{display:none}
+body.nav-min .side nav button{text-align:center;padding:11px 0}
+body.nav-min .side nav button i{margin:0;width:auto;font-size:1.05rem}
+body.nav-min .side-min{transform:rotate(180deg)}
+/* atalho de importação: canto superior direito, só na aba inicial */
+.imp-cta{position:fixed;top:16px;right:20px;z-index:90;background:var(--bg2);
+  border:1px solid var(--line);border-radius:99px;color:var(--dim);font-family:inherit;
+  font-size:.76rem;padding:7px 14px;cursor:pointer;transition:.15s}
+.imp-cta:hover{color:var(--acc);border-color:var(--line2)}
+body.is-mobile .imp-cta{top:calc(var(--tb) + 10px);right:14px}
 /* ============ botões e controles ============ */
 .btn{font-family:inherit;font-size:.8rem;font-weight:500;letter-spacing:0;text-transform:none;
   background:var(--panel);border:1px solid var(--line);color:var(--dim);padding:8px 14px;cursor:pointer;
@@ -1298,7 +1319,7 @@ body.is-mobile .npan{padding:14px;border-radius:13px}
   border:1px solid var(--line);border-radius:var(--r);padding:20px 20px 22px}
 .tk{padding:19px 0 0;margin-top:19px;border-top:1px dotted var(--line)}
 .tk:first-child{border-top:none;margin-top:0;padding-top:0}
-.tk-h{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.tk-h{display:grid;grid-template-columns:96px 1fr auto;align-items:baseline;gap:10px;margin-bottom:8px}
 .tk-h>span{font-family:inherit;font-size:.72rem;letter-spacing:.01em;
   color:var(--dim2);flex:0 0 82px;white-space:nowrap}
 .tk-h>b{font-size:.82rem;color:var(--ivory);font-weight:500;font-variant-emoji:text;
@@ -1525,6 +1546,15 @@ body.is-mobile .pv-cfg{margin-left:0;flex-basis:100%}
 .pv-sin-i u{margin-left:auto;width:7px;height:7px;border-radius:50%;flex:0 0 auto;text-decoration:none}
 .pv-sin-i u.principal{background:var(--acc)}
 .pv-sin-i u.desdobramento{background:var(--blue)}
+/* progressões e direções: seção recolhível */
+.pv{margin-top:26px;border-top:1px solid var(--line)}
+.pv-sum{list-style:none;display:flex;align-items:baseline;gap:12px;cursor:pointer;padding:16px 0}
+.pv-sum::-webkit-details-marker{display:none}
+.pv-sum>span{font-size:1.02rem;font-weight:600;color:var(--ivory2)}
+.pv-sum>em{font-style:normal;font-size:.76rem;color:var(--dim2);min-width:0}
+.pv-sum>i{margin-left:auto;font-style:normal;color:var(--acc);transition:transform .2s}
+.pv[open] .pv-sum>i{transform:rotate(90deg)}
+.pv-sum:hover>span{color:var(--acc)}
 /* ============ régua temporal + feed ============ */
 .pvru{display:flex;align-items:stretch;gap:6px;margin:14px 0 8px}
 .pvru-nav{flex:0 0 34px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
@@ -1737,6 +1767,7 @@ body.sheet-open{overflow:hidden}
 .tpx>b i{font-style:normal;font-weight:400;color:var(--dim2);font-size:.78rem}
 .tpx>p{margin:3px 0 0;font-size:.84rem;color:var(--dim);line-height:1.55}
 .tpq2{font-size:.84rem;color:var(--dim);line-height:1.6}
+.tpq3{font-size:.76rem;color:var(--dim2);line-height:1.55;margin:3px 0 4px}
 .tpe-h b{font-size:1.3rem;font-weight:650;color:var(--ivory2);letter-spacing:-.01em;margin-right:10px}
 .tpe-h em{font-style:normal;font-size:.84rem;color:var(--dim)}
 .tpg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
@@ -1966,6 +1997,7 @@ body.sheet-open{overflow:hidden}
 .tpx>b i{font-style:normal;font-weight:400;color:var(--dim2);font-size:.78rem}
 .tpx>p{margin:3px 0 0;font-size:.84rem;color:var(--dim);line-height:1.55}
 .tpq2{font-size:.84rem;color:var(--dim);line-height:1.6}
+.tpq3{font-size:.76rem;color:var(--dim2);line-height:1.55;margin:3px 0 4px}
 .tpe-h b{font-size:1.3rem;font-weight:650;color:var(--ivory2);letter-spacing:-.01em;margin-right:10px}
 .tpe-h em{font-style:normal;font-size:.84rem;color:var(--dim)}
 .tpg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
@@ -2292,21 +2324,24 @@ body.is-mobile .rv2-sticky{position:static}
   <aside class="side noprint">
     <div class="brand">
       <h1>Astro<em>Graph</em></h1>
+      <button class="side-min" id="side-min" title="Recolher menu">‹</button>
     </div>
     <nav id="nav">
-      <button data-p="dados" class="on">Dados</button>
-      <button data-p="natal">Mapa natal</button>
-      <button data-p="tempo">Tempo</button>
-      <button data-p="rs">Revoluções</button>
-      <button data-p="sin">Sinastria</button>
-      <button data-p="perfil">Perfil geral</button>
-      <button data-p="tipos">Tipologias</button>
-      <button data-p="config">Ajustes</button>
+      <button data-p="dados" class="on"><i>◇</i><span>Dados</span></button>
+      <button data-p="natal"><i>☉</i><span>Mapa natal</span></button>
+      <button data-p="tempo"><i>◷</i><span>Tempo</span></button>
+      <button data-p="rs"><i>◎</i><span>Revoluções</span></button>
+      <button data-p="sin"><i>◑</i><span>Sinastria</span></button>
+      <button data-p="perfil"><i>◈</i><span>Perfil geral</span></button>
+      <button data-p="tipos"><i>⌘</i><span>Tipologias</span></button>
+      <button data-p="config"><i>◌</i><span>Ajustes</span></button>
     </nav>
     <div class="foot">
       <button class="btn" onclick="window.print()">Exportar PDF</button>
     </div>
   </aside>
+  <!-- atalho discreto de importação: só na aba inicial -->
+  <button class="imp-cta noprint" id="imp-cta" hidden>Importar mapa natal</button>
 
   <!-- navegação inferior: só o essencial, no polegar -->
   <nav class="bnav noprint" id="bnav">
@@ -2378,7 +2413,9 @@ body.is-mobile .rv2-sticky{position:static}
         <div class="tl3-c" id="tl-viz"></div>
         <aside class="tl3-r" id="tl-side"></aside>
       </div>
-      <section class="pv">
+      <details class="pv" id="pv-wrap">
+        <summary class="pv-sum"><span>Progressões e direções</span>
+          <em>direções primárias, progressões secundárias e a linha do tempo preditiva</em><i>›</i></summary>
         <div class="pv-h">
           <div class="pv-tit"><span class="kicker">linha do tempo preditiva</span>
             <h3>O que tende a acontecer, e quando</h3></div>
@@ -2393,7 +2430,7 @@ body.is-mobile .rv2-sticky{position:static}
           </details>
         </div>
         <div id="pv-body"></div>
-      </section>
+      </details>
       <span id="tempo-date" hidden></span>
       <details id="tempo-more">
         <summary class="kicker" style="cursor:pointer">eventos, retrospectiva e linha do tempo ano a ano</summary>

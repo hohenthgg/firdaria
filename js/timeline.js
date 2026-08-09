@@ -63,10 +63,12 @@ function tlTracksHTML(d,S){
   /* revolução — o retorno vigente em doze partes */
   const R=S.rev;
   if(R&&R.end){
-    const dur=R.end-R.start, pos=(d.getTime()-R.start.getTime())/dur*100, at=Math.floor(pos/100*12);
-    const s0=signOf(R.ascLon);
+    const dur=R.end-R.start, pos=(d.getTime()-R.start.getTime())/dur*100;
+    const sAsc=signOf(R.ascLon);
+    /* os doze signos em ordem zodiacal fixa; o aceso é o signo do
+       Ascendente do retorno — o traço fino continua marcando o tempo */
     let s4='';
-    for(let i=0;i<12;i++)s4+=seg(1,sgGlyph((s0+i)%12),i===at,null,SIGNS[(s0+i)%12]);
+    for(let i=0;i<12;i++)s4+=seg(1,sgGlyph(i),i===sAsc,null,SIGNS[i]);
     out+=faixa('Revolução',sgOf(R.ascLon)+' '+R.ascSignNm,
       fdate(R.start)+' – '+fdate(R.end), s4, pos);
   } else {
