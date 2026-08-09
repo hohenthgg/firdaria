@@ -3,6 +3,8 @@
    ============================================================ */
 /* ---- navegação: sidebar (desktop), bottom nav (mobile) e folha ⋯ ---- */
 function irPara(p){
+  document.body.dataset.tab=p;
+  const cta=document.getElementById('imp-cta'); if(cta)cta.hidden=(p!=='dados');
   document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
   document.querySelectorAll('#bnav button').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
   document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));
@@ -19,6 +21,21 @@ function irPara(p){
   const el=document.getElementById(id); if(!el)return;
   el.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.p)irPara(b.dataset.p);});
 });
+/* sidebar recolhível (desktop) */
+(function(){
+  const btn=document.getElementById('side-min'); if(!btn)return;
+  const apply=v=>{document.body.classList.toggle('nav-min',v);
+    try{localStorage.setItem('ag_navmin',v?'1':'0');}catch(e){}};
+  btn.onclick=()=>apply(!document.body.classList.contains('nav-min'));
+  try{if(localStorage.getItem('ag_navmin')==='1')apply(true);}catch(e){}
+})();
+/* atalho de importação: leva ao campo e foca */
+(function(){
+  const cta=document.getElementById('imp-cta'); if(!cta)return;
+  cta.hidden=false;                               // a aba inicial é Dados
+  cta.onclick=()=>{const f=document.getElementById('imp-url');
+    if(f){f.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>f.focus(),300);}};
+})();
 /* folha administrativa */
 function admOpen(v){const s=document.getElementById('adm-sheet'); if(!s)return;
   s.hidden=!v; document.body.classList.toggle('sheet-open',v);}
