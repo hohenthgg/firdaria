@@ -43,40 +43,6 @@ function sinA(){
 const SIN_ELEM=['fogo','terra','ar','água'];
 const sinElemOf=L=>SIN_ELEM[signOf(L)%4];
 
-/* --- compleição: o clima de fundo de cada mapa --- */
-const SIN_ELEMQ={fogo:['quente','seco'],terra:['frio','seco'],ar:['quente','úmido'],'água':['frio','úmido']};
-const SIN_PQUAL={sun:['quente','seco'],moon:['frio','úmido'],mercury:['frio','seco'],
-  venus:['quente','úmido'],mars:['quente','seco'],jupiter:['quente','úmido'],saturn:['frio','seco']};
-/* temperamento simétrico: os mesmos testemunhos para A e B (mapa leve) */
-function sinTemperamento(C){
-  const Q={quente:0,frio:0,seco:0,'úmido':0}, W=[];
-  const add=(qs,w,fonte)=>{if(!qs)return;qs.forEach(q=>Q[q]+=w);W.push(fonte);};
-  add(SIN_ELEMQ[sinElemOf(C.asc)],3,'Asc em '+SIGNS[signOf(C.asc)]);
-  const ru=C.rulers[1], rp=C.pts[ru];
-  if(rp)add(SIN_ELEMQ[sinElemOf(rp.lon)],3,'regente do Asc ('+PT_NAME[ru]+') em '+SIGNS[signOf(rp.lon)]);
-  if(C.pts.moon)add(SIN_ELEMQ[sinElemOf(C.pts.moon.lon)],2,'Lua em '+SIGNS[signOf(C.pts.moon.lon)]);
-  Object.entries(C.pts).forEach(([k,p])=>{if(p.h===1&&k!==ru)add(SIN_PQUAL[k],2,PT_NAME[k]+' na casa 1');});
-  if(C.pts.moon&&C.pts.sun){
-    const el=n360(C.pts.moon.lon-C.pts.sun.lon);
-    add(el<90?['quente','úmido']:el<180?['quente','seco']:el<270?['frio','seco']:['frio','úmido'],1,'fase da Lua');
-  }
-  const hc=Q.quente+Q.frio||1, dm=Q.seco+Q['úmido']||1;
-  const quente=Math.round(Q.quente/hc*100), seco=Math.round(Q.seco/dm*100);
-  const humor=quente>=50?(seco>=50?'colérico':'sanguíneo'):(seco>=50?'melancólico':'fleumático');
-  return {quente,seco,humor,W};
-}
-const SIN_TVS={
-  'colérico|colérico':'Fogo contra fogo. Os dois reagem rápido, decidem cedo e detestam ceder. A faísca é imediata — a briga também. Funciona enquanto houver inimigo comum; sem ele, o adversário vira o outro.',
-  'colérico|sanguíneo':'O fogo comanda e o ar espalha. Muita energia junta e pouca paciência com o que demora. O risco não é a briga: é os dois acelerarem sem ninguém segurar o freio.',
-  'colérico|melancólico':'Ímpeto contra cautela. Um decide no calor, o outro rumina no frio — e cada um lê o ritmo do outro como defeito. A secura em comum ajuda: os dois são teimosos demais para fingir.',
-  'colérico|fleumático':'Opostos completos. Um esquenta, o outro apaga; um ataca, o outro absorve. Ou o colérico entende que calma não é lentidão, ou o fleumático vira parede — e parede cansa quem bate.',
-  'sanguíneo|sanguíneo':'Ar com ar: leveza, conversa e movimento em dobro. O encontro é fácil; difícil é criar raiz. Sem um lastro externo, a relação circula muito e assenta pouco.',
-  'sanguíneo|melancólico':'Opostos completos. Um vive para fora, o outro para dentro; um espalha, o outro guarda. A troca enriquece — quando cada um para de exigir que o outro funcione no seu clima.',
-  'sanguíneo|fleumático':'A umidade em comum dá liga: os dois sabem conviver. Mas o ar quer novidade e a água quer permanência — um puxa para a rua, o outro para o sofá.',
-  'melancólico|melancólico':'Terra com terra: profundidade, memória e lealdade — e o dobro de silêncio. Ninguém aqui esquece nada. A relação dura; o desafio é não endurecer junto.',
-  'melancólico|fleumático':'Frio com frio: ritmo lento, vínculo que cresce por camadas. Estável quase por definição. O risco é a inércia — ninguém provoca, ninguém muda, e o tempo passa.',
-  'fleumático|fleumático':'Água parada com água parada: paz, acolhimento e zero pressa. O conflito quase não aparece — e esse é o problema: o que não se diz afunda, e afundado fermenta.'
-};
 /* --- rótulos de campo por casa --- */
 /* como sujeito de oração: "os estudos de A entram…" */
 const SIN_HSUJ={1:'a identidade e o corpo',2:'os recursos',3:'os estudos e a comunicação',4:'a casa e a família',
@@ -135,136 +101,58 @@ function sinSignificado(C,k){
         +prep('por',SIN_HTAG[p.h])+'.'
       : cap1(nat)+', sem casa administrada; age apenas '+prep('por',SIN_HTAG[p.h])+'.'};
 }
-/* condição do planeta num mapa leve — decide o que o aspecto facilita ou tensiona */
-function sinCond(C,k){
-  const ctx={pts:C.pts,diurno:!!C.diurno,sunLon:C.pts.sun?C.pts.sun.lon:null,cusps:C.cusps};
-  try{ return condicaoDe(k,ctx); }catch(e){ return null; }
-}
 /* forma de interação do aspecto — não juízo */
 const SIN_FORMA={0:'operam fundidos: um não se move sem o outro',
   60:'transmitem com facilidade um para o outro',120:'transmitem com facilidade um para o outro',
   90:'exigem ajuste recíproco: pressão constante entre os dois campos',
   180:'ficam em oposição de campo: cada um puxa para o seu lado'};
 
-/* ---------- uma entrada do quadro ---------- */
-function sinEntradaHTML(dono,visita,k,idx){
-  const p=visita.pts[k]; if(!p)return '';
-  const S=sinSignificado(visita,k); if(!S)return '';
-  const hOut=houseByRule(p.lon,dono.cusps);
-  const aberto=SIN_OPEN===(visita.name+':'+k);
-  /* aspecto mais fechado com os pontos do dono */
-  let m=null;
-  Object.entries(dono.pts).forEach(([j,q])=>{
-    const a=aspectBetween(p.lon,q.lon);
-    if(a&&(!m||a.orb<m.a.orb))m={j,a};
-  });
-  let tec='';
-  if(m){
-    const T=sinSignificado(dono,m.j), cd=sinCond(dono,m.j), cv=sinCond(visita,k);
-    tec='<p>'+PT_NAME[k]+' e '+PT_NAME[m.j]+' de '+dono.name+' '
-      +(SIN_FORMA[m.a.ang]||'entram em contato')+' ('+m.a.gl+' '+fmtOrb(m.a.orb)+').</p>'
-      +'<p>O que está em jogo: '+(T&&T.rege.length?lista(T.rege.map(x=>SIN_HSUJ[x]))+' de '+dono.name
-        :'a natureza de '+PT_NAME[m.j])+', '
-      +'com '+PT_NAME[m.j]+' '+(cd?('<i>'+cd.nivel+'</i>'):'em condição não avaliada')
-      +' e '+PT_NAME[k]+' '+(cv?('<i>'+cv.nivel+'</i>'):'em condição não avaliada')+'. '
-      +'A condição dos dois é que decide o que se facilita ou se tensiona — não o aspecto sozinho.</p>';
-  } else tec='<p>Não fecha aspecto com nenhum ponto de '+dono.name+' dentro do orbe: a incidência é só por casa.</p>';
-  return '<div class="sy-i">'
-    +'<button class="sy-ih" data-syo="'+visita.name+':'+k+'">'
-      +'<span class="sy-g">'+(PT_GLYPH[k]||'')+'︎</span>'
-      +'<span class="sy-t"><b>'+PT_NAME[k]+' de '+visita.name+'</b>'
-        +'<em>'+SIGNS[S.signo]+' · '+S.rota+'</em></span>'
-      +'<span class="sy-move">→ '+hOut+'ª</span>'
-    +'</button>'
-    +(aberto?('<div class="sy-b">'
-      +'<span class="sy-l">Na natividade de '+visita.name+'</span><p>'+S.origem+'</p>'
-      +'<span class="sy-l">No mapa de '+dono.name+' · casa '+hOut+'</span>'
-      +'<p class="sy-ef">'+cap1(sinCruzFrase(dono,visita,k))+'</p>'
-      +'<details class="sy-tec"><summary>Ver estrutura técnica</summary>'+tec+'</details>'
-      +'</div>'):'')
-    +'</div>';
-}
-/* a frase de efeito, literal */
-function sinCruzFrase(dono,visita,k){
-  const p=visita.pts[k]; if(!p)return '';
-  const S=sinSignificado(visita,k), hOut=houseByRule(p.lon,dono.cusps);
-  return cap1(S.mat)+' de '+visita.name+' '+sinEfeito(hOut,dono.name,S.plural)+'.';
-}
-/* ---------- resumo legível: o que um faz com o outro ---------- */
-const SIN_CAMPO={1:'identidade e corpo',2:'recursos',3:'estudos e circulação',4:'casa e origem',
-  5:'afeto e criação',6:'trabalho e rotina',7:'parcerias e contratos',8:'partilhas e perdas',
-  9:'convicções',10:'carreira e posição',11:'projetos e alianças',12:'bastidores'};
-function sinPesos(dono,visita){
-  const PES={1:3,7:3,10:2.5,4:2.5,5:2,8:2,2:1.5,6:1.5,11:1.5,3:1,9:1,12:1};
-  const conta={}, itens=[];
-  Object.keys(visita.pts).forEach(k=>{
-    const h=houseByRule(visita.pts[k].lon,dono.cusps);
-    const w=(PES[h]||1)*(['sun','moon','saturn'].includes(k)?1.4:1);
-    conta[h]=(conta[h]||0)+w; itens.push({k,h,w});
-  });
-  const top=Object.keys(conta).map(Number).sort((a,b)=>conta[b]-conta[a]);
-  return {conta,itens,top,total:Object.values(conta).reduce((s,x)=>s+x,0)};
-}
-function sinResumoHTML(M){
-  const AB=sinPesos(M.B,M.A);      // planetas de A caindo em B
-  const BA=sinPesos(M.A,M.B);      // planetas de B caindo em A
-  const campo=t=>lista(t.slice(0,2).map(h=>SIN_CAMPO[h]));
-  /* cooperação e fricção: pelo aspecto mais forte, lido pela condição */
-  let coop=null, fric=null;
-  Object.keys(M.A.pts).forEach(ka=>Object.keys(M.B.pts).forEach(kb=>{
-    const a=aspectBetween(M.A.pts[ka].lon,M.B.pts[kb].lon); if(!a)return;
-    const Sa=sinSignificado(M.A,ka), Sb=sinSignificado(M.B,kb);
-    const peso=(3-a.orb/4)*((['sun','moon','saturn'].includes(ka)||['sun','moon','saturn'].includes(kb))?1.3:1);
-    const reg={ka,kb,a,Sa,Sb,peso};
-    if(a.cls==='tens'){ if(!fric||peso>fric.peso)fric=reg; }
-    else { if(!coop||peso>coop.peso)coop=reg; }
-  }));
-  const prim=(C,k,S)=>S.rege.length?SIN_HSUJ[S.rege[0]]:(PL_NATUREZA[k]?PL_NATUREZA[k].n:PT_NAME[k]);
-  const frase=(r,verbo)=>r
-    ? cap1(prim(M.A,r.ka,r.Sa))+' de '+M.A.name+' e '+prim(M.B,r.kb,r.Sb)+' de '+M.B.name+' '+verbo
-      +' ('+PT_NAME[r.ka]+' '+r.a.gl+' '+PT_NAME[r.kb]+', '+fmtOrb(r.a.orb)+').'
-    : 'nada dentro do orbe.';
-  /* assimetria: pelo peso total das incidências, sem porcentagem */
-  const d=BA.total-AB.total;
-  const assim=Math.abs(d)<1.5
-    ? 'A interferência é recíproca, em intensidade semelhante nos dois sentidos.'
-    : (d>0?M.B:M.A).name+' interfere mais intensamente na vida de '+(d>0?M.A:M.B).name
-      +' — sobretudo em '+(d>0?campo(BA.top):campo(AB.top))+' — do que o inverso.';
-  const q=(t,v,w)=>'<div class="sy-r'+(w?' wide':'')+'"><span>'+t+'</span><b>'+v+'</b></div>';
-  return '<div class="sy-res">'
-    +q('Onde '+M.B.name+' mais interfere em '+M.A.name,cap1(campo(BA.top)))
-    +q('Onde '+M.A.name+' mais interfere em '+M.B.name,cap1(campo(AB.top)))
-    +q('Principal cooperação',frase(coop,'funcionam juntos'),true)
-    +q('Principal fricção',frase(fric,'exigem ajuste um do outro'),true)
-    +q('Assimetria',assim,true)
-    +'</div>';
-}
-/* ---------- temperamento, em uma linha ---------- */
-function sinTempHTML(M){
-  const tA=sinTemperamento(M.A), tB=sinTemperamento(M.B);
-  const par=[tA.humor,tB.humor].sort().join('|');
-  const linha=(C,t)=>'<div class="sy-r"><span>'+C.name+'</span><b>'+cap1(t.humor)+'</b>'
-    +'<p>'+t.quente+'% quente · '+t.seco+'% seco — '+t.W.slice(0,2).join(' · ')+'</p></div>';
-  return '<div class="sy-sec"><b>Compleição</b><em>o clima de fundo de cada um</em></div>'
-    +'<div class="sy-res">'+linha(M.A,tA)+linha(M.B,tB)
-    +'<div class="sy-r wide"><span>Encontro</span><p>'+(SIN_TVS[par]
-      ||'Compleições distintas: o atrito depende de qual eixo cada um defende.')+'</p></div></div>';
-}
-/* ---------- o quadro inteiro ---------- */
+/* ---------- o par de um planeta: o de A em cima, o de B embaixo ---------- */
 let SIN_OPEN=null;
-function sinQuadroHTML(M){
-  const col=(dono,visita)=>'<div class="sy-col">'
-    +'<div class="sy-dir"><i>'+visita.name+'</i> → '+dono.name+'</div>'
-    +'<div class="sy-list">'
-    +['sun','moon','mercury','venus','mars','jupiter','saturn']
-      .map((k,i)=>sinEntradaHTML(dono,visita,k,i)).join('')
-    +'</div></div>';
-  return '<div class="sy-sec"><b>Quadro comparativo</b>'
-    +'<em>cada planeta pelo que administra no próprio mapa, depois pelo campo em que incide no outro</em></div>'
-    +'<div class="sy-grid">'+col(M.B,M.A)+col(M.A,M.B)+'</div>';
+function sinParHTML(M,k){
+  const pA=M.A.pts[k], pB=M.B.pts[k]; if(!pA&&!pB)return '';
+  const card=C=>{
+    const p=C.pts[k];
+    if(!p)return '<div class="syp-card off"><em>sem '+PT_NAME[k]+' neste mapa</em></div>';
+    const S=sinSignificado(C,k);
+    return '<div class="syp-card"><span class="syp-g">'+(PT_GLYPH[k]||'')+'\uFE0E</span>'
+      +'<span class="syp-t"><b>'+PT_NAME[k]+' de '+C.name+'</b>'
+      +'<em>'+SIGNS[S.signo]+' \u00b7 casa '+S.casa
+      +(S.rege.length?(' \u00b7 rege '+S.rege.map(h=>h+'\u00aa').join(' e ')):'')+'</em></span></div>';
+  };
+  const aberto=SIN_OPEN===k;
+  let x='';
+  if(aberto){
+    /* a leitura conversível: o planeta de um, traduzido no mapa do outro */
+    const dir=(de,para)=>{
+      const p=de.pts[k]; if(!p)return '';
+      const S=sinSignificado(de,k), h=houseByRule(p.lon,para.cusps);
+      const reg=S.rege.length
+        ?', que rege '+lista(S.rege.map(hh=>'sua '+hh+'\u00aa'))
+          +' ('+lista(S.rege.map(hh=>SIN_HSUJ[hh]))+')'
+          +(S.rege.includes(1)?(' \u2014 portanto '+de.name+' em pessoa \u2014'):',')
+        :', sem casa administrada no pr\u00f3prio mapa,';
+      return '<p><b>'+PT_NAME[k]+' de '+de.name+'</b>'+reg
+        +' tende a se manifestar na casa '+h+' de '+para.name+' \u2014 '+SIN_HTAG[h]+'.</p>';
+    };
+    const a=(pA&&pB)?aspectBetween(pA.lon,pB.lon):null;
+    x='<div class="syp-x">'+dir(M.A,M.B)+dir(M.B,M.A)
+      +(a?('<p class="syp-asp">Entre si, os dois '+PT_NAME[k]+' '
+        +(SIN_FORMA[a.ang]||'entram em contato')+' ('+a.gl+' '+fmtOrb(a.orb)+').</p>'):'')
+      +'</div>';
+  }
+  return '<div class="syp'+(aberto?' open':'')+'">'
+    +card(M.A)
+    +'<button class="syp-arr'+(aberto?' on':'')+'" data-syp="'+k+'" aria-label="converter a leitura">\u21c5</button>'
+    +card(M.B)+x+'</div>';
 }
-function sinArenaHTML(M){
-  return sinResumoHTML(M)+sinTempHTML(M)+sinQuadroHTML(M);
+/* ---------- o quadro inteiro: s\u00f3 os pares, um em cima do outro ---------- */
+function sinQuadroHTML(M){
+  return '<div class="sy-sec"><b>Quadro comparativo</b>'
+    +'<em>cada planeta com o seu correspondente; a seta \u21c5 converte a leitura de um mapa no outro</em></div>'
+    +'<div class="sy-stack">'
+    +['sun','moon','mercury','venus','mars','jupiter','saturn'].map(k=>sinParHTML(M,k)).join('')
+    +'</div>';
 }
 /* ---------------- render ---------------- */
 function renderSin(){
@@ -279,14 +167,14 @@ function renderSin(){
   el.innerHTML='';
   if($('sin-main'))$('sin-main').hidden=false;
   const ar=$('sin-arena');
-  if(ar){try{ar.innerHTML=sinArenaHTML({A,B:SINB});}catch(e){console.error('sin arena',e);}}
+  if(ar){try{ar.innerHTML=sinQuadroHTML({A,B:SINB});}catch(e){console.error('sin quadro',e);}}
 }
 function bindSinastria(){
   const w=$('p-sin'); if(!w)return;
   SINB=sinLoad();
   w.addEventListener('click',e=>{
-    const o=e.target.closest&&e.target.closest('[data-syo]');
-    if(o){SIN_OPEN=(SIN_OPEN===o.dataset.syo)?null:o.dataset.syo;renderSin();}
+    const o=e.target.closest&&e.target.closest('[data-syp]');
+    if(o){SIN_OPEN=(SIN_OPEN===o.dataset.syp)?null:o.dataset.syp;renderSin();}
   });
   const st=$('sin-status');
   const okB=(text,birth,name,place)=>{

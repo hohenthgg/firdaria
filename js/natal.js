@@ -114,6 +114,31 @@ function natalBarb(s){
   return {exc,integra:T};
 }
 
+/* Gargatholil (Depth Astrology): casa e signo, íntegra no original em inglês */
+function natalGargTxt(t){
+  let out='',ul=[];
+  const flush=()=>{if(ul.length){out+='<ul class="ne-l">'+ul.map(x=>'<li>'+x+'</li>').join('')+'</ul>';ul=[];}};
+  t.split(/\n/).forEach(l=>{
+    l=l.trim(); if(!l){flush();return;}
+    if(/^##\s*/.test(l)){flush();out+='<p class="np-h">'+l.replace(/^##\s*/,'')+'</p>';}
+    else if(/^-\s+/.test(l))ul.push(l.replace(/^-\s+/,''));
+    else{flush();out+='<p>'+l+'</p>';}
+  });
+  flush(); return out;
+}
+function natalGargHTML(N){
+  const GC=(typeof GARG_CASA!=='undefined')?(GARG_CASA[N.k]&&GARG_CASA[N.k][N.casa]):null;
+  const GS=(typeof GARG_SIGNO!=='undefined')?(GARG_SIGNO[N.k]&&GARG_SIGNO[N.k][N.s]):null;
+  if(!GC&&!GS)return '';
+  const det=(t,txt)=>'<details class="np-int"><summary>'+t+'</summary>'
+    +'<div class="np-txt">'+natalGargTxt(txt)+'</div></details>';
+  return '<div class="npan-ps garg"><span>'+PT_NAME[N.k]+' segundo Gargatholil</span>'
+    +'<p class="np-sub">Depth Astrology — leitura psicológica profunda da casa e do signo, no original em inglês.</p>'
+    +(GC?det(PT_NAME[N.k]+' na casa '+N.casa+' — íntegra',GC):'')
+    +(GS?det(PT_NAME[N.k]+' em '+SIGNS[N.s]+' — íntegra',GS):'')
+    +'</div>';
+}
+
 /* ---------- render: chips + painel único ---------- */
 let NX_SEL=null, NX_DET=null;
 function natalChipsHTML(){
@@ -138,12 +163,8 @@ function natalPainelHTML(k){
     +'</header>'
     +'<p class="npan-n">'+cap1(N.nat.n)+' — '+N.nat.d+'.</p>'
     +bloco(R.t,R.d)+bloco(C.t,C.d)+bloco(S.t,S.d)
-    +(function(){const B=natalBarb(N.s); if(!B)return '';
-      return '<div class="npan-ps barb"><span>'+SIGNS[N.s]+' segundo Barbault</span>'
-        +'<p>'+B.exc+'</p>'
-        +'<details class="np-int"><summary>Barbault, na íntegra</summary>'
-        +'<div class="np-txt">'+B.integra.split(/\n\n+/).map(x=>'<p>'+x.replace(/\n/g,' ')+'</p>').join('')+'</div></details></div>';})()
-    +(N.camadas?('<div class="npan-ps"><span>leitura psicológica'
+    /* 1 · Olavo — a leitura psicológica da casa, modulada pela regência */
+    +(N.camadas?('<div class="npan-ps"><span>leitura psicológica — Olavo'
       +(N.camadas.psi.titulo?(' · '+N.camadas.psi.titulo):'')+'</span>'
       +'<p>'+N.camadas.sintese+'</p>'
       +'<p class="np-sub">'+N.camadas.psi.texto+'</p>'
@@ -152,6 +173,14 @@ function natalPainelHTML(k){
           +'<div class="np-txt">'+OL_TEXTO[N.casa][N.k].split(/\n\n+/).map(x=>'<p>'+x.replace(/\n/g,' ')+'</p>').join('')+'</div></details>')
         :'')
       +'</div>'):'')
+    /* 2 · Barbault — o signo */
+    +(function(){const B=natalBarb(N.s); if(!B)return '';
+      return '<div class="npan-ps barb"><span>'+SIGNS[N.s]+' segundo Barbault</span>'
+        +'<p>'+B.exc+'</p>'
+        +'<details class="np-int"><summary>Barbault, na íntegra</summary>'
+        +'<div class="np-txt">'+B.integra.split(/\n\n+/).map(x=>'<p>'+x.replace(/\n/g,' ')+'</p>').join('')+'</div></details></div>';})()
+    /* 3 · Gargatholil — casa e signo */
+    +natalGargHTML(N)
     +'<button class="npan-x" data-nxdet="'+k+'">Estrutura natal <i>'+(NX_DET===k?'⌄':'›')+'</i></button>'
     +(NX_DET===k?natalEstruturaHTML(N):'')
     +'</article>';
