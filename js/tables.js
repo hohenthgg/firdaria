@@ -28,19 +28,7 @@ const TERMS=[
  [[6,'saturn'],[12,'mercury'],[20,'venus'],[25,'jupiter'],[30,'mars']],   // Aquário
  [[8,'venus'],[14,'jupiter'],[20,'mercury'],[26,'mars'],[30,'saturn']]];  // Peixes
 /* casas: significações tradicionais */
-const HOUSE_SIG={
- 1:{q:'angular · casa da vida',s:'a vida, o corpo, a compleição e as iniciativas da própria pessoa'},
- 2:{q:'sucedente',s:'o dinheiro, os bens móveis, ganhos e perdas materiais'},
- 3:{q:'cadente · alegria da Lua',s:'irmãos e parentes próximos, viagens curtas, cartas, estudos e ritos'},
- 4:{q:'angular',s:'o pai, a casa, terras e imóveis, heranças de raiz e o fim de toda coisa'},
- 5:{q:'sucedente · alegria de Vênus',s:'filhos, prazeres, jogos, presentes e criações'},
- 6:{q:'cadente · MALÉFICA (não vê o Ascendente)',s:'doenças, trabalho penoso, servidões e subordinados'},
- 7:{q:'angular',s:'casamento, sócios, contratos e inimigos declarados'},
- 8:{q:'sucedente · MALÉFICA (não vê o Ascendente)',s:'a morte, os medos e ansiedades, dívidas, dinheiro alheio e partilhas'},
- 9:{q:'cadente · alegria do Sol',s:'longas viagens, religião, doutrina, sonhos e ensino superior'},
- 10:{q:'angular',s:'o ofício, as honras, a reputação e a autoridade'},
- 11:{q:'sucedente · alegria de Júpiter · BENÉFICA',s:'amigos, apoios, esperanças e os frutos do ofício'},
- 12:{q:'cadente · MALÉFICA (não vê o Ascendente)',s:'inimigos ocultos, prisões, exílios, autossabotagem e animais grandes'}};
+
 const HOUSE_SHORT={1:'o corpo e a vida',2:'o dinheiro',3:'estudos, irmãos e a palavra',4:'a casa e o pai',5:'filhos, prazeres e criações',6:'doenças e trabalho',7:'cônjuge, sócios e contendas',8:'morte, medos e dívidas',9:'doutrina e longas viagens',10:'o ofício e as honras',11:'amigos e apoios',12:'inimigos ocultos e exílios'};
 /* temas literais de cada casa — claros, sem determinismo */
 const HOUSE_THEME={
@@ -60,7 +48,7 @@ const HOUSE_THEME={
 const HOUSE_TAG={1:'identidade e corpo',2:'dinheiro',3:'estudos e comunicação',4:'casa e família',5:'filhos e prazeres',6:'saúde e trabalho',7:'relacionamentos',8:'perdas e recursos de terceiros',9:'estudos superiores e estrangeiro',10:'carreira',11:'amigos e grupos',12:'bastidores e isolamento'};
 /* compatibilidade retro: aliases usados no restante do código */
 const HOUSE_BLUNT=HOUSE_THEME, HOUSE_ACID=HOUSE_THEME;
-const OLAVO_CASA={1:'a autoimagem imediata: o que a pessoa vê de si sem intermediários',2:'o confronto com o mundo físico: o real enquanto peso, forma e densidade',3:'a linguagem: transformar a realidade em signo — o mundo virando discurso',4:'a intimidade: o rio do tempo interno, a vivência direta das emoções',5:'a consciência do poder pessoal: o que se sabe poder ou não poder fazer agora',6:'o rendimento: o balanço entre os recursos próprios e as exigências de fora',7:'o eu apreendido pelo espelho do outro: expectativas bilaterais',8:'o potencial de decisão imediata: a estimativa quase premonitória da situação',9:'o arquivo do já sabido: as certezas sobre as quais todo pensamento se assenta',10:'os lugares sociais efetivos: o poder exercido e sofrido diante da sociedade inteira',11:'os projetos de futuro: o personagem que se quer ser, a inserção na própria época',12:'o espaço além do mundo conhecido: o que se pressente fora da esfera reconhecida'};
+
 /* firdária: ordens e durações */
 const FIRD_DIURNAL=[['sun','Sol',10],['venus','Vênus',8],['mercury','Mercúrio',13],['moon','Lua',9],['saturn','Saturno',11],['jupiter','Júpiter',12],['mars','Marte',7],['nn','Nodo N.',3],['sn','Nodo S.',2]];
 const FIRD_NOCTURNAL=[['moon','Lua',9],['saturn','Saturno',11],['jupiter','Júpiter',12],['mars','Marte',7],['sun','Sol',10],['venus','Vênus',8],['mercury','Mercúrio',13],['nn','Nodo N.',3],['sn','Nodo S.',2]];
@@ -208,15 +196,8 @@ const CONSELHO={
  mars:'Cortar, competir, executar — uma frente por vez; pressa serve à execução, não a contratos.',
  jupiter:'Expandir só sobre fundação: crescer onde há fiador, contrato ou mestre; excesso sem lastro cobra depois.',
  saturn:'Durar: prazos longos, obrigações honradas, podas feitas cedo; o período paga em estrutura, não em aplauso.'};
-const PL_EFFECT={sun:'vitalidade, visibilidade e decisões de identidade',moon:'humor, rotina doméstica e assuntos do público',mercury:'comunicação, documentos, deslocamentos e negociações',venus:'acordos, afetos, estética e dinheiro por relações',mars:'energia, pressa, atrito e capacidade de execução',jupiter:'expansão, oportunidades, apoios e excessos',saturn:'estrutura, prazos, restrições e responsabilidades'};
-const FAVOR={
- harm:{sun:['assumir frente de trabalho','apresentar-se a decisor'],moon:['tratar de casa e família','lançar para público amplo'],mercury:['assinar após revisão','negociar, escrever, publicar'],venus:['fechar acordo','tratar de preço e estética'],mars:['executar tarefa difícil','treinar, competir'],jupiter:['pedir apoio ou crédito','iniciar estudo ou publicação'],saturn:['formalizar compromisso','planejar longo prazo']},
- conj:{sun:['iniciar em nome próprio'],moon:['iniciar hábito ou mudança doméstica'],mercury:['iniciar texto, curso ou proposta'],venus:['iniciar parceria ou compra'],mars:['iniciar projeto que exige força'],jupiter:['iniciar expansão com fiador'],saturn:['assumir obrigação duradoura']},
- tens:{sun:['resolver pendência que exige coragem'],moon:['tratar problema doméstico adiado'],mercury:['revisar textos e contratos com rigor'],venus:['renegociar valores'],mars:['resolver problema técnico que exige força'],jupiter:['cortar excesso ou custo'],saturn:['reestruturar prazo ou dívida']}};
-const CAUTION={
- harm:['não confundir facilidade com garantia: revisar mesmo assim'],
- conj:['o início marca o tom do ciclo: não começar no improviso'],
- tens:{sun:['choques com autoridade; decisões por orgulho'],moon:['reatividade emocional; decidir no pico do humor'],mercury:['discussões, contratos não revisados, erros de prazo'],venus:['ceder preço cedo demais; gastos por agrado'],mars:['acidentes por pressa, palavras cortantes, rompimentos precipitados'],jupiter:['promessas maiores que a entrega; gasto por otimismo'],saturn:['bloqueios, atrasos, dureza excessiva']}};
+
+
 /* eletiva */
 const ELECT_SIG={'assinar contrato':{sig:'mercury',houses:[3,7]},'lançar produto':{sig:'sun',houses:[10,2]},'publicar vídeo':{sig:'mercury',houses:[3,11]},'abrir empresa':{sig:'sun',houses:[10,1]},'enviar proposta':{sig:'mercury',houses:[3,9]},'realizar reunião':{sig:'mercury',houses:[3,7]},'viajar':{sig:'mercury',houses:[3,9]},'iniciar curso':{sig:'jupiter',houses:[9,3]},'fazer compra':{sig:'venus',houses:[2]},'iniciar tratamento':{sig:'sun',houses:[6,1]},'realizar evento':{sig:'sun',houses:[5,10]},'realizar live':{sig:'mercury',houses:[3,11]},'pedir aumento':{sig:'sun',houses:[10,2]},'iniciar relacionamento':{sig:'venus',houses:[7,5]},'marcar casamento':{sig:'venus',houses:[7]}};
 /* método (estático) */
@@ -233,62 +214,7 @@ const CONTEUDO={explic:[
  ['Motor de relevância','Cada trânsito pontua por: senhor da firdária (+3), da sub (+2), Senhor do Ano (+3), regência da casa profectada (+2), angularidade na RS informada (+2), toque em Asc/Sol/Lua/MC (+2), toque no Senhor do Ano natal (+2), eco de aspecto da RS (+2), orbe <1° (+2). Medida interna de repetição entre técnicas — não é probabilidade.']
 ]};
 /* 48 eixos — configuração GENÉRICA: avaliada contra o mapa carregado */
-const AXES_CONFIG=[
- ['Energia e ação','mars',[
-  ['Atividade–Passividade',[['pl','mars',3,1],['pl','sun',2,1],['el','fogo',2,1],['el','água',2,-1],['mo','fixo',1,-0.4]]],
-  ['Rapidez–Deliberação',[['el','fogo',2,1],['el','ar',1,0.6],['mo','fixo',3,-1],['pl','saturn',2,-0.7]]],
-  ['Iniciativa–Reatividade',[['pl','sun',2,0.8],['pl','mars',2,0.8],['mo','cardinal',2,1],['el','água',2,-0.8]]],
-  ['Persistência–Variabilidade',[['mo','fixo',3,1],['el','terra',2,0.8],['mo','mutável',3,-1]]],
-  ['Audácia–Cautela',[['el','fogo',2,1],['pl','mars',2,0.7],['pl','saturn',3,-1],['el','terra',1,-0.5]]],
-  ['Irritabilidade–Serenidade',[['asp','moon','mars','tens',2,1],['pl','mars',1,0.5],['pl','jupiter',2,-0.8],['pl','venus',2,-0.7]]],
-  ['Intensidade–Moderação',[['mo','fixo',2,0.8],['el','água',1,0.6],['pl','venus',2,-0.7],['el','ar',1,-0.5]]],
-  ['Tolerância à pressão–Saturação',[['pl','saturn',2,0.8],['mo','fixo',2,0.7],['asp','jupiter','saturn','harm',2,0.8],['asp','sun','saturn','tens',2,-0.8]]]]],
- ['Afetividade e relações','venus',[
-  ['Emotividade–Reserva afetiva',[['el','água',3,1],['pl','venus',2,0.7],['pl','moon',2,0.6],['el','terra',2,-0.8],['pl','saturn',2,-0.7]]],
-  ['Extroversão–Introversão',[['el','fogo',2,0.8],['el','ar',2,0.8],['el','água',2,-0.7],['el','terra',1,-0.5]]],
-  ['Dominação–Acomodação',[['pl','sun',3,1],['pl','mars',1,0.5],['pl','venus',2,-0.8],['pl','moon',1,-0.5]]],
-  ['Sociabilidade–Seletividade',[['pl','venus',2,0.8],['pl','jupiter',2,0.7],['pl','saturn',3,-1]]],
-  ['Confiança–Vigilância',[['pl','jupiter',3,1],['el','fogo',1,0.5],['pl','saturn',2,-0.8],['el','água',1,-0.5]]],
-  ['Vinculação–Desapego',[['mo','fixo',2,1],['el','água',2,0.7],['mo','mutável',2,-0.8],['el','fogo',1,-0.4]]],
-  ['Expressividade afetiva–Reticência',[['el','fogo',2,0.8],['pl','mercury',1,0.5],['el','terra',2,-0.7],['pl','saturn',2,-0.7]]],
-  ['Sensibilidade–Blindagem',[['pl','moon',3,1],['el','água',2,0.8],['el','terra',2,-0.7],['pl','saturn',1,-0.5]]]]],
- ['Cognição','mercury',[
-  ['Abstração–Concretude',[['el','ar',2,1],['el','fogo',1,0.6],['el','terra',3,-1]]],
-  ['Análise–Síntese',[['pl','mercury',2,1],['el','terra',1,0.5],['pl','jupiter',3,-1]]],
-  ['Concentração–Dispersão',[['mo','fixo',3,1],['pl','saturn',2,0.7],['mo','mutável',3,-1]]],
-  ['Sequencialidade–Apreensão global',[['el','terra',2,1],['pl','mercury',1,0.5],['pl','sun',2,-0.7],['pl','jupiter',2,-0.7]]],
-  ['Exame crítico–Receptividade simbólica',[['pl','mercury',2,0.8],['pl','saturn',2,0.7],['el','água',2,-0.8],['pl','jupiter',1,-0.5]]],
-  ['Retenção–Improvisação',[['pl','saturn',2,0.8],['el','terra',2,0.7],['el','fogo',2,-0.8]]],
-  ['Flexibilidade cognitiva–Dogmatismo',[['mo','mutável',3,1],['el','ar',2,0.7],['mo','fixo',3,-1]]],
-  ['Imaginação simbólica–Literalidade',[['el','água',2,1],['pl','moon',2,0.7],['pl','jupiter',1,0.5],['el','terra',2,-0.9]]]]],
- ['Organização e adaptação','saturn',[
-  ['Ordem–Espontaneidade',[['pl','saturn',3,1],['el','terra',2,0.8],['el','fogo',2,-0.8]]],
-  ['Disciplina–Inconstância',[['mo','fixo',2,0.9],['pl','saturn',2,0.8],['mo','mutável',2,-0.9]]],
-  ['Rigidez–Maleabilidade',[['mo','fixo',3,1],['pl','venus',2,-0.8],['mo','mutável',2,-0.7]]],
-  ['Estabilidade–Mudança',[['mo','fixo',3,1],['el','terra',1,0.5],['mo','cardinal',2,-0.8]]],
-  ['Planejamento–Ação emergente',[['pl','saturn',2,0.9],['pl','jupiter',1,0.5],['el','fogo',2,-0.8],['mo','cardinal',1,-0.5]]],
-  ['Controle–Entrega',[['pl','sun',2,0.7],['pl','saturn',2,0.7],['el','água',2,-0.8]]],
-  ['Execução–Procrastinação',[['el','terra',2,0.8],['pl','mars',2,0.8],['el','água',2,-0.7]]],
-  ['Perfeccionismo–Suficiência',[['pl','saturn',2,0.7],['pl','venus',2,0.5],['pl','jupiter',2,-0.7]]]]],
- ['Valores e orientação','jupiter',[
-  ['Otimismo–Pessimismo',[['pl','jupiter',3,1],['el','fogo',2,0.7],['pl','saturn',3,-1]]],
-  ['Ambição–Contentamento',[['pl','sun',3,1],['pl','mars',1,0.5],['pl','venus',2,-0.6]]],
-  ['Idealismo–Pragmatismo',[['el','fogo',2,0.7],['pl','jupiter',2,0.7],['el','terra',3,-1]]],
-  ['Generosidade–Economia',[['pl','jupiter',2,0.9],['pl','venus',2,0.6],['pl','saturn',2,-0.8],['el','terra',1,-0.5]]],
-  ['Honra–Utilidade',[['pl','sun',3,1],['pl','jupiter',1,0.5],['pl','mercury',2,-0.7]]],
-  ['Expansão–Conservação',[['pl','jupiter',2,0.9],['mo','cardinal',1,0.5],['mo','fixo',3,-1]]],
-  ['Hedonismo–Ascetismo',[['pl','venus',3,1],['el','fogo',1,0.4],['pl','saturn',3,-1]]],
-  ['Tradição–Experimentação',[['pl','saturn',2,0.8],['el','terra',1,0.5],['el','ar',2,-0.7],['mo','mutável',1,-0.5]]]]],
- ['Identidade e conflito','sun',[
-  ['Autonomia–Dependência',[['pl','sun',3,1],['el','fogo',1,0.5],['pl','moon',2,-0.6],['el','água',1,-0.5]]],
-  ['Assertividade–Conciliação',[['pl','mars',2,0.9],['pl','sun',2,0.7],['pl','venus',3,-1]]],
-  ['Autocontrole–Impulsividade',[['mo','fixo',2,0.9],['pl','saturn',2,0.8],['el','fogo',2,-0.7],['asp','moon','mars','tens',2,-0.7]]],
-  ['Competição–Cooperação',[['pl','mars',2,0.8],['pl','sun',2,0.7],['pl','jupiter',2,-0.8],['pl','venus',2,-0.7]]],
-  ['Resistência–Suscetibilidade',[['mo','fixo',2,0.8],['pl','saturn',2,0.7],['el','água',2,-0.8]]],
-  ['Resiliência–Vulnerabilidade',[['pl','jupiter',2,0.9],['asp','jupiter','saturn','harm',2,0.8],['pl','moon',2,-0.6]]],
-  ['Coesão identitária–Multiplicidade',[['pl','sun',3,1],['mo','fixo',2,0.7],['mo','mutável',2,-0.8],['pl','mercury',1,-0.5]]],
-  ['Transparência–Reserva estratégica',[['el','fogo',2,0.8],['pl','sun',1,0.5],['el','água',2,-0.8],['pl','saturn',2,-0.7]]]]]
-];
+
 
 /* ---------- CFG: pesos ajustáveis pelo usuário (aba Ajustes) ---------- */
 const CFG_DEF={

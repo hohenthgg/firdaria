@@ -6,8 +6,8 @@
    ============================================================ */
 
 /* ---------- utilidades comuns ---------- */
-const elemOf=L=>SIGN_ELEM[signOf(L)];
-const modeOf=L=>SIGN_MODE[signOf(L)];
+
+
 const pct=x=>Math.round(x);
 function lordOfGeniture(){
   const ks=Object.keys(PT_NAME).filter(k=>NATAL.pts[k]);

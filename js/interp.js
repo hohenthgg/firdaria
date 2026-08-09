@@ -11,14 +11,7 @@
    ============================================================ */
 
 /* ---------- função essencial de cada planeta ---------- */
-const IN_FUNC={
-  sun:'a identidade consciente, a autoridade pessoal e a direção da vida — onde a pessoa decide em nome próprio e busca reconhecimento',
-  moon:'o humor, os hábitos, o corpo enquanto ritmo — como a pessoa absorve o cotidiano e de que precisa para se sentir segura',
-  mercury:'a razão prática, a palavra, os documentos e os deslocamentos — como a pessoa entende, argumenta e negocia',
-  venus:'os vínculos, os acordos, o gosto e o prazer — como a pessoa atrai, concilia e escolhe o que considera belo ou justo',
-  mars:'a capacidade de agir, cortar, competir e defender-se — onde a pessoa aplica força e como reage a obstáculos',
-  jupiter:'a expansão, a confiança, o ensino e os apoios — onde a pessoa cresce, a quem recorre e o que considera promissor',
-  saturn:'o limite, a estrutura, o tempo longo e a responsabilidade — o que a pessoa teme perder e o que aceita sustentar por anos'};
+
 
 /* ---------- tendências comportamentais neutras (por planeta) ---------- */
 const IN_TRAIT={
@@ -64,19 +57,7 @@ const IN_CAMPO={
   12:'no que se vive longe dos olhos: isolamento, bastidores, inimigos ocultos, autossabotagem'};
 
 /* ---------- fundo típico de cada casa (quando é casa de origem na regra dos 5°) ---------- */
-const IN_FUNDO={
-  1:'a iniciativa pessoal como pano de fundo',
-  2:'a questão material como pano de fundo',
-  3:'o ambiente de estudo e comunicação como origem',
-  4:'a família e a origem como contexto oculto',
-  5:'o prazer e a criação como motor discreto',
-  6:'o trabalho cotidiano e a saúde como contexto',
-  7:'o outro — sócio, cônjuge, adversário — como origem da questão',
-  8:'perdas, medos e dependências como fundo não visível',
-  9:'convicções e doutrina como pano de fundo',
-  10:'a carreira e a imagem pública como contexto',
-  11:'a rede de apoios como origem discreta',
-  12:'isolamento, ruminação e o que se esconde do público como fundo'};
+
 
 /* ---------- estilo por elemento e modo do signo ---------- */
 const IN_ELEM_STYLE={fogo:'de forma direta, visível e rápida',terra:'de forma prática, lenta e cumulativa',ar:'pela palavra, pela troca e pela comparação',
@@ -226,14 +207,7 @@ function interpPlanet(k){
    ============================================================ */
 
 /* hierarquia interpretativa (aparece no app) */
-const HIERARQUIA=[
-  ['Firdária maior','Agenda estratégica do ciclo','Qual assunto domina este capítulo da vida?'],
-  ['Sub-firdária','Fase operacional dentro do ciclo','Por qual assunto o ciclo está passando agora?'],
-  ['Profecção','Demanda específica do ano','Qual área da vida exige desenvolvimento neste ano?'],
-  ['Senhor do Ano','Administrador da demanda anual','Quem conduz e conecta os acontecimentos do ano?'],
-  ['Revolução Solar','Cenário anual de manifestação','Em quais ambientes isso aparece?'],
-  ['Trânsitos','Disparadores temporais','Quando o potencial é pressionado ou liberado?'],
-  ['Promessa natal','Potencial estrutural do mapa','O que já estava inscrito e pode ser realizado?']];
+
 
 /* operação (natureza) de cada planeta — o tipo de ação */
 const IN_OP={sun:'liderar e dar direção',moon:'nutrir, adaptar e manter o ritmo',
@@ -241,15 +215,9 @@ const IN_OP={sun:'liderar e dar direção',moon:'nutrir, adaptar e manter o ritm
   mars:'agir, competir e executar com força',jupiter:'expandir, ensinar e buscar apoio',
   saturn:'estruturar, limitar e sustentar no tempo'};
 /* palavra-chave curta da agenda de cada planeta (para o cartão executivo) */
-const AGENDA_KW={sun:'direção, identidade e reconhecimento',moon:'rotina, cuidado e vida doméstica',
-  mercury:'comunicação, negócios e aprendizado',venus:'recursos, relações e acordos',
-  mars:'ação, autonomia e disputas',jupiter:'expansão, apoio e sentido',
-  saturn:'estrutura, tempo e responsabilidade'};
+
 /* contexto anual pelo signo do Ascendente da Revolução */
-const RS_CTX=['iniciativa, coragem e novos começos','recursos, estabilidade e prazeres','trocas, estudos e comunicação',
-  'família, segurança e vida privada','criação, filhos e afirmação pessoal','trabalho, saúde e organização',
-  'relações, parcerias e acordos','crises, perdas e recursos partilhados','sentido, estudos e horizontes amplos',
-  'carreira, reputação e responsabilidades','grupos, projetos e amizades','recolhimento, bastidores e entrega'];
+
 /* síntese literal automática do momento (conclusão → contexto) */
 /* synthLiteral, periodExec e execCardHTML vivem agora em motor.js
    (motor de convergência por camadas). */
@@ -334,51 +302,5 @@ function crossFirdProf(mk,sk,p){
    ARQUÉTIPO (carta de tarô) por planeta — símbolo dominante do regente.
    Arquétipo ATUAL = regente do Ascendente · IDEAL = regente do Lote do Espírito.
    ============================================================ */
-const ARCHETYPE={
-  sun:{card:'O Imperador',num:'IV',sym:'♔',arq:'O Rei',kw:['autoridade','vontade','centro'],txt:'governar em nome próprio, dar rosto e direção ao que faz'},
-  moon:{card:'A Sacerdotisa',num:'II',sym:'☾',arq:'A Guardiã',kw:['intuição','ritmo','cuidado'],txt:'sentir o clima, guardar o que importa e nutrir'},
-  mercury:{card:'O Mago',num:'I',sym:'☿',arq:'O Mensageiro',kw:['palavra','razão','habilidade'],txt:'ligar as coisas pela mente e pela fala, negociar e traduzir'},
-  venus:{card:'A Imperatriz',num:'III',sym:'♀',arq:'A Amante',kw:['beleza','acordo','prazer'],txt:'conciliar, agradar e criar harmonia e vínculo'},
-  mars:{card:'A Torre',num:'XVI',sym:'⚔',arq:'O Guerreiro',kw:['coragem','corte','ação'],txt:'agir, cortar e defender — romper o que trava'},
-  jupiter:{card:'A Roda da Fortuna',num:'X',sym:'♃',arq:'O Benfeitor',kw:['expansão','fé','mestre'],txt:'ampliar, ensinar e abrir caminho com generosidade'},
-  saturn:{card:'O Eremita',num:'IX',sym:'⌛',arq:'O Ancião',kw:['tempo','limite','disciplina'],txt:'estruturar, podar e sustentar no tempo, mesmo só'}};
-function tarotCard(k,role,pos){
-  const a=ARCHETYPE[k]; if(!a)return '';
-  const dig=pos?(', '+pos.dig+', casa '+pos.h):'';
-  return '<div class="tarot" data-arche="'+role+'">'
-    +'<div class="t-num">'+a.num+'</div>'
-    +'<div class="t-role">'+role+'</div>'
-    +'<div class="t-sym">'+(PT_GLYPH[k]||a.sym)+'︎</div>'
-    +'<div class="t-card">'+a.card+'</div>'
-    +'<div class="t-arq">'+a.arq+' · '+PT_NAME[k]+'</div>'
-    +'<div class="t-kw">'+a.kw.map(w=>'<span>'+w+'</span>').join('')+'</div>'
-    +'<div class="t-txt">'+a.txt+dig+'.</div>'
-    +'</div>';
-}
-function archetypeCards(){
-  if(!NATAL)return '';
-  const ascR=NATAL.meta.ascRuler;
-  const sp=NATAL.pts.spirit, spR=SIGN_RULER[signOf(sp.lon)];
-  const same=ascR===spR;
-  return '<div class="arche-wrap">'
-    +'<div class="arche-head"><span class="kicker">Arquétipo — quem você é · quem você pode ser</span>'
-      +'<p class="mono" style="margin:2px 0 0;color:var(--dim2)">Regente do Ascendente (o ponto de partida) frente ao regente do Lote do Espírito (a direção a integrar).</p></div>'
-    +'<div class="tcards">'
-      +tarotCard(ascR,'arquétipo atual',NATAL.pts[ascR])
-      +'<div class="t-arrow">→</div>'
-      +tarotCard(spR,'arquétipo ideal',NATAL.pts[spR])
-    +'</div>'
-    +'<p class="arche-note">'+(same
-      ?'Regente do Ascendente e do Espírito coincidem em <b>'+PT_NAME[ascR]+'</b>: o ponto de partida já aponta para a direção — resta amadurecê-lo.'
-      :'O caminho vai de <b>'+ARCHETYPE[ascR].arq+' ('+PT_NAME[ascR]+')</b> a <b>'+ARCHETYPE[spR].arq+' ('+PT_NAME[spR]+')</b>: integrar '+ARCHETYPE[spR].txt+', sem abandonar a força de partida.')+'</p>'
-    +'</div>';
-}
 
-/* ---------- síntese em uma frase (cabeçalho) ---------- */
-function interpFrase(k){
-  const p=NATAL.pts[k]; if(!p)return '';
-  const ru=ruledHouses(k);
-  const dAsc=adiff(p.lon,NATAL.asc);
-  const alvo=(dAsc<=5&&p.hBack)?('domina em parte a identidade, vindo da '+p.hBack+'ª'):p.h===1?'marca a identidade':('atua '+IN_CAMPO[p.h]);
-  return PT_NAME[k]+' '+alvo+(ru.length?('; rege '+ru.map(h=>h+'ª').join(' e ')+' ('+ru.map(h=>HOUSE_THEME[h].split(',')[0].split(':')[0]).join('; ')+')'):'')+'.';
-}
+

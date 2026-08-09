@@ -114,13 +114,14 @@ function natalBarb(s){
   return {exc,integra:T};
 }
 
-/* Gargatholil (Depth Astrology): casa e signo, íntegra no original em inglês */
+/* Gargatholil (Depth Astrology): casa e signo — tradução quando existe, íntegra em inglês sempre */
 function natalGargTxt(t){
   let out='',ul=[];
   const flush=()=>{if(ul.length){out+='<ul class="ne-l">'+ul.map(x=>'<li>'+x+'</li>').join('')+'</ul>';ul=[];}};
   t.split(/\n/).forEach(l=>{
     l=l.trim(); if(!l){flush();return;}
     if(/^##\s*/.test(l)){flush();out+='<p class="np-h">'+l.replace(/^##\s*/,'')+'</p>';}
+    else if(/^—.*—$/.test(l)){flush();out+='<p class="np-h">'+l.replace(/^—\s*|\s*—$/g,'')+'</p>';}
     else if(/^-\s+/.test(l))ul.push(l.replace(/^-\s+/,''));
     else{flush();out+='<p>'+l+'</p>';}
   });
@@ -129,13 +130,55 @@ function natalGargTxt(t){
 function natalGargHTML(N){
   const GC=(typeof GARG_CASA!=='undefined')?(GARG_CASA[N.k]&&GARG_CASA[N.k][N.casa]):null;
   const GS=(typeof GARG_SIGNO!=='undefined')?(GARG_SIGNO[N.k]&&GARG_SIGNO[N.k][N.s]):null;
-  if(!GC&&!GS)return '';
+  const TC=(typeof GARG_PT_C!=='undefined')?(GARG_PT_C[N.k]&&GARG_PT_C[N.k][N.casa]):null;
+  const TS=(typeof GARG_PT_S!=='undefined')?(GARG_PT_S[N.k]&&GARG_PT_S[N.k][N.s]):null;
+  if(!GC&&!GS&&!TC&&!TS)return '';
   const det=(t,txt)=>'<details class="np-int"><summary>'+t+'</summary>'
     +'<div class="np-txt">'+natalGargTxt(txt)+'</div></details>';
   return '<div class="npan-ps garg"><span>'+PT_NAME[N.k]+' segundo Gargatholil</span>'
-    +'<p class="np-sub">Depth Astrology — leitura psicológica profunda da casa e do signo, no original em inglês.</p>'
-    +(GC?det(PT_NAME[N.k]+' na casa '+N.casa+' — íntegra',GC):'')
-    +(GS?det(PT_NAME[N.k]+' em '+SIGNS[N.s]+' — íntegra',GS):'')
+    +'<p class="np-sub">Depth Astrology — leitura psicológica profunda da casa e do signo.'
+    +((TC||TS)?' Tradução integral disponível para esta colocação; a íntegra original em inglês segue abaixo.':' Íntegras no original em inglês.')+'</p>'
+    +(TC?det(PT_NAME[N.k]+' na casa '+N.casa+' — em português',TC):'')
+    +(TS?det(PT_NAME[N.k]+' em '+SIGNS[N.s]+' — em português',TS):'')
+    +(GC?det(PT_NAME[N.k]+' na casa '+N.casa+' — íntegra original',GC):'')
+    +(GS?det(PT_NAME[N.k]+' em '+SIGNS[N.s]+' — íntegra original',GS):'')
+    +'</div>';
+}
+/* Lions Daily: função, presença, traços e os dois registros (objetivo e subjetivo) */
+function natalLionHTML(N){
+  if(typeof LION_FUNCAO==='undefined'||!LION_FUNCAO[N.k])return '';
+  const k=N.k, li=a=>'<ul class="ne-l">'+a.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+  const reg=LION_REG_PL[k], rc=LION_REG_CASA[N.casa];
+  return '<div class="npan-ps lion"><span>função e traços — compêndio</span>'
+    +'<p>'+cap1(LION_FUNCAO[k])+'.</p>'
+    +'<p class="np-sub">'+cap1(LION_PRESENCA[k])+'; opera '+LION_ESTILO_ELEM[SIGN_ELEM[N.s]]+', '
+      +LION_ESTILO_MODO[SIGN_MODE[N.s]]+' — '+LION_CAMPO[N.casa]+'.</p>'
+    +'<details class="np-int"><summary>tendências, expressão construtiva e sob aflição</summary>'
+      +'<p class="np-h">Tendências</p>'+li(LION_TRACO[k])
+      +'<p class="np-h">Em alta</p>'+li(LION_ALTA[k])
+      +'<p class="np-h">Sob aflição</p>'+li(LION_BAIXA[k])+'</details>'
+    +(reg?('<details class="np-int"><summary>os dois registros de '+PT_NAME[k]+' — objetivo e subjetivo</summary>'
+      +'<p class="np-h">Registro objetivo (tradição)</p><p>'+reg[0]+'</p>'
+      +'<p class="np-h">Registro subjetivo (psicológico)</p><p>'+reg[1]+'</p></details>'):'')
+    +(rc?('<details class="np-int"><summary>os dois registros da casa '+N.casa+'</summary>'
+      +'<p class="np-h">Registro objetivo (Lilly)</p><p>'+rc[0]+'</p>'
+      +'<p class="np-h">Registro subjetivo (psicológico)</p><p>'+rc[1]+'</p></details>'):'')
+    +'</div>';
+}
+/* eixos e nodos: colocações traduzidas do Depth, quando o mapa coincide */
+function natalEixoHTML(){
+  if(typeof LION_EIXO==='undefined'||typeof NATAL==='undefined'||!NATAL)return '';
+  const items=[];
+  const sAsc=signOf(NATAL.asc), sMc=signOf(NATAL.mc);
+  if(LION_EIXO.ascSigno[sAsc])items.push(['Ascendente em '+SIGNS[sAsc],LION_EIXO.ascSigno[sAsc]]);
+  if(LION_EIXO.mcSigno[sMc])items.push(['Meio-do-Céu em '+SIGNS[sMc],LION_EIXO.mcSigno[sMc]]);
+  const nn=NATAL.pts&&NATAL.pts.nn, sn=NATAL.pts&&NATAL.pts.sn;
+  if(nn&&LION_EIXO.nnCasa[nn.h])items.push(['Nodo Norte na casa '+nn.h,LION_EIXO.nnCasa[nn.h]]);
+  if(sn&&LION_EIXO.snCasa[sn.h])items.push(['Nodo Sul na casa '+sn.h,LION_EIXO.snCasa[sn.h]]);
+  if(!items.length)return '';
+  return '<div class="npan-ps garg" style="margin-top:12px"><span>eixos e nodos segundo Gargatholil — em português</span>'
+    +items.map(it=>'<details class="np-int"><summary>'+it[0]+'</summary>'
+      +'<div class="np-txt">'+natalGargTxt(it[1])+'</div></details>').join('')
     +'</div>';
 }
 
@@ -163,6 +206,8 @@ function natalPainelHTML(k){
     +'</header>'
     +'<p class="npan-n">'+cap1(N.nat.n)+' — '+N.nat.d+'.</p>'
     +bloco(R.t,R.d)+bloco(C.t,C.d)+bloco(S.t,S.d)
+    /* 0 · função e traços do compêndio */
+    +natalLionHTML(N)
     /* 1 · Olavo — a leitura psicológica da casa, modulada pela regência */
     +(N.camadas?('<div class="npan-ps"><span>leitura psicológica — Olavo'
       +(N.camadas.psi.titulo?(' · '+N.camadas.psi.titulo):'')+'</span>'
@@ -173,12 +218,20 @@ function natalPainelHTML(k){
           +'<div class="np-txt">'+OL_TEXTO[N.casa][N.k].split(/\n\n+/).map(x=>'<p>'+x.replace(/\n/g,' ')+'</p>').join('')+'</div></details>')
         :'')
       +'</div>'):'')
-    /* 2 · Barbault — o signo */
-    +(function(){const B=natalBarb(N.s); if(!B)return '';
+    /* 2 · Barbault — o signo, o planeta no signo e o planeta na casa */
+    +(function(){const B=natalBarb(N.s);
+      const ps=(typeof BARB_PS!=='undefined')&&BARB_PS[N.k]&&BARB_PS[N.k][N.s];
+      const pc=(typeof BARB_PC!=='undefined')&&BARB_PC[N.k]&&BARB_PC[N.k][N.casa];
+      const cic=(typeof LION_CICLO!=='undefined')?LION_CICLO[N.s]:null;
+      if(!B&&!ps&&!pc)return '';
       return '<div class="npan-ps barb"><span>'+SIGNS[N.s]+' segundo Barbault</span>'
-        +'<p>'+B.exc+'</p>'
-        +'<details class="np-int"><summary>Barbault, na íntegra</summary>'
-        +'<div class="np-txt">'+B.integra.split(/\n\n+/).map(x=>'<p>'+x.replace(/\n/g,' ')+'</p>').join('')+'</div></details></div>';})()
+        +(cic?('<p class="np-sub">'+cic+'</p>'):'')
+        +(B?('<p>'+B.exc+'</p>'):'')
+        +(ps?('<p class="np-h">'+PT_NAME[N.k]+' em '+SIGNS[N.s]+'</p><p>'+ps+'</p>'):'')
+        +(pc?('<p class="np-h">'+PT_NAME[N.k]+' na casa '+N.casa+'</p><p>'+pc+'</p>'):'')
+        +(B?('<details class="np-int"><summary>Barbault, na íntegra (o capítulo do signo)</summary>'
+        +'<div class="np-txt">'+B.integra.split(/\n\n+/).map(x=>'<p>'+x.replace(/\n/g,' ')+'</p>').join('')+'</div></details>'):'')
+        +'</div>';})()
     /* 3 · Gargatholil — casa e signo */
     +natalGargHTML(N)
     +'<button class="npan-x" data-nxdet="'+k+'">Estrutura natal <i>'+(NX_DET===k?'⌄':'›')+'</i></button>'
@@ -249,7 +302,7 @@ function renderNatalTab(){
   if(typeof NATAL==='undefined'||!NATAL){chips.innerHTML='';pan.innerHTML=emptyState();return;}
   if(!NX_SEL)NX_SEL=Object.keys(PT_NAME)[0];
   chips.innerHTML=natalChipsHTML();
-  try{pan.innerHTML=natalPainelHTML(NX_SEL);}
+  try{pan.innerHTML=natalPainelHTML(NX_SEL)+natalEixoHTML();}
   catch(e){console.error('natal painel',e);pan.innerHTML='<p class="note">não foi possível montar a leitura.</p>';}
 }
 function bindNatal(){

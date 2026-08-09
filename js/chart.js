@@ -1,11 +1,11 @@
 /* ============================================================
    CHART.JS — construtor genérico: do texto colado à estrutura
    interpretativa completa. Define os globais que o resto usa:
-   NATAL, BIRTH, FIRD, RS_DATA, RSMETA, ERA_TXT, OLAVO_PL,
+   NATAL, BIRTH, FIRD, RS_DATA, RSMETA, ERA_TXT,
    NATAL_ASP, PROMESSAS, STR, EL, MO, HAS, CHARTMETA.
    ============================================================ */
 let NATAL=null, BIRTH=null, FIRD=[], RS_DATA={}, RSMETA={angular:{},echo:{}};
-let ERA_TXT={}, OLAVO_PL={}, NATAL_ASP={}, PROMESSAS=[], STR={}, EL={}, MO={}, HAS={}, CHARTMETA={};
+let ERA_TXT={}, NATAL_ASP={}, PROMESSAS=[], STR={}, EL={}, MO={}, HAS={}, CHARTMETA={};
 
 const n360=x=>{x%=360;return x<0?x+360:x;};
 const adiff=(a,b)=>{let d=Math.abs(n360(a)-n360(b))%360;return d>180?360-d:d;};
@@ -185,24 +185,9 @@ function buildEraTexts(){
 }
 function buildAspLabels(){/* NATAL_ASP já montado em buildChart */}
 function buildOlavoFallback(){
-  // linha genérica por planeta-na-casa; a versão do corpus substitui via RAG quando disponível
+
   const NAT={sun:'a vontade e a identidade',moon:'o sentir e os hábitos',mercury:'a razão e a palavra',venus:'o afeto e o gosto',mars:'a força e o corte',jupiter:'a expansão e a fé',saturn:'o limite e a estrutura'};
-  Object.keys(PT_NAME).forEach(k=>{
-    const p=NATAL.pts[k]; if(!p)return;
-    OLAVO_PL[k]=PT_NAME[k]+' na casa '+p.h+': '+NAT[k]+' operam no campo de '+HOUSE_SHORT[p.h]+' — '+OLAVO_CASA[p.h]+'.';
-  });
   // tentar substituir pelo corpus (assíncrono, não bloqueia)
-  if(typeof RAG!=='undefined'){
-    RAG.load().then(()=>{
-      const ROM=['','Casa I','Casa II','Casa III','Casa IV','Casa V','Casa VI','Casa VII','Casa VIII','Casa IX','Casa X','Casa XI','Casa XII'];
-      Object.keys(PT_NAME).forEach(k=>{
-        const p=NATAL.pts[k]; if(!p||!RAG.chunks||!RAG.chunks.length)return;
-        const hit=RAG.chunks.find(c=>c.planeta===PT_NAME[k]&&c.casa===ROM[p.h]&&String(c.secao)==='interpretacao');
-        if(hit){const t=(hit.texto||'').replace(/\s+/g,' ').trim();
-          OLAVO_PL[k]=PT_NAME[k]+' na casa '+p.h+': '+t.slice(0,340)+(t.length>340?'…':'')+' [corpus]';}
-      });
-    });
-  }
 }
 /* ---------- motor de promessas por múltiplos testemunhos ----------
    Uma promessa nasce da relação REGÊNCIA × POSIÇÃO (regente de X na casa Y)

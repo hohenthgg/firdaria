@@ -40,8 +40,6 @@ function sinA(){
     asc:NATAL.asc,mc:NATAL.mc,cusps:NATAL.cusps,pts,rulers:NATAL.rulers};
 }
 
-const SIN_ELEM=['fogo','terra','ar','água'];
-const sinElemOf=L=>SIN_ELEM[signOf(L)%4];
 
 /* --- rótulos de campo por casa --- */
 /* como sujeito de oração: "os estudos de A entram…" */
@@ -56,23 +54,7 @@ const SIN_HTAG={1:'a identidade e o corpo',2:'os recursos próprios',3:'os estud
   9:'os estudos superiores e a fé',10:'a carreira e a posição pública',
   11:'os amigos, os grupos e os projetos',12:'os bastidores e o isolamento'};
 /* efeito da incidência, com verbo que concorda com o sujeito */
-const SIN_EFEITO={
-  1 :['incide','incidem','diretamente sobre a pessoa de {o}: sobre o corpo, o humor e o modo de se apresentar'],
-  2 :['entra','entram','no orçamento de {o}: no ganho, no gasto e na sensação de segurança material'],
-  3 :['entra','entram','na conversa cotidiana de {o}: no que se fala, no que se estuda e no trânsito do dia'],
-  4 :['entra','entram','na casa de {o}: no ambiente doméstico, na família e no que sustenta por baixo'],
-  5 :['incide','incidem','sobre o prazer e a criação de {o}: romance, filhos, o que se faz por gosto'],
-  6 :['cai','caem','na rotina de {o}: no trabalho diário, nas obrigações e no corpo em funcionamento'],
-  7 :['incide','incidem','sobre o campo de parcerias, contratos e relações um-a-um de {o}'],
-  8 :['toca','tocam','o que {o} não administra sozinho: dívidas, heranças, o que muda sem consentimento'],
-  9 :['incide','incidem','sobre as convicções de {o}: fé, estudo longo, o sentido que dá ao conjunto'],
-  10:['incide','incidem','sobre a carreira de {o}: sobre a posição, a autoridade e a imagem pública'],
-  11:['chega','chegam','pelo círculo de {o}: amigos, grupos, projetos e o que ele espera do futuro'],
-  12:['age','agem','em zona cega de {o}: bastidor, retiro, o que se sente sem conseguir nomear']};
-function sinEfeito(h,dono,plural){
-  const E=SIN_EFEITO[h]||SIN_EFEITO[1];
-  return (plural?E[1]:E[0])+' '+E[2].replace(/\{o\}/g,dono);
-}
+
 
 /* ============================================================
    QUADRO COMPARATIVO — sem arena, sem campeão, sem batalha.
