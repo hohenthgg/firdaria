@@ -1267,6 +1267,8 @@ body.is-mobile .tpl-row{flex-wrap:wrap}body.is-mobile .tpl-i{flex:1 1 100%}body.
 .np-int>summary::before{content:"› "}
 .np-int[open]>summary::before{content:"⌄ "}
 .np-txt{max-height:340px;overflow-y:auto;padding:6px 2px 2px}
+.np-h{font-weight:700;color:var(--ivory);margin:10px 0 2px!important;font-size:.8rem!important}
+.npan-ps.garg{border-left-color:#7a6ea8}
 .np-txt p{font-size:.8rem;color:var(--dim);line-height:1.6;margin:0 0 9px}
 .npan-x{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:12px;
   background:none;border:none;border-top:1px solid var(--line);padding:12px 0 0;cursor:pointer;
@@ -1713,41 +1715,29 @@ body.is-mobile .pv-hoje{padding-left:34px}
    SINASTRIA — quadro comparativo. Sem arena, sem moldura: duas
    colunas de leitura e um resumo legível no topo.
    ============================================================ */
-.sy-res{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 22px}
-.sy-r{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.sy-r.wide{grid-column:1/-1}
-.sy-r span{display:block;font-size:.7rem;color:var(--dim2);margin-bottom:4px}
-.sy-r b{display:block;font-size:.92rem;font-weight:550;color:var(--ivory2);line-height:1.4}
-.sy-r p{margin:4px 0 0;font-size:.8rem;color:var(--dim);line-height:1.5}
 .sy-sec{display:flex;align-items:baseline;gap:10px;margin:26px 0 10px}
 .sy-sec b{font-size:1rem;font-weight:600;color:var(--ivory2)}
 .sy-sec em{font-style:normal;font-size:.74rem;color:var(--dim2)}
-.sy-dir{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;color:var(--dim);
-  background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:4px 12px}
-.sy-dir i{font-style:normal;color:var(--acc)}
-.sy-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
-.sy-col{min-width:0}
-.sy-list{display:flex;flex-direction:column;gap:8px}
-.sy-i{background:var(--bg2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.sy-ih{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;width:100%;
-  text-align:left;background:none;border:none;padding:11px 13px;cursor:pointer;font-family:inherit}
-.sy-ih:hover{background:var(--panel)}
-.sy-g{font-size:1.1rem;line-height:1;color:var(--ivory2);text-align:center;font-variant-emoji:text}
-.sy-t b{display:block;font-size:.88rem;font-weight:550;color:var(--ivory)}
-.sy-t em{display:block;font-style:normal;font-size:.72rem;color:var(--dim2);margin-top:1px}
-.sy-move{font-size:.72rem;color:var(--acc);white-space:nowrap;font-variant-numeric:tabular-nums}
-.sy-b{padding:0 13px 12px;font-size:.82rem;color:var(--dim);line-height:1.55}
-.sy-b .sy-l{display:block;font-size:.68rem;color:var(--dim2);margin:8px 0 2px}
-.sy-b p{margin:0 0 2px}
-.sy-b .sy-ef{color:var(--ivory);font-weight:450}
-.sy-tec{margin-top:9px;border-top:1px solid var(--line);padding-top:8px}
-.sy-tec>summary{list-style:none;cursor:pointer;font-size:.72rem;color:var(--dim2);padding:2px 0}
-.sy-tec>summary::-webkit-details-marker{display:none}
-.sy-tec>summary::before{content:"› ";color:var(--acc)}
-.sy-tec[open]>summary::before{content:"⌄ "}
-.sy-tec p{font-size:.75rem;color:var(--dim2);margin:5px 0 0;line-height:1.5}
-@media(max-width:860px){.sy-grid{grid-template-columns:1fr}.sy-res{grid-template-columns:1fr}}
-body.is-mobile .sy-grid,body.is-mobile .sy-res{grid-template-columns:1fr}
+/* quadro comparativo: pares empilhados, seta conversível no meio */
+.sy-stack{display:flex;flex-direction:column;gap:14px;max-width:600px;margin:0 auto}
+.syp{display:grid;grid-template-columns:1fr;justify-items:center;gap:0;background:var(--bg2);
+  border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.syp-card{display:grid;grid-template-columns:34px 1fr;gap:11px;align-items:center;width:100%;
+  background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 13px}
+.syp-card.off{grid-template-columns:1fr;color:var(--dim2);font-size:.78rem;text-align:center}
+.syp-g{font-size:1.25rem;line-height:1;color:var(--ivory2);text-align:center;font-variant-emoji:text}
+.syp-t b{display:block;font-size:.88rem;font-weight:550;color:var(--ivory)}
+.syp-t em{display:block;font-style:normal;font-size:.72rem;color:var(--dim2);margin-top:1px}
+.syp-arr{background:var(--panel);border:1px solid var(--line);color:var(--acc);font-size:1.05rem;
+  line-height:1;width:34px;height:30px;border-radius:99px;cursor:pointer;margin:-2px 0;
+  position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
+  transition:background .15s,transform .15s}
+.syp-arr:hover{background:var(--accs)}
+.syp-arr.on{background:var(--accs);border-color:var(--acc)}
+.syp-x{width:100%;margin-top:10px;border-top:1px solid var(--line);padding-top:10px;
+  font-size:.84rem;color:var(--ivory);line-height:1.6}
+.syp-x p{margin:0 0 8px}
+.syp-x .syp-asp{color:var(--dim);font-size:.78rem;margin-bottom:0}
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:99px;border:3px solid transparent;background-clip:content-box}
@@ -2528,6 +2518,7 @@ body.is-mobile .rv2-sticky{position:static}
 <script src="js/olavo.js"></script>
 <script src="js/olavo_texto.js"></script>
 <script src="js/barbault.js"></script>
+<script src="js/garg.js"></script>
 <script src="js/tipodata.js"></script>
 <script src="js/condicao.js"></script>
 <script src="js/parse.js"></script>
