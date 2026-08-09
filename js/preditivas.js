@@ -15,6 +15,7 @@ const norm180=x=>{let d=n360(x); return d>180?d-360:d;};
 /* ortografia: concordância de gênero dos nomes planetários */
 const PV_FEM={moon:1,venus:1};                   // concordância nos textos
 const pvArtigo=k=>PV_FEM[k]?'à ':'ao ';
+
 const pvGen=(k,txt)=>PV_FEM[k]
   ? txt.replace(/\bdignificado\b/g,'dignificada').replace(/\bdebilitado\b/g,'debilitada')
        .replace(/\brecebido\b/g,'recebida').replace(/\bcombusto\b/g,'combusta')
@@ -394,6 +395,7 @@ function pvJanelaCasa(mover,casa,anos){
    CAMADA 2 — CLASSIFICAÇÃO ASTROLÓGICA
    ============================================================ */
 let PV_TAB='dir', PV_METODO='pup', PV_KEY='naibod', PV_SENT='ambas', PV_MARG=6;
+
 let PV_OPEN=null;
 
 /* papéis: o significador é o CAMPO atingido; o promissor é a NATUREZA da ativação */
@@ -539,6 +541,7 @@ function pvClusters(itens,janelaAnos){
 /* ============================================================
    CAMADA 3 — INTERPRETAÇÃO (só lê o que já foi calculado)
    ============================================================ */
+
 const PV_ADJ={sun:'solar',moon:'lunar',mercury:'mercurial',venus:'venusiana',
   mars:'marcial',jupiter:'jupiteriana',saturn:'saturnina'};
 function pvIdadeTxt(anos){
@@ -559,6 +562,8 @@ function pvTitulo(it){
   return (PT_GLYPH[it.prom.pl]||'')+'\uFE0E '+PT_NAME[it.prom.pl]+' '+asp+' '+alvo
     +(it.sentido==='conversa'?' <i>(conversa)</i>':'');
 }
+
+
 function pvCondicaoNatal(k){
   const p=NATAL.pts[k]; if(!p)return 'condição não avaliável';
   const q=qualidade(k);
@@ -608,27 +613,7 @@ function pvEstado(it,agora){
   if(Math.abs(dif)<=PV_MARG)return 'ativo';
   return dif>0?'proximo':'passado';
 }
-function pvItens(){
-  const agora=CURSOR, idade=ageAt(agora);
-  const base = PV_TAB==='dir' ? direcoesPrimarias()
-             : progressoesSecundarias(Math.max(0,idade-10),idade+10);
-  const jan=PV_TAB==='dir'?10:8;
-  const perto=base.filter(x=>Math.abs(x.anos-idade)<=jan);
-  const bruta=perto.length?perto:base.slice(0,40);
-  const pre=bruta.map(x=>{const p=pvPromessa(x), e=pvEnvolvidos(x), s=pvEstrutural(x);
-    return Object.assign({},x,{promessa:p,env:e,estr:s,
-      _rank:(p?p.sc:0)+s.motivos.length+(s.alvoVital?2:0)+(s.duro?1:0),
-      _dist:Math.abs(x.anos-idade)});});
-  pre.sort((a,b)=>(b._rank-a._rank)||(a._dist-b._dist));
-  const iPerto=pre.reduce((mi,x,i)=>(x._dist<pre[mi]._dist?i:mi),0);
-  const sel=pre.slice(0,16);
-  if(iPerto>=16)sel[15]=pre[iPerto];
-  const curta=sel.map(x=>{const conf=pvConfirmacoes(x,false);
-    return Object.assign({},x,{conf,nivel:pvRelevancia(x,x.promessa,conf)});});
-  const peso={alta:0,'média':1,contextual:2};
-  curta.sort((a,b)=>(peso[a.nivel]-peso[b.nivel])||(b._rank-a._rank)||(a._dist-b._dist));
-  return {lista:curta, clusters:pvClusters(curta,PV_TAB==='dir'?2.5:1.5), idade, agora};
-}
+
 function pvCalcHTML(it){
   const F=pvFrame(), g=x=>x==null?'—':((Math.round(x*1000)/1000).toFixed(3)+'°');
   const lin=(a,b)=>'<div class="pv-cr"><span>'+a+'</span><b>'+b+'</b></div>';
@@ -894,6 +879,27 @@ let PV_VAL=(function(){try{return JSON.parse(localStorage.getItem('agx_pvval')||
 function pvValSave(){try{localStorage.setItem('agx_pvval',JSON.stringify(PV_VAL));}catch(e){}}
 function pvValKey(ev){return (ev.promId||'x')+'|'+ev.campo+'|'+Math.round(ev.pico*10);}
 let PV_EVT_CACHE=null;
+function pvItens(){
+  const agora=CURSOR, idade=ageAt(agora);
+  const base = PV_TAB==='dir' ? direcoesPrimarias()
+             : progressoesSecundarias(Math.max(0,idade-10),idade+10);
+  const jan=PV_TAB==='dir'?10:8;
+  const perto=base.filter(x=>Math.abs(x.anos-idade)<=jan);
+  const bruta=perto.length?perto:base.slice(0,40);
+  const pre=bruta.map(x=>{const p=pvPromessa(x), e=pvEnvolvidos(x), s=pvEstrutural(x);
+    return Object.assign({},x,{promessa:p,env:e,estr:s,
+      _rank:(p?p.sc:0)+s.motivos.length+(s.alvoVital?2:0)+(s.duro?1:0),
+      _dist:Math.abs(x.anos-idade)});});
+  pre.sort((a,b)=>(b._rank-a._rank)||(a._dist-b._dist));
+  const iPerto=pre.reduce((mi,x,i)=>(x._dist<pre[mi]._dist?i:mi),0);
+  const sel=pre.slice(0,16);
+  if(iPerto>=16)sel[15]=pre[iPerto];
+  const curta=sel.map(x=>{const conf=pvConfirmacoes(x,false);
+    return Object.assign({},x,{conf,nivel:pvRelevancia(x,x.promessa,conf)});});
+  const peso={alta:0,'média':1,contextual:2};
+  curta.sort((a,b)=>(peso[a.nivel]-peso[b.nivel])||(b._rank-a._rank)||(a._dist-b._dist));
+  return {lista:curta, clusters:pvClusters(curta,PV_TAB==='dir'?2.5:1.5), idade, agora};
+}
 function pvEventos(){
   // biografia inteira: do nascimento até ~4,5 anos além de hoje.
   // Independe do cursor — só o recorte visual muda com a data lida.

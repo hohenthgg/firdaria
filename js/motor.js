@@ -15,7 +15,7 @@
    ============================================================ */
 
 /* ---------- vocabulário literal (sem frases vagas) ---------- */
-const VERBO=['tende a','favorece','aumenta a inclinação a','pode se manifestar como'];
+
 const casaTag=h=>HOUSE_TAG[h]||'assuntos gerais';
 const casasTag=hs=>{
   if(!hs||!hs.length)return 'assuntos gerais';
@@ -149,70 +149,9 @@ function execCardHTML(age,compact){
 /* ============================================================
    TRÂNSITOS — seleção curta e priorizada + textos de 1 frase
    Prioridade (framework-001 §5, pn4-001 §7): senhores do tempo primeiro.
-   ============================================================ */
-function transitPriority(hit,d,S){
-  S=S||tempoState(d); if(!S)return {score:0,porque:''};
-  let sc=0, porque=null;
-  const T=hit.tKey, alvo=hit.nk;
-  if(T===S.mk){sc+=5;porque=porque||'rege a firdária maior em curso';}
-  if(T===S.sk){sc+=4;porque=porque||'rege a fase (sub-firdária) atual';}
-  if(T===S.lord){sc+=5;porque=porque||'é o Senhor do Ano';}
-  if(S.rev){
-    if(T===S.rev.planetKey){sc+=4;porque=porque||'é o planeta da Revolução '+S.rev.label+' selecionada';}
-    if(T===S.rev.ascRuler){sc+=4;porque=porque||'rege o Ascendente da Revolução '+S.rev.label;}
-  }
-  if(alvo===S.lord){sc+=3;porque=porque||'toca o Senhor do Ano no natal';}
-  if(alvo===S.mk||alvo===S.sk){sc+=2;porque=porque||'toca um senhor do tempo no natal';}
-  if(['asc','mc','sun','moon'].includes(alvo)){sc+=3;porque=porque||'toca um ponto vital do mapa';}
-  if(alvo==='fort'){sc+=2;porque=porque||'toca a Fortuna';}
-  // contatos com planetas/casas de promessas ativadas
-  const proms=(typeof PROMESSAS!=='undefined'?PROMESSAS:[]).filter(pr=>promiseState(pr,d,S).estado==='ativada');
-  const pAlvo=proms.find(pr=>pr.pl===alvo||pr.pl===T);
-  if(pAlvo){sc+=3;porque=porque||'toca o administrador de uma promessa natal ativada';}
-  const casasAtivas=[S.profHouse].concat(proms.map(pr=>pr.h));
-  if(ruledHouses(alvo).some(h=>casasAtivas.includes(h))){sc+=2;porque=porque||'o ponto tocado administra uma casa ativada no período';}
-  if(hit.orb<1)sc+=2; else if(hit.orb<2.5)sc+=1;
-  return {score:sc, porque:porque||'contato secundário no período', lento:['saturn','jupiter'].includes(T)};
-}
-/* os 3–5 trânsitos realmente relevantes */
-function transitosRelevantes(d,max){
-  if(typeof NATAL==='undefined'||!NATAL)return [];
-  const S=tempoState(d); if(!S)return [];
-  const seen={};
-  return transitHits(d).map(h=>Object.assign(h,{pri:transitPriority(h,d,S)}))
-    .filter(h=>h.pri.score>=5)
-    .sort((a,b)=>b.pri.score-a.pri.score||a.orb-b.orb)
-    .filter(h=>{const k=h.tKey+h.nk;if(seen[k])return false;seen[k]=1;return true;})
-    .slice(0,max||5);
-}
+
+
 /* efeito literal em até 24 palavras — regências do TRANSITANTE são bagagem
    dele; as do ALVO pertencem ao alvo (nunca trocar). */
-const TR_ACAO={
-  sun:{conj:'ilumina e expõe',harm:'dá visibilidade a',tens:'pressiona por reconhecimento'},
-  moon:{conj:'agita e torna imediato',harm:'facilita o trato com',tens:'desestabiliza o cotidiano de'},
-  mercury:{conj:'movimenta papéis e conversas sobre',harm:'destrava conversas e documentos de',tens:'embaralha prazos e informações de'},
-  venus:{conj:'suaviza e aproxima',harm:'facilita acordos em',tens:'confunde valores e afetos em'},
-  mars:{conj:'acelera e força a ação em',harm:'dá impulso a',tens:'acirra disputas e desgasta'},
-  jupiter:{conj:'amplia e abre',harm:'favorece crescimento em',tens:'infla expectativas em'},
-  saturn:{conj:'cobra estrutura de',harm:'consolida com esforço',tens:'pressiona, atrasa e exige revisão de'}};
-function transitoTexto(hit,d,S){
-  S=S||tempoState(d);
-  const T=hit.tKey, alvo=hit.np;
-  const acao=(TR_ACAO[T]&&TR_ACAO[T][hit.cls])||'ativa';
-  const alvoCasas=ruledHouses(hit.nk);                     // regências do ALVO
-  const campo=alvoCasas.length?casasTag(alvoCasas.slice(0,2)):casaTag(alvo.h);
-  const titulo=PT_NAME[T]+' em '+({conj:'conjunção a',harm:hit.ang===60?'sextil a':'trígono a',tens:hit.ang===90?'quadratura a':'oposição a'})[hit.cls]+' '+alvo.nm+' natal';
-  let efeito=cap1(PT_NAME[T])+' '+acao+' '+campo+'; '
-    +(hit.cls==='tens'?'exige revisão e cautela.':hit.cls==='harm'?'abre espaço para avançar.':'pede integração consciente.');
-  // corta em 24 palavras
-  const w=efeito.split(/\s+/); if(w.length>24) efeito=w.slice(0,24).join(' ')+'…';
-  const janela=hitWindow(hit,d);
-  return {titulo, efeito,
-    porque:cap1(PT_NAME[T])+' '+hit.pri.porque+'.',
-    janela, lento:hit.pri.lento,
-    tecnico:PT_NAME[T]+' a '+zfmt(hit.lon)+', orbe '+hit.orb.toFixed(1)+'° · '
-      +alvo.nm+' natal a '+zfmt(alvo.lon)+' (casa '+alvo.h+')'
-      +(alvoCasas.length?(' · '+alvo.nm+' rege '+alvoCasas.map(ordinal).join(' e ')):'')
-      +(ruledHouses(T).length?(' · '+PT_NAME[T]+' natal rege '+ruledHouses(T).map(ordinal).join(' e ')):'')
-      +' · relevância interna '+hit.pri.score};
-}
+
+
