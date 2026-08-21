@@ -253,13 +253,13 @@ function tpSOCOA(){
 }
 
 /* ---------- render ---------- */
-const TP_TABS=[['mbti','MBTI'],['enn','Eneagrama'],['soc','Sociônica'],['disc','DISC'],['socoa','Socoa']];
+const TP_TABS=[['mbti','MBTI'],['enn','Eneagrama'],['soc','Sociônica'],['disc','DISC'],['socoa','Socoa'],['guia','Guia']];
 function renderTipos(){
   const bar=$('tp-tabs'), body=$('tp-body'); if(!bar||!body)return;
   bar.innerHTML=TP_TABS.map(([id,lab])=>
     '<button class="tp-tab'+(TP_TAB===id?' on':'')+'" data-tptab="'+id+'">'+lab+'</button>').join('');
   try{
-    body.innerHTML={mbti:tpMBTI,enn:tpENN,soc:tpSOC,disc:tpDISC,socoa:tpSOCOA}[TP_TAB]();
+    body.innerHTML={mbti:tpMBTI,enn:tpENN,soc:tpSOC,disc:tpDISC,socoa:tpSOCOA,guia:tpGUIA}[TP_TAB]();
   }catch(e){console.error('tipologias',e);body.innerHTML='<p class="note">não foi possível montar esta seção.</p>';}
 }
 function bindTipos(){
@@ -267,5 +267,9 @@ function bindTipos(){
   w.addEventListener('click',e=>{
     const b=e.target.closest&&e.target.closest('[data-tptab]');
     if(b){TP_TAB=b.dataset.tptab;renderTipos();window.scrollTo({top:0,behavior:'instant'});}
+    const g=e.target.closest&&e.target.closest('[data-tpg]');
+    if(g){TP_G=g.dataset.tpg;renderTipos();
+      const a=document.querySelector('.gu-nav');
+      if(a)a.scrollIntoView({behavior:'smooth',block:'start'});}
   });
 }

@@ -1829,132 +1829,7 @@ body.is-mobile .pv-hoje{padding-left:34px}
   .syc-x{animation:none}
   .syc,.syc-arr,.syc-arr i{transition:none}
 }
-::-webkit-scrollbar{width:10px;height:10px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:99px;border:3px solid transparent;background-clip:content-box}
-::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.18);background-clip:content-box}
-body.sheet-open{overflow:hidden}
-/* ============ aba tipologias + saúde ============ */
-.tp-tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
-.tp-tabs::-webkit-scrollbar{display:none}
-.tp-tab{flex:0 0 auto;background:var(--bg2);border:1px solid var(--line);border-radius:99px;
-  color:var(--dim);font-family:inherit;font-size:.82rem;padding:8px 16px;cursor:pointer;transition:.15s}
-.tp-tab.on{background:var(--accs);border-color:transparent;color:var(--acc);font-weight:550}
-.tps{margin:22px 0}
-.tps>h3{margin-top:0}
-.tpx{padding:10px 0;border-top:1px solid var(--line)}
-.tpx:first-of-type{border-top:none}
-.tpx>b{display:block;font-size:.88rem;font-weight:600;color:var(--ivory2)}
-.tpx>b i{font-style:normal;font-weight:400;color:var(--dim2);font-size:.78rem}
-.tpx>p{margin:3px 0 0;font-size:.84rem;color:var(--dim);line-height:1.55}
-.tpq2{font-size:.84rem;color:var(--dim);line-height:1.6}
-.tpq3{font-size:.76rem;color:var(--dim2);line-height:1.55;margin:3px 0 4px}
-.tpe-h b{font-size:1.3rem;font-weight:650;color:var(--ivory2);letter-spacing:-.01em;margin-right:10px}
-.tpe-h em{font-style:normal;font-size:.84rem;color:var(--dim)}
-.tpg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
-.tpg-i{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:10px 12px}
-.tpg-i b{font-size:.88rem;color:var(--ivory2)}
-.tpg-i b i{font-style:normal;color:var(--dim2);font-weight:400;font-size:.74rem}
-.tpg-i span{display:block;font-size:.76rem;color:var(--dim);margin-top:2px}
-.tpg-i em{display:block;font-style:normal;font-size:.68rem;color:var(--dim2);margin-top:3px}
-/* saúde */
-.sd-b{display:grid;grid-template-columns:minmax(120px,220px) 1fr 74px;gap:12px;align-items:center;padding:7px 0}
-.sd-b>span{font-size:.8rem;color:var(--dim)}
-.sd-t{height:8px;border-radius:99px;background:var(--panel);overflow:hidden}
-.sd-t i{display:block;height:100%;border-radius:99px;background:var(--acc)}
-.sd-t i.ok{background:var(--green)} .sd-t i.mal{background:var(--red)}
-.sd-b>b{font-size:.74rem;font-weight:550;color:var(--ivory);text-align:right}
-body.is-mobile .sd-b{grid-template-columns:1fr 74px;grid-template-rows:auto auto}
-body.is-mobile .sd-b>span{grid-column:1/-1}
-/* ============ tipologias clicáveis + drawers ============ */
-.pf-t.clic{cursor:pointer;text-align:left;transition:.16s;border:1px solid var(--line);background:rgba(255,255,255,.02)}
-.pf-t.clic:hover{border-color:rgba(220,184,119,.45);background:rgba(220,184,119,.05)}
-.pf-t.clic u{display:block;margin-top:7px;font-family:var(--mono);font-size:.5rem;letter-spacing:.16em;
-  color:var(--dim2);text-decoration:none}
-.pf-t.clic:hover u{color:var(--acc)}
-.tp-drawer{padding-bottom:8px}
-.tp-hero{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 0 16px;margin-bottom:14px;
-  border-bottom:1px solid var(--line);text-align:center}
-.tp-hero b{font-family:var(--serif);font-size:2rem;font-weight:400;color:var(--ivory);letter-spacing:.04em}
-.tp-hero em{font-family:inherit;font-size:.72rem;letter-spacing:.01em;color:var(--dim2);font-style:normal}
-.tp-selo{width:44px;height:44px;border-radius:50%;display:block}
-.tp-selo.jung{border:1px solid rgba(220,184,119,.55);background:
-  radial-gradient(circle at 50% 50%, rgba(220,184,119,.25) 0 22%, transparent 23%),
-  conic-gradient(rgba(220,184,119,.16) 0 25%, transparent 0 50%, rgba(220,184,119,.16) 0 75%, transparent 0)}
-.tp-selo.sov{border-radius:4px;border:1px solid rgba(201,106,90,.6);background:
-  repeating-linear-gradient(45deg, rgba(201,106,90,.3) 0 5px, transparent 5px 11px)}
-.tp-selo.maya{border-radius:6px;border:1px solid rgba(201,143,90,.55);background:
-  repeating-linear-gradient(0deg, rgba(201,143,90,.22) 0 4px, transparent 4px 9px),
-  repeating-linear-gradient(90deg, rgba(201,143,90,.22) 0 4px, transparent 4px 9px)}
-.tps{margin:0 0 13px}
-.tps>span{display:block;font-family:inherit;font-size:.7rem;letter-spacing:.01em;color:var(--dim2);margin-bottom:4px}
-.tps p{font-size:.8rem;color:var(--dim);line-height:1.6;margin:0}
-.tp-stack{display:flex;flex-direction:column;gap:7px;margin:0 0 16px}
-.tp-fn{display:grid;grid-template-columns:44px 1fr;gap:4px 12px;padding:9px 11px;border:1px solid var(--line);border-radius:11px;
-  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008))}
-.tp-fn i{grid-row:1/3;font-style:normal;font-family:var(--serif);font-size:1.25rem;color:var(--acc);
-  display:flex;align-items:center;justify-content:center;border:1px solid rgba(220,184,119,.3);border-radius:50%;width:42px;height:42px}
-.tp-fn.p0 i{background:rgba(220,184,119,.12)}
-.tp-fn.p3 i{opacity:.55;border-style:dashed}
-.tp-fn b{font-size:.76rem;color:var(--ivory);font-weight:500}
-.tp-fn span{grid-column:2;font-family:inherit;font-size:.7rem;letter-spacing:.01em;color:var(--dim2)}
-.tp-fn p{grid-column:1/-1;font-size:.74rem;color:var(--dim);line-height:1.5;margin:3px 0 0}
-/* sociônica: modelo A construtivista */
-.tp-drawer.soc .tp-hero b{letter-spacing:.14em}
-.soc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 16px}
-.soc-bloco{border:1px solid rgba(201,106,90,.3);border-radius:0;padding:9px 11px;background:rgba(201,106,90,.03)}
-.soc-bk{font-family:var(--mono);font-size:.54rem;letter-spacing:.24em;color:#c96a5a;margin-bottom:7px}
-.soc-bk i{display:block;font-style:normal;font-size:.46rem;letter-spacing:.08em;text-transform:none;color:var(--dim2);margin-top:2px}
-.soc-fn{padding:5px 0;border-top:1px dotted rgba(201,106,90,.25)}
-.soc-fn b{font-family:var(--mono);font-size:.72rem;color:var(--ivory);letter-spacing:.08em}
-.soc-fn span{display:block;font-size:.62rem;color:var(--dim);margin:1px 0 2px}
-.soc-fn p{font-size:.6rem;color:var(--dim2);line-height:1.45;margin:0}
-/* eneagrama */
-.enn-fig{display:block;width:190px;margin:2px auto 4px}
-.enn-leg{text-align:center;font-family:var(--mono);font-size:.48rem;letter-spacing:.1em;color:var(--dim2);margin:0 0 14px}
-/* auditoria */
-.tpq{margin-top:16px;border-top:1px solid var(--line);padding-top:10px}
-.tpq>summary{list-style:none;cursor:pointer;font-family:var(--mono);font-size:.52rem;letter-spacing:.16em;
-  color:var(--dim2);padding:3px 0}
-.tpq>summary::-webkit-details-marker{display:none}
-.tpq>summary::before{content:"▸ "}
-.tpq[open]>summary::before{content:"▾ "}
-.tpq-n{font-size:.68rem;color:var(--dim2);line-height:1.5;margin:8px 0 10px}
-.tpq-r{margin-bottom:10px}
-.tpq-r>span{display:block;font-family:inherit;font-size:.7rem;letter-spacing:.01em;color:var(--dim2);margin-bottom:2px}
-.tpq-r>b{font-size:.74rem;color:var(--ivory);font-weight:500}
-.tpq-r>p{font-size:.68rem;color:var(--dim2);line-height:1.5;margin:2px 0 0}
-/* clusters e avisos das preditivas */
-.pv-warn{font-size:.7rem;line-height:1.5;color:#e6c07a;background:rgba(220,184,119,.08);
-  border:1px solid rgba(220,184,119,.3);border-radius:10px;padding:9px 12px;margin:0 0 11px}
-.pv-clh{font-family:inherit;font-size:.7rem;letter-spacing:.01em;
-  color:var(--dim2);margin:14px 0 8px}
-.pv-cls{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
-.pvcl{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008));
-  border:1px solid var(--line);border-radius:12px;padding:11px 13px 12px}
-.pvcl.n-alta{border-left:2px solid rgba(220,184,119,.75)}
-.pvcl.n-media{border-left:2px solid rgba(111,159,216,.6)}
-.pvcl.n-contextual{border-left:2px solid rgba(255,255,255,.14)}
-.pvcl-h{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
-.pvcl-h b{font-size:.82rem;color:var(--ivory);font-weight:500}
-.pvcl-h em{margin-left:auto;font-family:var(--mono);font-size:.5rem;letter-spacing:.1em;
-  color:var(--dim2);font-style:normal;white-space:nowrap}
-.pvcl-i{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-top:1px dotted var(--line);
-  font-size:.71rem}
-.pvcl-i:first-child{border-top:none}
-.pvcl-i .pv-st{width:6px;height:6px;padding:0;border-radius:50%;flex:0 0 auto}
-.pvcl-i b{color:var(--dim);font-weight:400;font-variant-emoji:text;min-width:0}
-.pvcl-i b i{font-style:normal;color:var(--dim2)}
-.pvcl-i em{margin-left:auto;font-family:var(--mono);font-size:.55rem;color:var(--dim2);
-  font-style:normal;white-space:nowrap;flex:0 0 auto}
-.pvcl-i u{text-decoration:none;font-family:var(--mono);font-size:.45rem;letter-spacing:.12em;
-  flex:0 0 auto}
-.pvcl-i u.n-alta{color:var(--acc)}
-.pvcl-i u.n-media{color:var(--blue)}
-.pvcl-i u.n-contextual{color:var(--dim2)}
-.pvc-s p i{font-style:normal;color:var(--dim2);font-size:.9em}
-.pvc-h b i{font-style:normal;font-size:.72rem;color:var(--dim2);letter-spacing:.04em}
-/* ============ sinastria ============ */
+sinastria ============ */
 .sn-setup{margin:0 0 16px}
 .sn-in>summary{list-style:none;cursor:pointer;font-family:inherit;font-size:.72rem;letter-spacing:0;
   color:var(--dim2);padding:4px 0}
@@ -2087,6 +1962,48 @@ body.sheet-open{overflow:hidden}
 .tpg-i b i{font-style:normal;color:var(--dim2);font-weight:400;font-size:.74rem}
 .tpg-i span{display:block;font-size:.76rem;color:var(--dim);margin-top:2px}
 .tpg-i em{display:block;font-style:normal;font-size:.68rem;color:var(--dim2);margin-top:3px}
+/* ---- guia das tipologias ---- */
+.gu-nav{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 20px;scroll-margin-top:calc(var(--tb) + 12px)}
+.gu-b{flex:0 0 auto;font-family:inherit;font-size:.8rem;cursor:pointer;padding:8px 15px;
+  background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--dim);
+  transition:color .15s,border-color .15s,background .15s}
+.gu-b:hover{color:var(--ivory2);border-color:var(--line2)}
+.gu-b.on{background:var(--accs);border-color:rgba(106,140,255,.45);color:var(--acc);font-weight:550}
+.gu-art{max-width:760px}
+.gu-h{margin-bottom:16px}
+.gu-h b{display:block;font-size:1.55rem;font-weight:650;color:var(--ivory2);letter-spacing:-.015em}
+.gu-h em{display:block;font-style:normal;font-size:.86rem;color:var(--dim2);margin-top:3px}
+.gu-def{display:grid;gap:12px;background:var(--bg2);border:1px solid var(--line);
+  border-left:2px solid var(--acc);border-radius:0 13px 13px 0;padding:15px 17px;margin-bottom:8px}
+.gu-def span{display:block;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--acc);margin-bottom:4px}
+.gu-def p{margin:0;font-size:.9rem;line-height:1.62;color:var(--ivory)}
+.gu-s{margin:26px 0}
+.gu-s>h4{margin:0 0 10px;font-size:.72rem;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--dim2);font-family:var(--mono)}
+.gu-p{font-size:.88rem;line-height:1.68;color:var(--dim);margin:0}
+.gu-p b,.gu-i p b,.gu-mi p b,.gu-def p b{color:var(--ivory2);font-weight:600}
+.gu-l{display:flex;flex-direction:column;gap:2px}
+.gu-i{padding:11px 0;border-top:1px solid var(--line)}
+.gu-i:first-child{border-top:none;padding-top:0}
+.gu-i>b{display:block;font-size:.88rem;font-weight:600;color:var(--ivory2);margin-bottom:3px}
+.gu-i>p{margin:0;font-size:.86rem;line-height:1.62;color:var(--dim)}
+.gu-ver{margin:14px 0 0;padding:12px 14px;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;font-size:.86rem;line-height:1.6;color:var(--ivory)}
+.gu-ver span{display:block;font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--dim2);margin-bottom:4px}
+.gu-chave{padding-left:13px;border-left:2px solid var(--accb);color:var(--ivory)}
+.gu-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:9px;margin-top:14px}
+.gu-mi{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  position:relative;overflow:hidden}
+.gu-mi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,var(--accb),transparent)}
+.gu-mi>b{display:block;font-size:.86rem;font-weight:600;color:var(--accb);margin-bottom:4px}
+.gu-mi>p{margin:0;font-size:.83rem;line-height:1.6;color:var(--dim)}
+.gu-nota{margin:26px 0 0;padding-top:12px;border-top:1px solid var(--line);
+  font-size:.74rem;line-height:1.6;color:var(--dim2);font-style:italic}
+@media(min-width:720px){.gu-def{grid-template-columns:1fr 1fr;gap:20px}}
+
 /* saúde */
 .sd-b{display:grid;grid-template-columns:minmax(120px,220px) 1fr 74px;gap:12px;align-items:center;padding:7px 0}
 .sd-b>span{font-size:.8rem;color:var(--dim)}
@@ -2628,6 +2545,7 @@ body.is-mobile .rv2-sticky{position:static}
 <script src="js/sinastria.js"></script>
 <script src="js/tipologia.js"></script>
 <script src="js/saude.js"></script>
+<script src="js/guia.js"></script>
 <script src="js/tipologias.js"></script>
 <script src="js/main.js"></script>
 </body>
