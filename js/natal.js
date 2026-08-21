@@ -104,17 +104,8 @@ function natalCasa(N){
 function natalSigno(N){
   return {t:SIGNS[N.s],d:cap1(PL_MODO_EL[SIGN_ELEM[N.s]])+'.'};
 }
-/* Barbault: trecho visível (abertura da Psicologia) + íntegra sob demanda */
-function natalBarb(s){
-  const T=(typeof BARB_SIGNO!=='undefined')?BARB_SIGNO[s]:null; if(!T)return null;
-  const i=T.indexOf('Psicologia:');
-  let exc=i>=0?T.slice(i+11):T;
-  const fim=exc.search(/[.!?]\s+[A-ZÀ-Ú][^.!?]*[.!?]\s/);
-  exc=exc.slice(0, exc.indexOf('.', 380)>0?exc.indexOf('.',380)+1:420).trim();
-  return {exc,integra:T};
-}
 
-/* Gargatholil (Depth Astrology): casa e signo — tradução quando existe, íntegra em inglês sempre */
+/* Gargatholil: formatação do texto, usada pelos eixos e nodos */
 function natalGargTxt(t){
   let out='',ul=[];
   const flush=()=>{if(ul.length){out+='<ul class="ne-l">'+ul.map(x=>'<li>'+x+'</li>').join('')+'</ul>';ul=[];}};
@@ -126,23 +117,6 @@ function natalGargTxt(t){
     else{flush();out+='<p>'+l+'</p>';}
   });
   flush(); return out;
-}
-function natalGargHTML(N){
-  const GC=(typeof GARG_CASA!=='undefined')?(GARG_CASA[N.k]&&GARG_CASA[N.k][N.casa]):null;
-  const GS=(typeof GARG_SIGNO!=='undefined')?(GARG_SIGNO[N.k]&&GARG_SIGNO[N.k][N.s]):null;
-  const TC=(typeof GARG_PT_C!=='undefined')?(GARG_PT_C[N.k]&&GARG_PT_C[N.k][N.casa]):null;
-  const TS=(typeof GARG_PT_S!=='undefined')?(GARG_PT_S[N.k]&&GARG_PT_S[N.k][N.s]):null;
-  if(!GC&&!GS&&!TC&&!TS)return '';
-  const det=(t,txt)=>'<details class="np-int"><summary>'+t+'</summary>'
-    +'<div class="np-txt">'+natalGargTxt(txt)+'</div></details>';
-  return '<div class="npan-ps garg"><span>'+PT_NAME[N.k]+' segundo Gargatholil</span>'
-    +'<p class="np-sub">Depth Astrology — leitura psicológica profunda da casa e do signo.'
-    +((TC||TS)?' Tradução integral disponível para esta colocação; a íntegra original em inglês segue abaixo.':' Íntegras no original em inglês.')+'</p>'
-    +(TC?det(PT_NAME[N.k]+' na casa '+N.casa+' — em português',TC):'')
-    +(TS?det(PT_NAME[N.k]+' em '+SIGNS[N.s]+' — em português',TS):'')
-    +(GC?det(PT_NAME[N.k]+' na casa '+N.casa+' — íntegra original',GC):'')
-    +(GS?det(PT_NAME[N.k]+' em '+SIGNS[N.s]+' — íntegra original',GS):'')
-    +'</div>';
 }
 /* Lions Daily: função, presença, traços e os dois registros (objetivo e subjetivo) */
 function natalLionHTML(N){
@@ -182,6 +156,76 @@ function natalEixoHTML(){
     +'</div>';
 }
 
+/* ============================================================
+   AS FONTES, NA ÍNTEGRA
+   Organizadas pelo que descrevem, não por autor: primeiro o
+   planeta no signo, depois o planeta na casa. Cada autor aparece
+   sempre — com o texto integral quando o corpus cobre a colocação,
+   e com a ausência declarada quando não cobre.
+   ============================================================ */
+function foPar(t){
+  return String(t).split(/\n\n+/).map(x=>{
+    x=x.replace(/\n/g,' ').trim(); if(!x)return '';
+    if(/^##\s*/.test(x))return '<p class="np-h">'+x.replace(/^##\s*/,'')+'</p>';
+    if(/^—.*—$/.test(x))return '<p class="np-h">'+x.replace(/^—\s*|\s*—$/g,'')+'</p>';
+    if(/^-\s+/m.test(x))return '<ul class="ne-l">'+x.split('\n').filter(Boolean)
+      .map(l=>'<li>'+l.replace(/^-\s+/,'')+'</li>').join('')+'</ul>';
+    return '<p>'+x+'</p>';
+  }).join('');
+}
+/* uma entrada: autor, obra, e o texto — ou a declaração de ausência */
+function foItem(autor,obra,txt,extra){
+  if(!txt)return '<div class="fo-i vazio"><b>'+autor+'</b>'
+    +'<span>'+obra+'</span><em>sem texto para esta colocação neste corpus</em></div>';
+  const n=String(txt).replace(/\s+/g,' ').length;
+  return '<details class="fo-i"><summary><b>'+autor+'</b><span>'+obra+'</span>'
+    +'<i>íntegra · '+(n>1200?(Math.round(n/1000)+' mil caracteres'):(n+' caracteres'))+'</i></summary>'
+    +'<div class="np-txt">'+(extra||'')+foPar(txt)+'</div></details>';
+}
+function natalFontesHTML(N){
+  const k=N.k, h=N.casa, sg=N.s;
+  const get=(o,a,b)=>{try{return o&&o[a]&&o[a][b]?o[a][b]:null;}catch(e){return null;}};
+  /* --- o planeta no signo --- */
+  const bSig=(typeof BARB_SIGNO!=='undefined')?BARB_SIGNO[sg]:null;
+  const bPS=(typeof BARB_PS!=='undefined')?get(BARB_PS,k,sg):null;
+  const gPTs=(typeof GARG_PT_S!=='undefined')?get(GARG_PT_S,k,sg):null;
+  const gENs=(typeof GARG_SIGNO!=='undefined')?get(GARG_SIGNO,k,sg):null;
+  const cic=(typeof LION_CICLO!=='undefined')?LION_CICLO[sg]:null;
+  const signo='<div class="fo-g"><h5>'+PT_NAME[k]+' em '+SIGNS[sg]+'<span>o planeta no signo</span></h5>'
+    +(cic?('<p class="fo-cic">'+cic+'</p>'):'')
+    +foItem('Barbault','Manual Prático — '+PT_NAME[k]+' em '+SIGNS[sg],bPS)
+    +foItem('Barbault','Manual Prático — o capítulo de '+SIGNS[sg],bSig)
+    +foItem('Gargatholil','Depth Astrology vol. 2 — em português',gPTs)
+    +foItem('Gargatholil','Depth Astrology vol. 2 — original em inglês',gENs)
+    +'<div class="fo-i vazio"><b>Olavo de Carvalho</b><span>Astrologia Simbólica</span>'
+      +'<em>a obra trata do planeta nas casas, não do planeta nos signos</em></div>'
+    +'</div>';
+  /* --- o planeta na casa --- */
+  const ru=(typeof RU_OLAVO!=='undefined')?get(RU_OLAVO,h,k):null;
+  const olT=(typeof OL_TEXTO!=='undefined')?get(OL_TEXTO,h,k):null;
+  const bPC=(typeof BARB_PC!=='undefined')?get(BARB_PC,k,h):null;
+  const gPTc=(typeof GARG_PT_C!=='undefined')?get(GARG_PT_C,k,h):null;
+  const gENc=(typeof GARG_CASA!=='undefined')?get(GARG_CASA,k,h):null;
+  const defC=(typeof RU_CASA!=='undefined')?RU_CASA[h]:null;
+  let olTxt=null, olExtra='';
+  if(ru){
+    olTxt=ru.t.join('\n\n')+(ru.a?('\n\n## A aporia\n\n'+ru.a):'');
+    olExtra=(ru.s?('<p class="fo-sint"><span>síntese do autor</span>'+ru.s+'</p>'):'')
+      +(ru.e?('<p class="fo-ex"><span>exemplos do autor</span>'+ru.e+'</p>'):'');
+  } else if(olT) olTxt=olT;
+  const casa='<div class="fo-g"><h5>'+PT_NAME[k]+' na casa '+h+'<span>o planeta na casa</span></h5>'
+    +foItem('Olavo de Carvalho','Astrologia Simbólica — '+PT_NAME[k]+' na Casa '+h,olTxt,olExtra)
+    +foItem('Olavo de Carvalho','Astrologia Simbólica — o que é a Casa '+h,defC)
+    +foItem('Barbault','Manual Prático — '+PT_NAME[k]+' na casa '+h,bPC)
+    +foItem('Gargatholil','Depth Astrology vol. 3 — em português',gPTc)
+    +foItem('Gargatholil','Depth Astrology vol. 3 — original em inglês',gENc)
+    +'</div>';
+  return '<div class="npan-ps fontes"><span>as fontes, na íntegra</span>'
+    +'<p class="np-sub">O que cada autor escreve sobre esta colocação, sem resumo. '
+    +'Quando um corpus não cobre a colocação, a ausência fica declarada em vez de sumir.</p>'
+    +signo+casa+'</div>';
+}
+
 /* ---------- render: chips + painel único ---------- */
 let NX_SEL=null, NX_DET=null;
 function natalChipsHTML(){
@@ -212,28 +256,9 @@ function natalPainelHTML(k){
     +(N.camadas?('<div class="npan-ps"><span>leitura psicológica — Olavo'
       +(N.camadas.psi.titulo?(' · '+N.camadas.psi.titulo):'')+'</span>'
       +'<p>'+N.camadas.sintese+'</p>'
-      +'<p class="np-sub">'+N.camadas.psi.texto+'</p>'
-      +(typeof OL_TEXTO!=='undefined'&&OL_TEXTO[N.casa]&&OL_TEXTO[N.casa][N.k]
-        ?('<details class="np-int"><summary>'+PT_NAME[N.k]+' na casa '+N.casa+' — o texto integral</summary>'
-          +'<div class="np-txt">'+OL_TEXTO[N.casa][N.k].split(/\n\n+/).map(x=>'<p>'+x.replace(/\n/g,' ')+'</p>').join('')+'</div></details>')
-        :'')
-      +'</div>'):'')
-    /* 2 · Barbault — o signo, o planeta no signo e o planeta na casa */
-    +(function(){const B=natalBarb(N.s);
-      const ps=(typeof BARB_PS!=='undefined')&&BARB_PS[N.k]&&BARB_PS[N.k][N.s];
-      const pc=(typeof BARB_PC!=='undefined')&&BARB_PC[N.k]&&BARB_PC[N.k][N.casa];
-      const cic=(typeof LION_CICLO!=='undefined')?LION_CICLO[N.s]:null;
-      if(!B&&!ps&&!pc)return '';
-      return '<div class="npan-ps barb"><span>'+SIGNS[N.s]+' segundo Barbault</span>'
-        +(cic?('<p class="np-sub">'+cic+'</p>'):'')
-        +(B?('<p>'+B.exc+'</p>'):'')
-        +(ps?('<p class="np-h">'+PT_NAME[N.k]+' em '+SIGNS[N.s]+'</p><p>'+ps+'</p>'):'')
-        +(pc?('<p class="np-h">'+PT_NAME[N.k]+' na casa '+N.casa+'</p><p>'+pc+'</p>'):'')
-        +(B?('<details class="np-int"><summary>Barbault, na íntegra (o capítulo do signo)</summary>'
-        +'<div class="np-txt">'+B.integra.split(/\n\n+/).map(x=>'<p>'+x.replace(/\n/g,' ')+'</p>').join('')+'</div></details>'):'')
-        +'</div>';})()
-    /* 3 · Gargatholil — casa e signo */
-    +natalGargHTML(N)
+      +'<p class="np-sub">'+N.camadas.psi.texto+'</p></div>'):'')
+    /* 2 · as fontes, na íntegra: o planeta no signo e o planeta na casa */
+    +natalFontesHTML(N)
     +'<button class="npan-x" data-nxdet="'+k+'">Estrutura natal <i>'+(NX_DET===k?'⌄':'›')+'</i></button>'
     +(NX_DET===k?natalEstruturaHTML(N):'')
     +'</article>';
