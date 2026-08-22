@@ -13,7 +13,7 @@ function irPara(p){
   if(p==='rs') renderRS();
   if(p==='sin'){try{renderSin();}catch(e){console.error(e);}}
   if(p==='config') renderConfig();
-  if(p==='perfil'){try{renderSaude();renderTemp();renderPers();}catch(e){console.error(e);}}
+  if(p==='perfil'){try{renderPerfilTabs();renderSaude();renderTemp();renderPers();}catch(e){console.error(e);}}
   if(p==='tipos'){try{renderTipos();}catch(e){console.error(e);}}
   if(p==='natal'){try{renderNatal();}catch(e){console.error(e);}}
 }

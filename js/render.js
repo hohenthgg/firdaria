@@ -423,6 +423,19 @@ function temperDiagram(T,size){
   });
   return '<svg class="tdiag" viewBox="0 0 '+W+' '+W+'">'+s+'</svg>';
 }
+/* ---------- abas internas do Perfil ---------- */
+let PF_TAB='temp';
+const PF_TABS=[['temp','Temperamento'],['psi','Perfil psicológico'],['saude','Saúde']];
+function renderPerfilTabs(){
+  const bar=$('pf-tabs'); if(!bar)return;
+  bar.innerHTML=PF_TABS.map(([id,l])=>'<button class="pf-tab'+(PF_TAB===id?' on':'')+'" data-pftab="'+id+'">'+l+'</button>').join('');
+  PF_TABS.forEach(([id])=>{const el=$('pf-'+id); if(el)el.hidden=(PF_TAB!==id);});
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-pftab]');
+  if(b){PF_TAB=b.dataset.pftab;renderPerfilTabs();window.scrollTo({top:0,behavior:'instant'});}
+});
+
 function renderTemp(){
   if(typeof NATAL==='undefined'||!NATAL){$('temp-body').innerHTML=emptyState();return;}
   const {T,A}=profileData(true);
@@ -430,14 +443,7 @@ function renderTemp(){
   const qcard=(q,v,cor)=>'<div class="qcd"><div class="qcd-h"><span class="qcd-i" style="color:'+cor+'">'+QICON[q]+'</span>'
     +'<span class="qcd-n">'+q.toUpperCase()+'</span></div>'
     +'<b>'+v+'%</b><div class="qcd-t"><i style="width:'+v+'%;background:'+cor+'"></i></div></div>';
-  const donut=(v)=>{const r=26,c=2*Math.PI*r;
-    return '<svg class="vdonut" viewBox="0 0 64 64"><circle cx="32" cy="32" r="'+r+'" fill="none" stroke="rgba(255,255,255,0.124)" stroke-width="3"/>'
-      +'<circle cx="32" cy="32" r="'+r+'" fill="none" stroke="var(--gold)" stroke-width="3" stroke-linecap="round" '
-      +'stroke-dasharray="'+(c*v/100)+' '+c+'" transform="rotate(-90 32 32)"/>'
-      +'<text x="32" y="36" text-anchor="middle" font-size="14" font-family="Inter" fill="var(--gold)">'+v+'%</text></svg>';};
-  $('temp-body').innerHTML=
-   '<div class="pfhero">'
-    // coluna 1 — diagnóstico
+  const hero='<div class="pfhero">'
     +'<div class="pfh-l">'
       +'<div class="pfh-mark">✦</div>'
       +'<div class="pfh-k">Predomínio</div>'
@@ -448,20 +454,92 @@ function renderTemp(){
         +'<div class="pfh-pill"><b>'+T.conf+'%</b><i>'+T.confLabel+'</i></div></div>'
       +'<div class="pfh-sec">Quadrante vizinho: <b>'+T.secundario+'</b></div>'
     +'</div>'
-    // coluna 2 — diagrama
     +'<div class="pfh-c">'+temperDiagram(T)+'</div>'
-    // coluna 3 — qualidades + veredito
-    +'<div class="pfh-r">'
-      +'<div class="qcds">'+qcard('quente',T.quente,'#d98a6a')+qcard('seco',T.seco,'#dcb877')
-        +qcard('frio',T.frio,'#7fa8d8')+qcard('úmido',T.umido,'#7fc8d8')+'</div>'
-      +'<div class="vcard"><div class="vc-h"><span class="pf-k" style="margin:0">veredito</span><span class="vc-s">⚖</span></div>'
-        +'<div class="vc-b"><div><b>Predomínio '+T.humor+'</b>'
-          +'<em>'+cap1(T.poloH)+' e '+T.poloD+' (quente '+T.quente+'% · seco '+T.seco+'%)</em></div>'
-          +donut(T.conf)+'</div></div>'
+    +'<div class="pfh-r"><div class="qcds">'
+      +qcard('quente',T.quente,'#d98a6a')+qcard('seco',T.seco,'#dcb877')
+      +qcard('frio',T.frio,'#7fa8d8')+qcard('úmido',T.umido,'#7fc8d8')+'</div></div>'
+   +'</div>';
+  $('temp-body').innerHTML=hero+temperFundoHTML(T)+quickReadHTML(T,A);
+}
+/* ---------- o temperamento em profundidade ---------- */
+const QUAL_SENTIDO={
+  quente:'move, dilata e acelera — o que gasta energia para fora',
+  frio:'retém, contrai e desacelera — o que poupa energia',
+  seco:'separa, define e endurece — o que mantém forma e distingue uma coisa da outra',
+  'úmido':'une, dissolve e amolece — o que mistura, adapta e recebe a forma do outro'};
+function tsec(t,sub,corpo){
+  return '<section class="tps2"><h4>'+t+(sub?('<span>'+sub+'</span>'):'')+'</h4>'+corpo+'</section>';
+}
+function temperFundoHTML(T){
+  const D=(typeof RU_TEMP!=='undefined')?RU_TEMP[T.humor]:null;
+  const par=v=>'<p class="tp-p">'+v+'</p>';
+  let h='<div class="tpdeep">';
+
+  /* 1 · as quatro qualidades, uma a uma */
+  h+=tsec('As quatro qualidades','dois eixos independentes, cada um normalizado em 100%',
+    '<p class="tp-p">O temperamento não é um rótulo: é o cruzamento de dois eixos. '
+    +'<b>Quente × frio</b> mede quanto o organismo gasta ou poupa; <b>seco × úmido</b>, '
+    +'quanto ele separa ou mistura. Cada eixo soma 100% por si, e o quadrante em que os dois '
+    +'se cruzam dá o humor.</p>'
+    +'<div class="tpq-l">'
+      +[['quente',T.quente],['frio',T.frio],['seco',T.seco],['úmido',T.umido]].map(([q,v])=>
+        '<div class="tpq-i"><b>'+cap1(q)+'</b><i>'+v+'%</i><p>'+cap1(QUAL_SENTIDO[q])+'.</p></div>').join('')
     +'</div>'
-   +'</div>'
-   // leitura rápida (recolhida)
-   +quickReadHTML(T,A);
+    +par('No seu caso, o par dominante é <b>'+T.poloH+' e '+T.poloD+'</b> — '
+      +'daí o quadrante <b>'+T.humor+'</b>.'));
+
+  /* 2 · o humor, em doutrina */
+  if(D) h+=tsec('O humor '+T.humor,'segundo a doutrina dos quatro humores',
+    '<div class="tpd-g">'
+      +[['elemento',D.el],['qualidades',D.q],['humor do corpo',D.humor],
+        ['estação',D.est],['idade da vida',D.idade]].map(x=>
+        '<div class="tpd-i"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('')
+    +'</div>'
+    +'<div class="tpd-vs"><div class="tpd-v"><span>virtudes do tipo</span><p>'+D.virtudes+'</p></div>'
+      +'<div class="tpd-s"><span>sombras do tipo</span><p>'+D.sombras+'</p></div></div>'
+    +'<p class="tp-irma"><span>a mesma raiz</span>'+D.irma+'</p>');
+
+  /* 3 · a mistura com o quadrante vizinho */
+  const dist=Math.abs(T.quente-50)+Math.abs(T.seco-50);
+  const puro=dist>=45?'muito marcado':dist>=25?'nítido':dist>=12?'moderado':'quase equilibrado';
+  h+=tsec('A mistura','quanto o tipo é puro e para onde ele escorrega',
+    par('O afastamento do centro nos dois eixos é <b>'+puro+'</b>. Quanto mais perto do meio, '
+      +'mais o comportamento alterna entre quadrantes conforme a situação; quanto mais longe, '
+      +'mais constante e mais previsível — inclusive nos defeitos.')
+    +par('O quadrante vizinho é <b>'+T.secundario+'</b>: é para lá que o tipo tende a escorregar '
+      +'quando a qualidade dominante afrouxa. '+(HUMOR_TXT[T.secundario]?('Nesse registro, '+HUMOR_TXT[T.secundario]+'.'):'')));
+
+  /* 4 · o regime tradicional */
+  if(D) h+=tsec('O regime','o que a tradição prescrevia contra o excesso',
+    par(D.regime)
+    +(D.regimeClassico?'<p class="tp-sub">'+D.regimeClassico+'</p>':'')
+    +'<p class="pf-aviso">Regime de higiene tradicional, de valor histórico e simbólico. '
+      +'Não é prescrição médica nem substitui orientação profissional.</p>');
+
+  /* 5 · confiança e divergências */
+  h+=tsec('Confiança e divergências','o quanto os testemunhos concordam entre si',
+    par('A confiança do veredito é <b>'+T.conf+'% ('+T.confLabel+')</b>. Ela mede a concordância '
+      +'entre os testemunhos, não a intensidade do temperamento: um tipo pode ser moderado e '
+      +'estar bem estabelecido, ou extremo e mal sustentado.')
+    +par(T.contra.length
+      ? 'Testemunhos que apontam para outro lado: <b>'+T.contra.map(c=>c.fonte+' ('+c.qs.join('-')+')').join('; ')+'</b>. '
+        +'São a parte do mapa que contradiz o veredito — e que costuma aparecer nas situações em que a pessoa "não se reconhece".'
+      : 'Nenhuma divergência interna: todos os testemunhos apontam para o mesmo quadrante.'));
+
+  /* 6 · os testemunhos, um a um */
+  h+=tsec('Os testemunhos','de onde cada ponto do cálculo veio',
+    '<div class="tp-tbw"><table class="pf-tb"><tr><th>Fonte</th><th>Detalhe</th><th>Qualidades</th><th>Peso</th></tr>'
+    +T.fx.map(f=>'<tr><td>'+f.fonte+'</td><td class="m">'+f.detalhe+'</td><td class="m">'
+      +f.qs.join(' · ')+'</td><td class="m">'+f.w+'</td></tr>').join('')+'</table></div>'
+    +'<details class="np-int"><summary>Como os pesos são atribuídos</summary>'
+    +par('Ascendente 3 · planeta na cúspide da casa 1 = 3 (não recontado como planeta na casa 1) · '
+      +'planeta dentro da casa 1 = 2 · regente do Ascendente, sobretudo pelo seu signo = 3 · Lua 2 · '
+      +'fase lunar 1 · Senhor da Genitura 1. Signo, casa, dignidade e condição modulam o peso entre '
+      +'0,75× e 1,25×, sem criar pontuação nova.')
+    +par('A normalização é feita por eixo: quente × frio = 100% e seco × úmido = 100%, calculados '
+      +'separadamente. Por isso os quatro números não somam 100 entre si.')+'</details>');
+
+  return h+'</div>';
 }
 function quickReadHTML(T,A){
   const fortes=A.slice().sort((a,b)=>Math.abs(b.pos-50)-Math.abs(a.pos-50)).slice(0,3);
@@ -519,29 +597,12 @@ function renderPers(){
   if(sort==='tens')L=L.slice().sort((a,b)=>Math.abs(a.pos-50)-Math.abs(b.pos-50));
   if(AX_FAM||q) html+='<div class="axgrid">'+L.map(axisCardHTML).join('')+'</div>';
   else html+='<p class="note axhint">Escolha uma família acima para abrir os doze eixos, ou use a busca.</p>';
-  // 6 · constituição tradicional (recolhida)
-  const C=constitution(T);
-  if(C)html+='<details class="card pf-const"><summary><span class="kicker" style="margin:0">constituição e suscetibilidades tradicionais</span>'
-    +'<b>'+cap1(C.constituicao)+' — '+C.qualidades+'</b><em>sustentação '+C.sust+'</em></summary>'
+  // fundamento técnico dos eixos
+  html+='<details class="card pf-fund"><summary><span class="kicker" style="margin:0">fundamento técnico</span>'
+    +'<b>como os 48 eixos são calculados</b></summary>'
     +'<div class="pf-cb">'
-    +'<div class="pf-cr"><span>Constituição predominante</span>'+cap1(C.constituicao)+' ('+C.qualidades+'). '+C.excesso+'.</div>'
-    +'<div class="pf-cr"><span>Funções tradicionalmente mais sensíveis</span><ul class="ilist">'
-      +C.sens.map(x=>'<li><b>'+x.o+'</b> — '+x.v+'</li>').join('')+'</ul></div>'
-    +'<div class="pf-cr"><span>Fatores de agravamento</span>'+(C.agrav.length?('<ul class="ilist">'+C.agrav.map(x=>'<li>'+x+'</li>').join('')+'</ul>'):'nenhum testemunho relevante detectado.')+'</div>'
-    +'<div class="pf-cr"><span>Fatores de compensação e proteção</span><ul class="ilist">'+C.comp.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>'
-    +'<div class="pf-cr"><span>Sustentação astrológica</span>'+C.sust+' — '+C.test.length+' testemunhos repetidos.</div>'
-    +'<p class="pf-aviso">Esta seção descreve tendências constitucionais da tradição. Não diagnostica, não prevê enfermidades e não substitui avaliação médica. Trate como suscetibilidade tradicional que merece atenção, nunca como conclusão clínica.</p>'
-    +'</div></details>';
-  // correspondências tipológicas migraram para a aba Tipologias
-  // 8 · fundamento técnico geral
-  html+='<details class="card pf-fund"><summary><span class="kicker" style="margin:0">fundamento técnico</span><b>pesos, testemunhos e regras usados</b></summary>'
-    +'<div class="pf-cb">'
-    +'<div class="pf-cr"><span>Hierarquia do temperamento</span>Ascendente 3 · planeta na cúspide da casa 1 = 3 (não recontado como planeta na casa 1) · planeta dentro da casa 1 = 2 · regente do Ascendente (sobretudo seu signo) 3 · Lua 2 · fase lunar 1 · Senhor da Genitura 1. Signo, casa, dignidade e condição modulam o peso entre 0,75× e 1,25×, sem criar pontuação nova.</div>'
-    +'<div class="pf-cr"><span>Normalização</span>quente × frio = 100% e seco × úmido = 100%, calculados separadamente. A confiança mede a concordância entre testemunhos, não a intensidade do resultado.</div>'
-    +'<div class="pf-cr"><span>Testemunhos do temperamento</span><table class="pf-tb"><tr><th>Fonte</th><th>Detalhe</th><th>Qualidades</th><th>Peso</th></tr>'
-      +T.fx.map(f=>'<tr><td>'+f.fonte+'</td><td class="m">'+f.detalhe+'</td><td class="m">'+f.qs.join(' · ')+'</td><td class="m">'+f.w+'</td></tr>').join('')+'</table></div>'
-    +'<div class="pf-cr"><span>Divergências internas</span>'+(T.contra.length?T.contra.map(c=>c.fonte+' ('+c.qs.join('-')+')').join('; ')+'.':'nenhuma — compleição unívoca.')+'</div>'
-    +'<div class="pf-cr"><span>Os 48 eixos</span>Cada eixo soma marcadores próprios (Ascendente, regente, Lua, planetas indicados, Senhor da Genitura, modalidades, elementos, casas e estrelas). Casas e estrelas entram como modificadores, nunca como prova isolada. A posição é a média ponderada das direções; a confiança combina concordância direcional (75%) e volume de testemunhos (25%).</div>'
+    +'<div class="pf-cr"><span>Marcadores</span>Cada eixo soma marcadores próprios (Ascendente, regente, Lua, planetas indicados, Senhor da Genitura, modalidades, elementos, casas e estrelas). Casas e estrelas entram como modificadores, nunca como prova isolada.</div>'
+    +'<div class="pf-cr"><span>Posição e confiança</span>A posição é a média ponderada das direções; a confiança combina concordância direcional (75%) e volume de testemunhos (25%). Confiança alta com posição perto do meio significa que os testemunhos concordam em que não há inclinação — não que faltem dados.</div>'
     +(typeof fundamentoHTML==='function'?fundamentoHTML(['temperamento','lua','aspecto','dignidade']):'')
     +'</div></details>';
   $('pers-body').innerHTML=html;
