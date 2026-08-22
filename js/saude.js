@@ -79,6 +79,77 @@ function saudeEngine(){
       +', vira queixa crônica de '+satRege.map(h=>SAUDE_CRON[h]).join(' e de ')):'')+'.');
   return {vit,carga6,cron,nv,ev,r1,c1,s6,s6r,p6,r6,mal1,mal6,sat6,satCuspide1};
 }
+/* ============================================================
+   PROPENSÃO POR ÁREA DO CORPO
+   Soma dos testemunhos tradicionais que apontam para cada área da
+   melotesia. O resultado é o PESO RELATIVO desses testemunhos —
+   não uma probabilidade clínica, que a astrologia não calcula.
+   ============================================================ */
+const SAUDE_AREA=[
+  'cabeça, olhos e face','garganta, pescoço e tireoide','pulmões, brônquios, braços e nervos',
+  'estômago, seios e digestão','coração, circulação e coluna dorsal','intestinos e absorção',
+  'rins, bexiga e região lombar','órgãos genitais e vias de eliminação','quadris, fígado e ciático',
+  'joelhos, ossos, articulações e pele','tornozelos, circulação e espasmos','pés, linfa e imunidade'];
+function saudePropensao(){
+  if(typeof NATAL==='undefined'||!NATAL)return null;
+  const P={}, EV={};
+  const add=(sg,w,txt)=>{if(sg==null||!isFinite(sg))return;
+    P[sg]=(P[sg]||0)+w; (EV[sg]=EV[sg]||[]).push(txt+' <i>+'+w.toFixed(1)+'</i>');};
+  const sgP=k=>NATAL.pts[k]?signOf(NATAL.pts[k].lon):null;
+  const r1=NATAL.rulers[1], r6=NATAL.rulers[6];
+  /* 1 · o panorama: a cúspide da 6ª */
+  const s6=signOf(NATAL.cusps[5]);
+  add(s6,3,'Cúspide da 6ª em '+SIGNS[s6]+' — o panorama das doenças possíveis');
+  /* 2 · o afunilamento: o signo do regente da 6ª */
+  const p6=NATAL.pts[r6];
+  if(p6)add(signOf(p6.lon),2.5,'Regente da 6ª ('+PT_NAME[r6]+') em '+SIGNS[signOf(p6.lon)]+' — afunila o panorama');
+  /* 3 · o corpo: Ascendente e seu regente */
+  const sA=signOf(NATAL.asc);
+  add(sA,2,'Ascendente em '+SIGNS[sA]+' — a compleição e o corpo');
+  const p1=NATAL.pts[r1];
+  if(p1)add(signOf(p1.lon),1.5,'Regente do Ascendente ('+PT_NAME[r1]+') em '+SIGNS[signOf(p1.lon)]);
+  /* 4 · a Lua: ritmo, líquidos e sono */
+  if(NATAL.pts.moon)add(sgP('moon'),1,'Lua em '+SIGNS[sgP('moon')]+' — ritmo, líquidos e sono');
+  /* 5 · os maléficos, pelo signo que ocupam e pela casa */
+  ['mars','saturn'].forEach(k=>{
+    const p=NATAL.pts[k]; if(!p)return;
+    const sg=signOf(p.lon);
+    add(sg,1.5,PT_NAME[k]+' em '+SIGNS[sg]+' — maléfico incidindo sobre a região');
+    if(p.h===1)add(sg,1,PT_NAME[k]+' na 1ª — pesa sobre o corpo e a vitalidade');
+    if(p.h===6)add(sg,1,PT_NAME[k]+' na 6ª — pesa sobre a saúde cotidiana');
+    const d2=(p.dig||'').match(/exílio|queda|combusto/);
+    if(d2)add(sg,.5,PT_NAME[k]+' debilitado ('+d2[0]+')');
+  });
+  /* 6 · qualquer planeta debilitado marca a sua região */
+  Object.keys(PT_NAME).forEach(k=>{
+    const p=NATAL.pts[k]; if(!p||['mars','saturn'].includes(k))return;
+    const deb=(p.dig||'').match(/exílio|queda/);
+    if(deb)add(signOf(p.lon),.5,PT_NAME[k]+' em '+deb[0]+' — a região responde com menos recurso');
+  });
+  const max=Math.max(1,...Object.values(P));
+  const lista=Object.keys(P).map(Number).sort((a,b)=>P[b]-P[a]).map(sg=>({
+    sg, area:SAUDE_AREA[sg], bruto:P[sg], pct:Math.round(P[sg]/max*100),
+    nivel:P[sg]/max>=.66?'alta':P[sg]/max>=.33?'moderada':'leve',
+    ev:EV[sg], detalhe:SAUDE_SIGNO[sg]}));
+  return {lista,total:Object.values(P).reduce((a,b)=>a+b,0)};
+}
+function saudePropHTML(){
+  const R=saudePropensao(); if(!R||!R.lista.length)return '';
+  const barra=x=>'<details class="pr-i"><summary>'
+    +'<span class="pr-n">'+cap1(x.area)+'</span>'
+    +'<span class="pr-t"><i class="'+x.nivel+'" style="width:'+x.pct+'%"></i></span>'
+    +'<span class="pr-v">'+x.nivel+'</span></summary>'
+    +'<div class="pr-b"><p><b>'+SIGNS[x.sg]+'</b> — '+x.detalhe+'.</p>'
+    +'<span>testemunhos que pesaram aqui</span><ul class="ne-l">'
+    +x.ev.map(e=>'<li>'+e+'</li>').join('')+'</ul></div></details>';
+  return '<div class="card sd"><div class="kicker">propensão por área do corpo — peso relativo dos testemunhos</div>'
+    +'<p class="pr-cab">As barras comparam <b>o peso dos testemunhos tradicionais</b> que apontam para cada '
+    +'região, sempre em relação à região mais apontada deste mapa. Não são probabilidades clínicas: '
+    +'a astrologia não calcula risco de doença, e nenhuma barra aqui significa que algo vá acontecer.</p>'
+    +R.lista.map(barra).join('')
+    +'<p class="pf-aviso">Suscetibilidade tradicional, não diagnóstico. Não substitui avaliação médica.</p>'
+    +'</div>';
+}
 function renderSaude(){
   const el=$('saude-body'); if(!el)return;
   const S=saudeEngine(); if(!S){el.innerHTML='';return;}
@@ -94,5 +165,23 @@ function renderSaude(){
     +'<details class="np-int"><summary>Como foi avaliado</summary>'
     +'<ul class="ne-l">'+S.ev.map(x=>'<li>'+x+'</li>').join('')+'</ul>'
     +'<p class="pf-aviso">Suscetibilidade tradicional, não diagnóstico. Não substitui avaliação médica.</p>'
-    +'</details></div>';
+    +'</details></div>'
+    +saudePropHTML()+saudeConstHTML();
+}
+/* constituição e suscetibilidades — migrada da aba dos eixos */
+function saudeConstHTML(){
+  if(typeof constitution!=='function')return '';
+  let C=null; try{C=constitution(profileData().T);}catch(e){return '';}
+  if(!C)return '';
+  return '<details class="card pf-const"><summary><span class="kicker" style="margin:0">constituição e suscetibilidades tradicionais</span>'
+    +'<b>'+cap1(C.constituicao)+' — '+C.qualidades+'</b><em>sustentação '+C.sust+'</em></summary>'
+    +'<div class="pf-cb">'
+    +'<div class="pf-cr"><span>Constituição predominante</span>'+cap1(C.constituicao)+' ('+C.qualidades+'). '+C.excesso+'.</div>'
+    +'<div class="pf-cr"><span>Funções tradicionalmente mais sensíveis</span><ul class="ilist">'
+      +C.sens.map(x=>'<li><b>'+x.o+'</b> — '+x.v+'</li>').join('')+'</ul></div>'
+    +'<div class="pf-cr"><span>Fatores de agravamento</span>'+(C.agrav.length?('<ul class="ilist">'+C.agrav.map(x=>'<li>'+x+'</li>').join('')+'</ul>'):'nenhum testemunho relevante detectado.')+'</div>'
+    +'<div class="pf-cr"><span>Fatores de compensação e proteção</span><ul class="ilist">'+C.comp.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>'
+    +'<div class="pf-cr"><span>Sustentação astrológica</span>'+C.sust+' — '+C.test.length+' testemunhos repetidos.</div>'
+    +'<p class="pf-aviso">Esta seção descreve tendências constitucionais da tradição. Não diagnostica, não prevê enfermidades e não substitui avaliação médica.</p>'
+    +'</div></details>';
 }
