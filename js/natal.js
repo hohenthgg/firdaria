@@ -118,27 +118,6 @@ function natalGargTxt(t){
   });
   flush(); return out;
 }
-/* Lions Daily: função, presença, traços e os dois registros (objetivo e subjetivo) */
-function natalLionHTML(N){
-  if(typeof LION_FUNCAO==='undefined'||!LION_FUNCAO[N.k])return '';
-  const k=N.k, li=a=>'<ul class="ne-l">'+a.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
-  const reg=LION_REG_PL[k], rc=LION_REG_CASA[N.casa];
-  return '<div class="npan-ps lion"><span>função e traços — compêndio</span>'
-    +'<p>'+cap1(LION_FUNCAO[k])+'.</p>'
-    +'<p class="np-sub">'+cap1(LION_PRESENCA[k])+'; opera '+LION_ESTILO_ELEM[SIGN_ELEM[N.s]]+', '
-      +LION_ESTILO_MODO[SIGN_MODE[N.s]]+' — '+LION_CAMPO[N.casa]+'.</p>'
-    +'<details class="np-int"><summary>tendências, expressão construtiva e sob aflição</summary>'
-      +'<p class="np-h">Tendências</p>'+li(LION_TRACO[k])
-      +'<p class="np-h">Em alta</p>'+li(LION_ALTA[k])
-      +'<p class="np-h">Sob aflição</p>'+li(LION_BAIXA[k])+'</details>'
-    +(reg?('<details class="np-int"><summary>os dois registros de '+PT_NAME[k]+' — objetivo e subjetivo</summary>'
-      +'<p class="np-h">Registro objetivo (tradição)</p><p>'+reg[0]+'</p>'
-      +'<p class="np-h">Registro subjetivo (psicológico)</p><p>'+reg[1]+'</p></details>'):'')
-    +(rc?('<details class="np-int"><summary>os dois registros da casa '+N.casa+'</summary>'
-      +'<p class="np-h">Registro objetivo (Lilly)</p><p>'+rc[0]+'</p>'
-      +'<p class="np-h">Registro subjetivo (psicológico)</p><p>'+rc[1]+'</p></details>'):'')
-    +'</div>';
-}
 /* eixos e nodos: colocações traduzidas do Depth, quando o mapa coincide */
 function natalEixoHTML(){
   if(typeof LION_EIXO==='undefined'||typeof NATAL==='undefined'||!NATAL)return '';
@@ -236,28 +215,124 @@ function natalChipsHTML(){
       +'<i>'+(PT_GLYPH[k]||'')+'︎</i><span>'+PT_NAME[k]+'</span></button>';
   }).join('');
 }
+/* ============================================================
+   O PAINEL DE UM PLANETA
+   Cadeia de causa e efeito no topo (o planeta, o que rege, onde
+   está, o signo, o resultado), depois três colunas: a explicação
+   simples, as camadas de profundidade e a legenda da página.
+   Todo o conteúdo é o mesmo de antes — muda a forma de apresentar.
+   ============================================================ */
+const NL_LAYICO={
+  fn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">'
+    +'<circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
+  alta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+    +'<path d="M11 20C6 20 4 16 4 12 9 12 12 9 12 4c4 1 7 4 7 9 0 4-3 7-8 7z"/><path d="M8 20c1-4 3-7 6-9"/></svg>',
+  baixa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+    +'<path d="M12 3.5 21.5 20h-19z"/><path d="M12 9.5v4.5M12 17h.01"/></svg>',
+  ex:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">'
+    +'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg>',
+  psi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">'
+    +'<path d="M12 20c4.4 0 8-3.1 8-7 0-3.3-2.7-6-6-6-2.8 0-5 2-5 4.4 0 2 1.6 3.6 3.6 3.6 1.6 0 2.9-1.2 2.9-2.7"/></svg>'};
+const NL_ICO={
+  rege:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">'
+    +'<path d="M3 21h18M4 21V10m4 11V10m4 11V10m4 11V10m4 11V10M2 10l10-7 10 7z"/></svg>',
+  casa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">'
+    +'<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>',
+  res:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">'
+    +'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>'};
+function natalCadeiaHTML(N){
+  const k=N.k, R=natalRege(N), C=natalCasa(N), S=natalSigno(N);
+  const fn=(typeof LION_FUNCAO!=='undefined'&&LION_FUNCAO[k])
+    ? cap1(LION_FUNCAO[k])+'.' : cap1(N.nat.n)+' — '+N.nat.d+'.';
+  const passo=(cor,ico,rot,txt)=>'<div class="nl-st '+cor+'">'
+    +'<div class="nl-hd"><span class="nl-ic">'+ico+'</span><b>'+rot+'</b></div>'
+    +'<p>'+txt+'</p></div>';
+  const seta='<div class="nl-ar" aria-hidden="true">→</div>';
+  const res=N.camadas?N.camadas.sintese:(cap1(R.d)+' '+C.d);
+  return '<section class="nl-chain">'
+    +'<div class="nl-chain-h"><h3>A lógica de '+PT_NAME[k]+' no seu mapa</h3>'
+      +'<span class="nl-meta">'+SIGNS[N.s]+' · casa '+N.casa+(N.retro?' · ℞':'')
+      +' · condição <i class="npan-c '+N.cond.nivel+'">'+N.cond.nivel+'</i></span></div>'
+    +'<div class="nl-row">'
+      +passo('c1','<i class="nl-g">'+(PT_GLYPH[k]||'')+'︎</i>',PT_NAME[k],fn)+seta
+      +passo('c2',NL_ICO.rege,(N.rege.length?('rege a '+N.rege[0]+'ª'):'sem regência'),R.d)+seta
+      +passo('c3',NL_ICO.casa,'está na '+N.casa+'ª',C.d)+seta
+      +passo('c4','<i class="nl-g">'+sgGlyph(N.s)+'</i>','em '+SIGNS[N.s],S.d)+seta
+      +passo('c5',NL_ICO.res,'resultado',res)
+    +'</div></section>';
+}
+/* --- coluna 1: a explicação em linguagem simples --- */
+function natalSimplesHTML(N){
+  const k=N.k, R=natalRege(N), C=natalCasa(N), S=natalSigno(N);
+  const p=[];
+  if(typeof LION_FUNCAO!=='undefined'&&LION_FUNCAO[k])
+    p.push(cap1(PT_NAME[k])+' é '+LION_FUNCAO[k]+'.');
+  else p.push(cap1(PT_NAME[k])+' é '+N.nat.n+': '+N.nat.d+'.');
+  p.push(R.d);
+  p.push(C.d);
+  p.push('Em '+SIGNS[N.s]+', '+(typeof LION_ESTILO_ELEM!=='undefined'&&LION_ESTILO_ELEM[SIGN_ELEM[N.s]]
+    ? ('opera '+LION_ESTILO_ELEM[SIGN_ELEM[N.s]]+', '+(LION_ESTILO_MODO[SIGN_MODE[N.s]]||'')+'.')
+    : S.d));
+  /* o resumo fecha com a condição — o resultado já traz a síntese */
+  const resumo=N.cond?(cap1(PT_NAME[k])+' está em condição <b>'+N.cond.nivel+'</b>: '+N.cond.nivelTxt+'.'):null;
+  return '<div class="nl-card"><div class="nl-ch"><span class="nl-ci c1">'
+    +(PT_GLYPH[k]||'')+'︎</span><h4>Explicação simples</h4></div>'
+    +p.map(x=>'<p>'+x+'</p>').join('')
+    +(resumo?('<p class="nl-res"><i>i</i><span>Em resumo: '+resumo+'</span></p>'):'')
+    +'</div>';
+}
+/* --- coluna 2: as camadas, em acordeão --- */
+function natalCamadasHTML(N){
+  const k=N.k, li=a=>'<ul class="ne-l">'+a.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+  const cam=[];
+  if(typeof LION_TRACO!=='undefined'&&LION_TRACO[k]){
+    cam.push(['c1',NL_LAYICO.fn,'função e traços',
+      (typeof LION_FUNCAO!=='undefined'?LION_FUNCAO[k]:N.nat.d),
+      '<p>'+cap1(LION_PRESENCA[k])+'.</p>'
+      +'<p class="np-h">Tendências</p>'+li(LION_TRACO[k])]);
+    cam.push(['c3',NL_LAYICO.alta,'expressão construtiva',
+      'Como '+PT_NAME[k]+' rende quando está bem sustentado no mapa.',
+      li(LION_ALTA[k])]);
+    cam.push(['c5',NL_LAYICO.baixa,'sob aflição',
+      'Desvios e excessos que enfraquecem a expressão de '+PT_NAME[k]+'.',
+      li(LION_BAIXA[k])]);
+  }
+  const reg=(typeof LION_REG_PL!=='undefined')?LION_REG_PL[k]:null;
+  const rc=(typeof LION_REG_CASA!=='undefined')?LION_REG_CASA[N.casa]:null;
+  if(reg||rc)cam.push(['c4',NL_LAYICO.ex,'exemplos concretos',
+    'O que '+PT_NAME[k]+' e a casa '+N.casa+' significam no mundo e na psique.',
+    (reg?('<p class="np-h">'+PT_NAME[k]+' — registro objetivo</p><p>'+reg[0]+'</p>'
+      +'<p class="np-h">'+PT_NAME[k]+' — registro subjetivo</p><p>'+reg[1]+'</p>'):'')
+    +(rc?('<p class="np-h">Casa '+N.casa+' — registro objetivo</p><p>'+rc[0]+'</p>'
+      +'<p class="np-h">Casa '+N.casa+' — registro subjetivo</p><p>'+rc[1]+'</p>'):'')]);
+  if(N.camadas)cam.push(['c2',NL_LAYICO.psi,'leitura psicológica — Olavo',
+    (N.camadas.psi.titulo||'A casa lida pela regência concreta do planeta.'),
+    '<p>'+N.camadas.sintese+'</p><p class="np-sub">'+N.camadas.psi.texto+'</p>']);
+  if(!cam.length)return '';
+  return '<div class="nl-card"><h4 class="nl-h4">Camadas de profundidade</h4>'
+    +cam.map(c=>'<details class="nl-lay"><summary>'
+      +'<span class="nl-ci '+c[0]+'">'+c[1]+'</span>'
+      +'<span class="nl-lt"><b>'+c[2]+'</b><em>'+cap1(c[3])+'</em></span>'
+      +'<i class="nl-cx">⌄</i></summary><div class="nl-lb">'+c[4]+'</div></details>').join('')
+    +'</div>';
+}
+/* --- coluna 3: como ler a página --- */
+function natalLegendaHTML(N){
+  const passos=[['c1','O que é o planeta'],['c2','O que ele rege'],['c3','Onde ele atua no mapa'],
+    ['c4','Como o signo modifica'],['c5','Qual o resultado disso']];
+  return '<div class="nl-card nl-leg" id="nl-legenda"><div class="nl-ch">'
+    +'<span class="nl-ci c5">✦</span><h4>Como ler esta página</h4></div>'
+    +'<p>Esta é uma leitura de causa e efeito.</p>'
+    +'<ul class="nl-lg">'+passos.map(p=>'<li><i class="'+p[0]+'"></i>'+p[1]+'</li>').join('')+'</ul>'
+    +'<p>Siga a sequência para entender como cada parte se conecta e forma o significado final.</p>'
+    +'<p class="nl-sub">Abaixo, as camadas de profundidade e as fontes na íntegra trazem o texto '
+    +'completo de cada autor; a estrutura natal mostra o cálculo que sustenta a leitura.</p></div>';
+}
 function natalPainelHTML(k){
   const N=natalNucleo(k); if(!N)return '<p class="note">ponto não encontrado.</p>';
-  const R=natalRege(N), C=natalCasa(N), S=natalSigno(N);
-  const cn=N.cond;
-  const bloco=(t,d)=>'<div class="nb"><span>'+t+'</span><p>'+d+'</p></div>';
-  return '<article class="npan">'
-    +'<header class="npan-h">'
-      +'<span class="npan-g">'+(PT_GLYPH[k]||'')+'︎</span>'
-      +'<div><b>'+PT_NAME[k]+'</b>'
-        +'<em>'+SIGNS[N.s]+' · '+N.casa+'ª'+(N.retro?' · ℞':'')+'</em></div>'
-      +'<i class="npan-c '+cn.nivel+'">'+cn.nivel+'</i>'
-    +'</header>'
-    +'<p class="npan-n">'+cap1(N.nat.n)+' — '+N.nat.d+'.</p>'
-    +bloco(R.t,R.d)+bloco(C.t,C.d)+bloco(S.t,S.d)
-    /* 0 · função e traços do compêndio */
-    +natalLionHTML(N)
-    /* 1 · Olavo — a leitura psicológica da casa, modulada pela regência */
-    +(N.camadas?('<div class="npan-ps"><span>leitura psicológica — Olavo'
-      +(N.camadas.psi.titulo?(' · '+N.camadas.psi.titulo):'')+'</span>'
-      +'<p>'+N.camadas.sintese+'</p>'
-      +'<p class="np-sub">'+N.camadas.psi.texto+'</p></div>'):'')
-    /* 2 · as fontes, na íntegra: o planeta no signo e o planeta na casa */
+  return '<article class="npan nl">'
+    +natalCadeiaHTML(N)
+    +'<div class="nl-grid">'+natalSimplesHTML(N)+natalCamadasHTML(N)+natalLegendaHTML(N)+'</div>'
     +natalFontesHTML(N)
     +'<button class="npan-x" data-nxdet="'+k+'">Estrutura natal <i>'+(NX_DET===k?'⌄':'›')+'</i></button>'
     +(NX_DET===k?natalEstruturaHTML(N):'')

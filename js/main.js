@@ -201,6 +201,9 @@ function boot(){
   try{bindPreditivas();}catch(e){console.error(e);}
   try{bindSinastria();}catch(e){console.error(e);}
   try{bindNatal();}catch(e){console.error(e);}
+  const nh=document.getElementById('nl-help');
+  if(nh)nh.onclick=()=>{const l=document.getElementById('nl-legenda');
+    if(l)l.scrollIntoView({behavior:'smooth',block:'center'});};
   try{bindTipos();}catch(e){console.error(e);}
   if(loadFromState()){
     document.getElementById('in-natal').value=STATE.natal.text;
