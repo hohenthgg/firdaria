@@ -77,41 +77,100 @@ function tlTracksHTML(d,S){
   return '<div class="tl-tracks">'+out+'</div>';
 }
 
-/* ---------- coluna esquerda: quatro cards compactos ---------- */
+/* ---------- coluna esquerda: as quatro camadas, em trilho numerado ---------- */
 function tempoExecCards(d){
   const S=tempoState(d); if(!S)return '';
   const W=tlWindows(S);
-  const card=(layer,tec,glyph,ativo,periodo,frase)=>
-    '<button class="tpc2'+(TP_LAYER===layer?' on':'')+'" data-layer="'+layer+'">'
-    +'<span class="tpc2-k">'+tec+'</span>'
-    +'<span class="tpc2-t"><i>'+glyph+'</i>'+ativo+'</span>'
-    +'<span class="tpc2-p">'+periodo+'</span>'
-    +'<span class="tpc2-d">'+frase+'</span></button>';
+  const card=(n,cor,layer,kicker,glifo,nome,periodo,frase)=>
+    '<div class="tw-row '+cor+'">'
+    +'<div class="tw-num"><span>'+n+'</span></div>'
+    +'<button class="tw-c'+(TP_LAYER===layer?' on':'')+'" data-layer="'+layer+'">'
+      +'<span class="tw-g">'+glifo+'</span>'
+      +'<span class="tw-b"><em>'+kicker+'</em><b>'+nome+'</b><p>'+frase+'</p></span>'
+      +'<span class="tw-r"><i>'+periodo+'</i><span class="tw-x">›</span></span>'
+    +'</button></div>';
   const out=[];
-  out.push(card('firdaria','Firdária',(PT_GLYPH[S.mk]||'✦')+'︎',PT_NAME[S.mk]||S.f.major,
+  out.push(card(1,'k1','firdaria','Firdária',(PT_GLYPH[S.mk]||'✦')+'︎',
+    PT_NAME[S.mk]||S.f.major,
     W.fird.ini.getUTCFullYear()+' – '+W.fird.fim.getUTCFullYear(),
     S.rulesMk.length?('Mantém '+casasTag(S.rulesMk)+' em primeiro plano.')
       :'Capítulo curto, sem casa administrada.'));
-  out.push(card('sub','Subfirdária',(PT_GLYPH[S.sk||S.f.majorKey]||'✦')+'︎',PT_NAME[S.sk||S.f.majorKey]||'—',
+  out.push(card(2,'k2','sub','Subfirdária',(PT_GLYPH[S.sk||S.f.majorKey]||'✦')+'︎',
+    PT_NAME[S.sk||S.f.majorKey]||'—',
     W.sub.fim?('até '+fdate(W.sub.fim)):'—',
     S.sk?('Traz '+casasTag(S.rulesSk)+' como assunto imediato.')
       :'A fase repete o regente do ciclo, em estado concentrado.'));
-  out.push(card('profeccao','Profecção',(PT_GLYPH[S.lord]||'✦')+'︎','Casa '+S.profHouse+' · '+sgGlyph(S.p.signIdx)+' '+PT_NAME[S.lord],
+  out.push(card(3,'k3','profeccao','Profecção',(PT_GLYPH[S.lord]||'✦')+'︎',
+    'Casa '+S.profHouse+' · '+PT_NAME[S.lord],
     W.prof.ini.getUTCFullYear()+' – '+W.prof.fim.getUTCFullYear(),
     'O ano trata de '+casaTag(S.profHouse)+', sob '+PT_NAME[S.lord]+'.'));
   const R=S.rev;
-  out.push(R?card('revolucao','Revolução '+R.label,sgOf(R.ascLon),R.ascSignNm,
-      fdate(R.start)+(R.end?(' – '+fdate(R.end)):''),
-      'O período tende a se manifestar por '+casaTag(R.ascNatalHouse)+'.')
-    :card('revolucao','Revolução','✦','—','—','Importe o mapa pelo link para calcular os retornos.'));
+  out.push(R
+    ? card(4,'k4','revolucao','Revolução '+R.label,sgOf(R.ascLon),R.ascSignNm,
+        fdate(R.start)+(R.end?(' – '+fdate(R.end)):''),
+        'O período tende a se manifestar por '+casaTag(R.ascNatalHouse)+'.')
+    : card(4,'k4','revolucao','Revolução','✦','—','—',
+        'Importe o mapa pelo link para calcular os retornos.'));
   return out.join('');
 }
-
-/* ---------- coluna direita: só a chamada de leitura longa ---------- */
-function tlSideHTML(d,S){
-  return '<button class="ia-btn sm" id="tl-ia">✦ Analisar com IA</button>';
+/* ---------- coluna direita: a leitura, camada por camada ---------- */
+/* a síntese junta as três frases que já existem nos cartões — não cria leitura nova */
+function tlSinteseTxt(S){
+  const m=[];
+  const push=(tag,fonte)=>{if(!tag)return;
+    const e=m.find(x=>x.tag===tag); if(e)e.f.push(fonte); else m.push({tag,f:[fonte]});};
+  if(S.rulesMk&&S.rulesMk.length)push(casasTag(S.rulesMk),'a firdária');
+  if(S.sk&&S.rulesSk&&S.rulesSk.length)push(casasTag(S.rulesSk),'a fase');
+  push(casaTag(S.profHouse),'a profecção');
+  if(S.rev)push(casaTag(S.rev.ascNatalHouse),'a revolução');
+  if(!m.length)return '';
+  const fr=m.map(x=>x.f.length>1
+    ? lista(x.f)+' apontam '+prep('para',x.tag)
+    : x.f[0]+' aponta '+prep('para',x.tag));
+  return cap1(fr.join('; '))+'.'
+    +(m.some(x=>x.f.length>1)?' As técnicas convergem sobre a mesma matéria.':'');
 }
-
+function tlSideHTML(d,S){
+  const R=S.rev, it=[];
+  it.push(['k1',(PT_GLYPH[S.mk]||'✦')+'︎',
+    (PT_NAME[S.mk]||S.f.major)+' — Firdária',
+    tlWindows(S).fird.ini.getUTCFullYear()+' – '+tlWindows(S).fird.fim.getUTCFullYear(),
+    PT_NAME[S.mk]
+      ? ('É o pano de fundo do ciclo. '+cap1(casasTag(S.rulesMk))+' em primeiro plano'
+        +(S.occMk?(', com a execução passando por '+casaTag(S.occMk)):'')+'.')
+      : 'Passagem de nodo: capítulo curto, sem casa administrada.']);
+  it.push(['k2',(PT_GLYPH[S.sk||S.f.majorKey]||'✦')+'︎',
+    (PT_NAME[S.sk||S.f.majorKey]||'—')+' — Subfirdária',
+    tlWindows(S).sub.fim?('até '+fdate(tlWindows(S).sub.fim)):'—',
+    S.sk
+      ? ('No momento, '+casasTag(S.rulesSk)+' entra'+(/\se\s/.test(casasTag(S.rulesSk))?'m':'')
+        +' como assunto imediato. '+cap1(relBetween(S.mk,S.sk).txt)+'.')
+      : 'A fase repete o regente do ciclo, em estado concentrado — sem assunto secundário próprio.']);
+  it.push(['k3',(PT_GLYPH[S.lord]||'✦')+'︎',
+    'Casa '+S.profHouse+' · '+PT_NAME[S.lord]+' — Profecção',
+    tlWindows(S).prof.ini.getUTCFullYear()+' – '+tlWindows(S).prof.fim.getUTCFullYear(),
+    'O foco do ano está '+prep('em',casaTag(S.profHouse))+', administrada por '+PT_NAME[S.lord]
+      +(S.occLord?(', que atua por '+casaTag(S.occLord)):'')+'.']);
+  if(R)it.push(['k4',sgOf(R.ascLon),
+    R.ascSignNm+' — Revolução '+R.label,
+    fdate(R.start)+(R.end?(' – '+fdate(R.end)):''),
+    'O cenário do período é '+casaTag(R.ascNatalHouse)+': o Ascendente do retorno em '
+      +R.ascSignNm+' cai '+prep('em',ordinal(R.ascNatalHouse))+' natal, sob '+PT_NAME[R.ascRuler]+'.']);
+  return '<div class="tw-h"><span class="tw-hi">'
+    +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round">'
+    +'<path d="M3 5.5C5.5 4 8.5 4 12 5.5c3.5-1.5 6.5-1.5 9 0V19c-2.5-1.5-5.5-1.5-9 0-3.5-1.5-6.5-1.5-9 0z"/>'
+    +'<path d="M12 5.5V19"/></svg></span><h3>A leitura</h3></div>'
+    +'<div class="tw-div">◈</div>'
+    +'<ol class="tw-list">'+it.map((x,i)=>'<li class="'+x[0]+'">'
+      +'<span class="tw-bg">'+x[1]+'</span>'
+      +'<div><b>'+(i+1)+'. '+x[2]+'</b> <i>('+x[3]+')</i>'
+      +'<p>'+x[4]+'</p></div></li>').join('')+'</ol>'
+    +'<div class="tw-sint"><span class="tw-bg">✦</span>'
+      +'<div><b>Síntese</b><p>'+tlSinteseTxt(S)+'</p></div></div>'
+    +'<button class="tw-ia" id="tl-ia">✦ Analisar com IA</button>'
+    +'<p class="tw-note">Leitura montada pelo motor local, em ordem hierárquica: '
+    +'firdária → fase → profecção → revolução.</p>';
+}
 /* ---------- drawer lateral: leitura longa fora do fluxo da página ---------- */
 function tlDrawer(titulo,html){
   const d=$('tl-drawer'); if(!d)return;
