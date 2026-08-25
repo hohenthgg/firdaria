@@ -282,21 +282,49 @@ function rsWheelSVG(R,S){
   return s;
 }
 
+/* ============================================================
+   REVOLUÇÕES — quadro de estudo em cartões numerados.
+   Mesmo conteúdo de sempre, distribuído em oito blocos; os blocos
+   07 e 08 são escritos pelo usuário e ficam salvos localmente.
+   ============================================================ */
+/* perguntas de estudo, pela matéria da casa ativada — são perguntas,
+   não afirmações: cada uma devolve o tema da casa ao próprio nativo */
+const RV_PERG={
+  1:['Como quero me apresentar neste ciclo?','O que o meu corpo está pedindo agora?','O que já não me representa?'],
+  2:['O que eu de fato valorizo neste momento?','Como quero ganhar e gastar neste ciclo?','O que me dá sensação de segurança?'],
+  3:['O que quero aprender e com quem quero falar?','Que conversa venho adiando?','Como circulo pelo meu entorno?'],
+  4:['O que significa casa para mim agora?','O que herdei da minha origem e quero manter?','De que base preciso para sustentar o resto?'],
+  5:['Como posso me colocar no centro da minha vida neste ano?','Que atividades me dão prazer e fazem o tempo voar?','Como usar a minha criação para gerar mais alegria?'],
+  6:['Que rotina me sustenta e qual me consome?','O que o trabalho diário exige do meu corpo?','Que hábito eu mudaria primeiro?'],
+  7:['O que espero de quem está do outro lado?','Que acordo precisa ser renegociado?','O que projeto no outro que é meu?'],
+  8:['O que preciso entregar para receber algo maior?','Que medo venho evitando olhar?','O que depende de recursos que não são meus?'],
+  9:['No que eu realmente acredito hoje?','Que estudo longo me chama?','O que me tiraria do lugar conhecido?'],
+  10:['Que posição quero ocupar e a que custo?','Que imagem pública estou construindo?','O que chamo de sucesso agora?'],
+  11:['Com quem quero caminhar neste ciclo?','Que projeto de futuro me move?','O que espero do grupo a que pertenço?'],
+  12:['Do que preciso me recolher para descansar?','O que me sabota sem que eu perceba?','Que silêncio me faria bem?']};
+function rvKey(R){return 'agx_rv_'+RS_KIND+'_'+(R&&R.start?R.start.toISOString().slice(0,10):'x');}
+function rvLoad(R,campo){try{return JSON.parse(localStorage.getItem(rvKey(R)+'_'+campo)||'null');}catch(e){return null;}}
+function rvSave(R,campo,v){try{localStorage.setItem(rvKey(R)+'_'+campo,JSON.stringify(v));}catch(e){}}
+
 function renderRS(){
-  if(typeof NATAL==='undefined'||!NATAL){if($('rs-body'))$('rs-body').innerHTML=emptyState();return;}
+  if(typeof NATAL==='undefined'||!NATAL){if($('rs-resumo'))$('rs-resumo').innerHTML=emptyState();return;}
   if($('rs-kinds'))$('rs-kinds').innerHTML=REV_KINDS.map(k=>{
     const per=k.per<40?'Mensal':k.per<400?'Anual':(Math.round(k.per/365.25)+' anos');
     return '<button class="rvty'+(k.id===RS_KIND?' on':'')+'" data-rsk="'+k.id+'">'
       +'<span class="rvty-g">'+(PT_GLYPH[k.key]||'')+'︎</span>'
-      +'<span class="rvty-b"><b>'+k.label+'</b><em>'+per+'</em></span>'
-      +(k.id===RS_KIND?'<span class="rvty-d"></span>':'')+'</button>';}).join('');
+      +'<span class="rvty-b"><b>'+k.label+'</b></span><em>'+per+'</em></button>';}).join('');
   const d=rsCursor(), R=revolutionFor(RS_KIND,d), S=tempoState(d), K=REV_BY_ID[RS_KIND];
-  if(!R){ ['rs-cmp','rs-cards'].forEach(i2=>{if($(i2))$(i2).innerHTML='';});
+  if($('rs-dica'))$('rs-dica').textContent='O retorno '+K.label.toLowerCase()+' mostra '+K.campo+'.';
+  if(!R){ ['rs-resumo','rs-fatos','rs-cards','rs-natal','rs-perg','rs-passos','rs-notas']
+      .forEach(i2=>{if($(i2))$(i2).innerHTML='';});
     if($('rs-wheel'))$('rs-wheel').innerHTML='';
-    $('rs-body').innerHTML='<div class="card"><p>Não foi possível calcular a Revolução '+K.label+'. Importe o mapa pelo link do Aspectarian.</p></div>';return;}
+    $('rs-resumo').innerHTML='<p class="rv-vaz">Não foi possível calcular a Revolução '+K.label
+      +'. Importe o mapa pelo link do Aspectarian.</p>';return;}
+  /* cabeçalho e navegação */
   const nb=rsNeighbors(R,3), sel=$('rs-year'), lab=$('rs-year-k');
-  const curto=K.per<40;                                  // retorno lunar → rótulo por mês
+  const curto=K.per<40;
   if(lab)lab.textContent=curto?'Mês':'Ano';
+  if($('rs-sub'))$('rs-sub').textContent='mapa de estudo · '+fdate(R.start)+(R.end?(' – '+fdate(R.end)):'');
   if(sel){sel.innerHTML=nb.map(x=>{
       const d0=x.R.start;
       const txt=curto?(MESES[d0.getUTCMonth()]+' '+d0.getUTCDate()+', '+d0.getUTCFullYear())
@@ -304,66 +332,113 @@ function renderRS(){
           +' · '+fdate(d0);
       return '<option value="'+d0.getTime()+'"'+(x.rel==='atual'?' selected':'')+'>'+txt+'</option>';}).join('');
     sel.onchange=()=>{RS_CURSOR=new Date(+sel.value+DAY);renderRS();};}
-  $('rs-wheel').innerHTML=rsWheelSVG(R,S);
   const pv=$('rs-prev'),nx=$('rs-next');
   if(pv)pv.onclick=()=>rsStep(-1); if(nx)nx.onclick=()=>rsStep(1);
-  // painel comparativo: revolução × natal
+  $('rs-wheel').innerHTML=rsWheelSVG(R,S);
+
+  /* 01 · resumo do ciclo */
+  /* palavras-chave: a matéria das casas ativadas, mais o signo e o planeta do retorno */
+  const tags=[...new Set(
+    [R.ascNatalHouse,S&&S.profHouse].filter(Boolean).map(h=>HOUSE_TAG[h]).join('; ')
+      .split(/[,;]\s*|\s+e\s+/).map(x=>x.trim()).filter(Boolean)
+      .concat([R.ascSignNm,PT_NAME[R.planetKey]]))].slice(0,6);
+  $('rs-resumo').innerHTML='<p class="rv-lead">O período tende a se manifestar '
+    +prep('por',HOUSE_TAG[R.ascNatalHouse])+', com o Ascendente do retorno em '+R.ascSignNm
+    +' caindo '+prep('em',ordinal(R.ascNatalHouse))+' natal.</p>'
+    +'<p class="rv-lead2">'+cap1(HOUSE_THEME[R.ascNatalHouse])+'.</p>'
+    +'<div class="rv-kw"><span>palavras-chave</span><div>'
+    +tags.map(t=>'<i>'+t+'</i>').join('')+'</div></div>';
+
+  /* 03 · os fatos do mapa da revolução */
   const rulerNat=NATAL.pts[R.ascRuler];
-  /* cada quadradinho carrega o seu glifo: planeta, signo ou numeral da casa */
-  const pg=k=>'<u class="rvq-g">'+(PT_GLYPH[k]||'')+'︎</u>';
-  const sg=L=>'<u class="rvq-g">'+sgOf(L)+'</u>';
-  const hg=h=>'<u class="rvq-g rvq-h">'+(ROMANO_RV[h]||h)+'</u>';
-  const q=(g,k,v,wide)=>'<div class="rvq'+(wide?' rvq-w':'')+'">'+(g||'')
-    +'<div class="rvq-t"><span>'+k+'</span><b>'+v+'</b></div></div>';
-  const revRul=R.chart&&R.chart.rulers?R.chart.rulers[1]:R.ascRuler;
-  $('rs-cmp').innerHTML=
-    '<section class="rvmini"><div class="kicker">mapa da revolução</div><div class="rvqs">'
-     +q(sg(R.ascLon),'Ascendente',R.ascSignNm+' <i>'+Math.floor(n360(R.ascLon)%30)+'°</i>')
-     +q(pg(R.ascRuler),'Regente do Asc',PT_NAME[R.ascRuler]
-        +(R.ascRulerRevHouse?(' <i>· casa '+R.ascRulerRevHouse+'</i>'):''))
-     +q(pg(R.planetKey),'Planeta do retorno',PT_NAME[R.planetKey]
-        +(R.planetRevHouse?(' <i>· casa '+R.planetRevHouse+' no mapa da revolução</i>'):''),true)
-     +q('<u class="rvq-g">✦</u>','Vigência',fdate(R.start)+(R.end?(' – '+fdate(R.end)):''),true)
-    +'</div></section>'
-    +'<section class="rvmini"><div class="kicker">onde isso vai no natal</div><div class="rvqs">'
-     +q(hg(R.ascNatalHouse),'Asc do retorno','casa '+R.ascNatalHouse+' natal')
-     +q(pg(R.ascRuler),'Regente no natal',rulerNat?('casa '+rulerNat.h+' <i>'+(rulerNat.dig||'')+'</i>'):'—')
-     +(S?q(hg(S.profHouse),'Profecção','casa '+S.profHouse):'')
-     +(S?q(pg(S.lord),'Senhor do ano',PT_NAME[S.lord]):'')
-     +q(hg(R.ascNatalHouse),'Matéria',cap1(HOUSE_THEME[R.ascNatalHouse]),true)
-    +'</div></section>';
-  // cards clicáveis: cada elemento do retorno
+  const fato=(g,k,v)=>'<div class="rv-f"><u>'+g+'</u><div><span>'+k+'</span><b>'+v+'</b></div></div>';
+  $('rs-fatos').innerHTML=
+     fato(sgOf(R.ascLon),'Ascendente',R.ascSignNm+' '+Math.floor(n360(R.ascLon)%30)+'°')
+    +fato((PT_GLYPH[R.ascRuler]||'')+'︎','Regente do Asc',PT_NAME[R.ascRuler]
+        +(R.ascRulerRevHouse?(' · casa '+R.ascRulerRevHouse):''))
+    +fato((PT_GLYPH[R.planetKey]||'')+'︎','Planeta do retorno',PT_NAME[R.planetKey]
+        +(R.planetRevHouse?(' · casa '+R.planetRevHouse):''))
+    +fato('✦','Vigência',fdate(R.start)+(R.end?(' – '+fdate(R.end)):''));
+
+  /* 05 · onde isso vai no natal */
+  const linha=(g,k,v)=>'<div class="rv-l"><u>'+g+'</u><span>'+k+'</span><b>'+v+'</b></div>';
+  $('rs-natal').innerHTML=
+     linha(ROMANO_RV[R.ascNatalHouse]||R.ascNatalHouse,'Asc do retorno','casa '+R.ascNatalHouse+' natal')
+    +linha((PT_GLYPH[R.ascRuler]||'')+'︎','Regente no natal',rulerNat?('casa '+rulerNat.h+(rulerNat.dig?(' · '+rulerNat.dig.split(' · ')[0]):'')):'—')
+    +(S?linha(ROMANO_RV[S.profHouse]||S.profHouse,'Profecção','casa '+S.profHouse):'')
+    +(S?linha((PT_GLYPH[S.lord]||'')+'︎','Senhor do ano',PT_NAME[S.lord]):'')
+    +'<div class="rv-mat"><span>Matéria</span><p>'+cap1(HOUSE_THEME[R.ascNatalHouse])+'</p></div>';
+
+  /* 04 · destaques: os elementos do retorno, cada um abrível */
   const escopo=S?(' Dentro da firdária de '+(PT_NAME[S.mk]||'—')+(S.sk?(' / '+PT_NAME[S.sk]):'')
     +' e da profecção da '+ordinal(S.profHouse)+', ') : ' ';
   const temas=(hs)=>casasTag([...new Set(hs.filter(Boolean))].slice(0,3));
-  const cardEl=(tit,sub,natal,rev,tem)=>'<details class="rvel"><summary><b>'+tit+'</b><em>'+sub+'</em><span>›</span></summary>'
+  const cardEl=(g,tit,sub,natal,rev,tem)=>'<details class="rvel"><summary>'
+    +'<span class="rvel-g">'+g+'</span>'
+    +'<span class="rvel-t"><b>'+tit+'</b><em>'+sub+'</em></span><i>›</i></summary>'
     +'<div class="rvel-b">'
     +'<div class="rvel-s"><span>No natal</span><p>'+natal+'</p></div>'
     +'<div class="rvel-s"><span>Na revolução</span><p>'+rev+'</p></div>'
     +'<div class="rvel-s"><span>Temas ativáveis</span><p>'+tem+'</p></div>'
     +'</div></details>';
   let cards='';
-  cards+=cardEl('Ascendente do retorno',sgOf(R.ascLon)+' '+R.ascSignNm+' · '+R.ascNatalHouse+'ª natal',
+  cards+=cardEl(sgOf(R.ascLon),'Ascendente do retorno',R.ascSignNm+' · '+R.ascNatalHouse+'ª natal',
     'A '+ordinal(R.ascNatalHouse)+' natal trata de '+HOUSE_THEME[R.ascNatalHouse]+'.',
     'O Ascendente define como o período se apresenta: em '+R.ascSignNm+', regido por '+PT_NAME[R.ascRuler]+'.',
     escopo+'a ativação tende a passar por '+temas([R.ascNatalHouse,S&&S.profHouse])+'.');
-  if(rulerNat)cards+=cardEl('Regente do Ascendente',PT_NAME[R.ascRuler]+' · casa '+rulerNat.h+' natal',
+  if(rulerNat)cards+=cardEl((PT_GLYPH[R.ascRuler]||'')+'︎','Regente do Ascendente',
+    PT_NAME[R.ascRuler]+' · casa '+rulerNat.h+' natal',
     PT_NAME[R.ascRuler]+' rege a '+(ruledHouses(R.ascRuler).map(h=>h+'ª').join(' e a ')||'—')
       +' e está na casa '+rulerNat.h+' ('+(rulerNat.dig||'—')+').',
     'Administra o retorno'+(R.ascRulerRevHouse?(' a partir da casa '+R.ascRulerRevHouse+' do próprio retorno'):'')+'.',
     escopo+'ele conduz '+temas(ruledHouses(R.ascRuler).concat([rulerNat.h]))+'.');
   const pp=NATAL.pts[R.planetKey];
-  if(pp)cards+=cardEl('Planeta do retorno',PT_NAME[R.planetKey]+' · '+K.label,
+  if(pp)cards+=cardEl((PT_GLYPH[R.planetKey]||'')+'︎','Planeta do retorno',PT_NAME[R.planetKey]+' · '+K.label,
     PT_NAME[R.planetKey]+' rege a '+(ruledHouses(R.planetKey).map(h=>h+'ª').join(' e a ')||'—')
       +' e está na casa '+pp.h+' natal ('+(pp.dig||'—')+').',
     'É o planeta que retorna ao grau natal'+(R.planetRevHouse?(', posicionado na casa '+R.planetRevHouse+' do retorno'):'')+'. '+cap1(K.campo)+'.',
     escopo+'o retorno reativa '+temas(ruledHouses(R.planetKey).concat([pp.h]))+'.');
-  cards+=cardEl('Casa ativada','Casa '+R.ascNatalHouse+' natal',
+  cards+=cardEl(ROMANO_RV[R.ascNatalHouse]||R.ascNatalHouse,'Casa ativada','Casa '+R.ascNatalHouse+' natal',
     cap1(HOUSE_THEME[R.ascNatalHouse])+'.',
     'É o ambiente onde o período tende a se manifestar (Ascendente do retorno).',
     escopo+'esses assuntos convergem com '+temas([S&&S.profHouse,S&&S.occLord])+'.');
   $('rs-cards').innerHTML=cards;
-  $('rs-body').innerHTML='';
+
+  /* 06 · perguntas para refletir */
+  const qs=RV_PERG[R.ascNatalHouse]||[];
+  $('rs-perg').innerHTML='<ul class="rv-q">'+qs.map(q=>'<li><i>→</i>'+q+'</li>').join('')+'</ul>';
+
+  /* 07 · passos, escritos pelo usuário */
+  const passos=rvLoad(R,'passos')||[];
+  $('rs-passos').innerHTML=(passos.length
+      ? '<ul class="rv-ck">'+passos.map((p,i)=>'<li><button class="rv-cb'+(p.ok?' on':'')
+        +'" data-rvck="'+i+'" aria-label="marcar"></button><span>'+esc(p.t)+'</span>'
+        +'<button class="rv-del" data-rvdel="'+i+'" aria-label="remover">×</button></li>').join('')+'</ul>'
+      : '<p class="rv-vaz">Nenhum passo ainda. Escreva o que você quer fazer neste ciclo.</p>')
+    +'<div class="rv-add"><input type="text" id="rv-np" placeholder="novo passo…" maxlength="120">'
+    +'<button class="rv-plus" id="rv-addp">+ Adicionar</button></div>';
+
+  /* 08 · anotações livres */
+  const notas=rvLoad(R,'notas')||'';
+  $('rs-notas').innerHTML='<textarea id="rv-nt" class="rv-nt" rows="7" '
+    +'placeholder="Ideias para o ciclo…">'+esc(notas)+'</textarea>'
+    +'<span class="rv-sv" id="rv-sv"></span>';
+  const ta=$('rv-nt');
+  if(ta)ta.oninput=()=>{rvSave(R,'notas',ta.value);
+    const sv=$('rv-sv'); if(sv){sv.textContent='salvo';clearTimeout(ta._t);
+      ta._t=setTimeout(()=>{sv.textContent='';},1600);}};
+  const inp=$('rv-np'), add=$('rv-addp');
+  const novo=()=>{const v=(inp.value||'').trim(); if(!v)return;
+    const L=rvLoad(R,'passos')||[]; L.push({t:v,ok:false}); rvSave(R,'passos',L); renderRS();};
+  if(add)add.onclick=novo;
+  if(inp)inp.onkeydown=e=>{if(e.key==='Enter')novo();};
+  const box=$('rs-passos');
+  if(box)box.onclick=e=>{
+    const c=e.target.closest&&e.target.closest('[data-rvck]');
+    const x=e.target.closest&&e.target.closest('[data-rvdel]');
+    const L=rvLoad(R,'passos')||[];
+    if(c){const i=+c.dataset.rvck; if(L[i]){L[i].ok=!L[i].ok;rvSave(R,'passos',L);renderRS();}}
+    else if(x){const i=+x.dataset.rvdel; L.splice(i,1);rvSave(R,'passos',L);renderRS();}};
 }
 
 document.addEventListener('click',e=>{
