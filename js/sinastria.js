@@ -90,75 +90,137 @@ const SIN_FORMA={0:'operam fundidos: um não se move sem o outro',
   180:'ficam em oposição de campo: cada um puxa para o seu lado'};
 
 /* ============================================================
-   O CIRCUITO DE CADA PLANETA
-   O planeta de A em cima, o mesmo planeta de B embaixo, ligados por
-   um barramento. A seta converte a leitura: o que sai de um aterrissa
-   numa casa do outro. Duas direções, sempre nomeadas.
+   O MAPA DE CONEXÕES
+   Sete nós — um por planeta — em torno de uma interseção central.
+   Cada nó liga a Pessoa A (à esquerda) e a Pessoa B (à direita):
+   a aresta da esquerda diz onde o planeta de A cai no mapa de B; a
+   da direita, onde o de B cai no de A. O nó aceso mostra os rótulos
+   e abre os detalhes ao lado.
    ============================================================ */
-let SIN_OPEN=null;
-function sinParHTML(M,k){
-  const pA=M.A.pts[k], pB=M.B.pts[k]; if(!pA&&!pB)return '';
-  const aberto=SIN_OPEN===k;
-  /* onde o planeta de um aterrissa no mapa do outro */
-  const pouso=(de,para)=>{const p=de.pts[k]; return p?houseByRule(p.lon,para.cusps):null;};
-  const card=(C,O,lado)=>{
-    const p=C.pts[k];
-    if(!p)return '<div class="syc-card off '+lado+'"><em>sem '+PT_NAME[k]+' neste mapa</em></div>';
-    const S=sinSignificado(C,k), h=pouso(C,O);
-    return '<div class="syc-card '+lado+'">'
-      +'<div class="syc-node"><i>'+(PT_GLYPH[k]||'')+'︎</i></div>'
-      +'<div class="syc-id"><b>'+PT_NAME[k]+' de '+C.name+'</b>'
-        +'<em>'+SIGNS[S.signo]+' · casa '+S.casa
-        +(S.rege.length?(' · rege '+S.rege.map(x=>x+'ª').join(' e ')):' · sem regência')+'</em></div>'
-      +(h?('<div class="syc-out"><span>aterrissa em</span><b>'+h+'ª</b></div>'):'')
-      +'</div>';
-  };
-  /* a leitura conversível, em cada sentido */
-  const via=(de,para,lado)=>{
-    const p=de.pts[k]; if(!p)return '';
-    const S=sinSignificado(de,k), h=houseByRule(p.lon,para.cusps);
+let SIN_OPEN=null, SIN_FILT='todas';
+const SIN_PL=['sun','moon','mercury','venus','mars','jupiter','saturn'];
+/* posições dos nós, em porcentagem do palco */
+function sinPos(i,n){
+  const th=(i*(360/n))*Math.PI/180;          // o primeiro nó no topo
+  return {x:50+25*Math.sin(th), y:50-33*Math.cos(th)};
+}
+/* tudo o que o app sabe sobre um par de planetas homônimos */
+function sinPar(M,k){
+  const pA=M.A.pts[k], pB=M.B.pts[k];
+  if(!pA&&!pB)return null;
+  const hAB=pA?houseByRule(pA.lon,M.B.cusps):null;   // o de A cai em que casa de B
+  const hBA=pB?houseByRule(pB.lon,M.A.cusps):null;
+  const a=(pA&&pB)?aspectBetween(pA.lon,pB.lon):null;
+  const nat=!a?'neutra':(a.cls==='tens'?'tensao':'harmonia');
+  return {k,pA,pB,hAB,hBA,a,nat,orb:a?a.orb:99};
+}
+function sinPares(M){return SIN_PL.map(k=>sinPar(M,k)).filter(Boolean);}
+function sinFiltra(P){
+  if(SIN_FILT==='harmonias')return P.filter(x=>x.nat==='harmonia');
+  if(SIN_FILT==='tensoes')return P.filter(x=>x.nat==='tensao');
+  if(SIN_FILT==='fortes')return P.slice().sort((a,b)=>a.orb-b.orb).slice(0,3);
+  return P;
+}
+/* ---------- o palco ---------- */
+function sinPalcoHTML(M){
+  const P=sinPares(M), vis=sinFiltra(P).map(x=>x.k);
+  const n=P.length, AX=9, AY=50, BX=91, BY=50;
+  let linhas='', nos='', rots='';
+  P.forEach((x,i)=>{
+    const p=sinPos(i,n), on=(SIN_OPEN===x.k), dim=!vis.includes(x.k);
+    const cls=' '+x.nat+(on?' on':'')+(dim?' dim':'');
+    /* arestas: A → nó e nó → B */
+    const c1=(AX+p.x)/2, c2=(p.x+BX)/2;
+    linhas+='<path class="syl a'+cls+'" d="M'+AX+','+AY+' C'+c1+','+AY+' '+c1+','+p.y+' '+p.x+','+p.y+'"/>';
+    if(x.pB)linhas+='<path class="syl b'+cls+'" d="M'+p.x+','+p.y+' C'+c2+','+p.y+' '+c2+','+BY+' '+BX+','+BY+'"/>';
+    linhas+='<path class="syl hub'+cls+'" d="M'+p.x+','+p.y+' L50,50"/>';
+    nos+='<button class="syn'+cls+'" style="left:'+p.x+'%;top:'+p.y+'%" data-syp="'+x.k+'" '
+      +'title="'+PT_NAME[x.k]+'"><i>'+(PT_GLYPH[x.k]||'')+'︎</i><em>'+PT_NAME[x.k]+'</em></button>';
+    if(on){
+      if(x.hAB)rots+='<span class="syr a" style="left:'+((AX+p.x)/2)+'%;top:'+((AY+p.y)/2)+'%">cai na '+x.hAB+'ª</span>';
+      if(x.hBA)rots+='<span class="syr b" style="left:'+((p.x+BX)/2)+'%;top:'+((p.y+BY)/2)+'%">cai na '+x.hBA+'ª</span>';
+    }
+  });
+  const nAsp=P.filter(x=>x.a).length;
+  return '<div class="sy-stage">'
+    +'<svg class="sy-links" viewBox="0 0 100 100" preserveAspectRatio="none">'+linhas+'</svg>'
+    +'<div class="sy-pes a"><em>pessoa A</em><b>'+M.A.name+'</b>'
+      +'<span class="sy-orb">'+(PT_GLYPH.sun||'')+'︎</span>'
+      +'<i>Asc '+SIGNS[signOf(M.A.asc)]+'</i></div>'
+    +'<div class="sy-pes b"><em>pessoa B</em><b>'+M.B.name+'</b>'
+      +'<span class="sy-orb">'+(PT_GLYPH.moon||'')+'︎</span>'
+      +'<i>Asc '+SIGNS[signOf(M.B.asc)]+'</i></div>'
+    +'<div class="sy-hub"><b>interseção</b><em>'+nAsp+' aspecto'+(nAsp===1?'':'s')+'</em></div>'
+    +nos+rots+'</div>';
+}
+/* ---------- a lista das conexões mais fechadas ---------- */
+function sinFortesHTML(M){
+  const L=sinPares(M).filter(x=>x.a).sort((a,b)=>a.orb-b.orb).slice(0,5);
+  if(!L.length)return '<div class="sy-box"><h4>Conexões mais fechadas</h4>'
+    +'<p class="sy-vaz">Nenhum planeta homônimo fecha aspecto dentro do orbe.</p></div>';
+  return '<div class="sy-box"><h4>Conexões mais fechadas <i>orbe menor = contato mais exato</i></h4>'
+    +'<ol class="sy-rank">'+L.map((x,i)=>'<li class="'+x.nat+'" data-syp="'+x.k+'">'
+      +'<span class="sy-rn">'+(i+1)+'</span>'
+      +'<span class="sy-rg">'+(PT_GLYPH[x.k]||'')+'︎</span>'
+      +'<span class="sy-rt">'+PT_NAME[x.k]+' de '+M.A.name+' ↔ '+PT_NAME[x.k]+' de '+M.B.name+'</span>'
+      +'<span class="sy-rv">'+x.a.gl+' '+fmtOrb(x.a.orb)+'</span></li>').join('')+'</ol></div>';
+}
+/* ---------- o painel de detalhes ---------- */
+function sinDetHTML(M){
+  if(!SIN_OPEN)return '<div class="sy-det vazio"><h4>Detalhes da conexão</h4>'
+    +'<p class="sy-vaz">Escolha um planeta no mapa para ver como ele atravessa de um mapa ao outro.</p></div>';
+  const x=sinPar(M,SIN_OPEN); if(!x)return '';
+  const k=x.k;
+  const via=(de,para,h,lado)=>{
+    const p=de.pts[k]; if(!p||!h)return '';
+    const S=sinSignificado(de,k);
     const reg=S.rege.length
       ?', que rege '+lista(S.rege.map(hh=>'sua '+hh+'ª'))
         +' ('+lista(S.rege.map(hh=>SIN_HSUJ[hh]))+')'
         +(S.rege.includes(1)?(' — portanto '+de.name+' em pessoa —'):',')
       :', sem casa administrada no próprio mapa,';
-    return '<div class="syc-via '+lado+'">'
-      +'<div class="syc-rot">'+de.name+' <i>⟶</i> '+para.name+'</div>'
+    return '<div class="sy-via '+lado+'"><span>'+de.name+' ⟶ '+para.name+'</span>'
       +'<p><b>'+PT_NAME[k]+' de '+de.name+'</b>'+reg
       +' tende a se manifestar na casa '+h+' de '+para.name+' — '+SIN_HTAG[h]+'.</p></div>';
   };
-  let x='';
-  if(aberto){
-    const a=(pA&&pB)?aspectBetween(pA.lon,pB.lon):null;
-    x='<div class="syc-x">'+via(M.A,M.B,'a')+via(M.B,M.A,'b')
-      +(a?('<div class="syc-asp"><span class="syc-agl">'+a.gl+'</span>'
-        +'<div><span>canal direto · '+fmtOrb(a.orb)+'</span>'
-        +'<p>Entre si, os dois '+PT_NAME[k]+' '+(SIN_FORMA[a.ang]||'entram em contato')+'.</p></div></div>')
-        :'<div class="syc-asp mudo"><span class="syc-agl">∅</span>'
-        +'<div><span>sem canal direto</span>'
-        +'<p>Os dois '+PT_NAME[k]+' não fecham aspecto entre si: a troca se dá só pelo campo em que cada um aterrissa.</p></div></div>')
-      +'</div>';
-  }
-  return '<div class="syc'+(aberto?' open':'')+'" data-syck="'+k+'">'
-    +card(M.A,M.B,'a')
-    +'<div class="syc-bus">'
-      +'<span class="syc-wire"></span>'
-      +'<button class="syc-arr'+(aberto?' on':'')+'" data-syp="'+k+'" '
-        +'aria-expanded="'+(aberto?'true':'false')+'" aria-label="converter a leitura de '+PT_NAME[k]+'">'
-        +'<i>⇅</i></button>'
-      +'<span class="syc-wire"></span>'
+  const cx=(rot,h,onde)=>'<div class="sy-cx"><em>'+rot+'</em><span>cai na</span>'
+    +'<b>'+h+'ª</b><i>casa em '+onde+'</i></div>';
+  const natTxt={harmonia:'Harmonia',tensao:'Tensão',neutra:'Sem aspecto direto'}[x.nat];
+  return '<div class="sy-det"><h4>Detalhes da conexão</h4>'
+    +'<div class="sy-pair"><span class="sy-pg a">'+(PT_GLYPH[k]||'')+'︎</span>'
+      +'<i>↔</i><span class="sy-pg b">'+(PT_GLYPH[k]||'')+'︎</span></div>'
+    +'<p class="sy-pt">'+PT_NAME[k]+' de '+M.A.name+' ↔ '+PT_NAME[k]+' de '+M.B.name+'</p>'
+    +'<div class="sy-cxs">'
+      +(x.hAB?cx(PT_NAME[k]+' de '+M.A.name,x.hAB,M.B.name):'')
+      +(x.hBA?cx(PT_NAME[k]+' de '+M.B.name,x.hBA,M.A.name):'')
     +'</div>'
-    +card(M.B,M.A,'b')+x+'</div>';
+    +'<div class="sy-nat"><em>natureza da conexão</em>'
+      +'<span class="sy-tag '+x.nat+'">'+natTxt+'</span>'
+      +(x.a?'<i>'+x.a.gl+' · orbe '+fmtOrb(x.a.orb)+'</i>':'')+'</div>'
+    +'<div class="sy-int"><em>interpretação</em>'
+      +via(M.A,M.B,x.hAB,'a')+via(M.B,M.A,x.hBA,'b')
+      +(x.a?('<p class="sy-asp">Entre si, os dois '+PT_NAME[k]+' '
+        +(SIN_FORMA[x.a.ang]||'entram em contato')+'.</p>')
+        :'<p class="sy-asp">Os dois '+PT_NAME[k]+' não fecham aspecto entre si: a troca se dá só '
+        +'pelo campo em que cada um aterrissa.</p>')
+    +'</div></div>';
 }
-/* ---------- o quadro inteiro: os sete circuitos ---------- */
+/* ---------- o quadro inteiro ---------- */
+const SIN_FILTS=[['todas','todas'],['fortes','mais fechadas'],['tensoes','tensões'],['harmonias','harmonias']];
 function sinQuadroHTML(M){
-  return '<div class="syc-head">'
-    +'<b>Quadro comparativo</b>'
-    +'<em>cada planeta com o seu correspondente · a seta ⇅ converte a leitura de um mapa no outro</em>'
-    +'<div class="syc-leg"><span class="a">'+M.A.name+'</span><span class="b">'+M.B.name+'</span></div>'
+  return '<div class="sy-head">'
+    +'<div class="sy-ht"><h3>Mapa de conexões</h3>'
+      +'<em>como os planetas de um mapa atravessam o outro</em></div>'
+    +'<div class="sy-chips">'+SIN_FILTS.map(([id,l])=>
+      '<button class="sy-chip'+(SIN_FILT===id?' on':'')+'" data-syf="'+id+'">'+l+'</button>').join('')+'</div>'
     +'</div>'
-    +'<div class="syc-stack">'
-    +['sun','moon','mercury','venus','mars','jupiter','saturn'].map(k=>sinParHTML(M,k)).join('')
+    +'<div class="sy-grid">'
+      +'<div class="sy-main">'+sinPalcoHTML(M)
+        +'<div class="sy-leg"><span class="harmonia">harmonias</span>'
+        +'<span class="tensao">tensões</span><span class="neutra">sem aspecto</span>'
+        +'<i>clique num planeta para abrir a conexão</i></div>'
+        +sinFortesHTML(M)+'</div>'
+      +sinDetHTML(M)
     +'</div>';
 }
 /* ---------------- render ---------------- */
@@ -180,6 +242,8 @@ function bindSinastria(){
   const w=$('p-sin'); if(!w)return;
   SINB=sinLoad();
   w.addEventListener('click',e=>{
+    const f=e.target.closest&&e.target.closest('[data-syf]');
+    if(f){SIN_FILT=f.dataset.syf;renderSin();return;}
     const o=e.target.closest&&e.target.closest('[data-syp]');
     if(o){SIN_OPEN=(SIN_OPEN===o.dataset.syp)?null:o.dataset.syp;renderSin();}
   });
