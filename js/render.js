@@ -511,32 +511,55 @@ document.addEventListener('click',e=>{
   if(b){PF_TAB=b.dataset.pftab;renderPerfilTabs();window.scrollTo({top:0,behavior:'instant'});}
 });
 
+/* ============================================================
+   TEMPERAMENTO — leitura editorial em duas colunas.
+   Esquerda: o veredito e as quatro entradas de leitura.
+   Direita: o mapa das qualidades, os quatro números e a confiança.
+   ============================================================ */
+const HUMOR_QUAD={'sanguíneo':'Quente + Úmido','colérico':'Quente + Seco',
+  'fleumático':'Frio + Úmido','melancólico':'Frio + Seco'};
+const HUMOR_ICO={'sanguíneo':'☉','colérico':'🜂','fleumático':'🜄','melancólico':'🜃'};
+const QUAL_COR={quente:'#d98a6a',frio:'#7fa8d8',seco:'#dcb877','úmido':'#7fc8d8'};
 function renderTemp(){
   if(typeof NATAL==='undefined'||!NATAL){$('temp-body').innerHTML=emptyState();return;}
   const {T,A}=profileData(true);
   if(!T){$('temp-body').innerHTML=emptyState();return;}
-  const qcard=(q,v,cor)=>'<div class="qcd"><div class="qcd-h"><span class="qcd-i" style="color:'+cor+'">'+QICON[q]+'</span>'
-    +'<span class="qcd-n">'+q.toUpperCase()+'</span></div>'
-    +'<b>'+v+'%</b><div class="qcd-t"><i style="width:'+v+'%;background:'+cor+'"></i></div></div>';
-  const hero='<div class="pfhero">'
-    +'<div class="pfh-l">'
-      +'<div class="pfh-mark">✦</div>'
-      +'<div class="pfh-k">Predomínio</div>'
-      +'<h3 class="pfh-h">'+T.humor+'</h3>'
-      +'<p class="pfh-p">Seu temperamento é predominantemente <b>'+T.humor+'</b>, com ênfase nas qualidades '
-        +'<b>'+T.poloH+'</b> e <b>'+T.poloD+'</b>. '+cap1(HUMOR_TXT[T.humor])+'.</p>'
-      +'<div class="pfh-cf"><span>Confiança do veredito</span>'
-        +'<div class="pfh-pill"><b>'+T.conf+'%</b><i>'+T.confLabel+'</i></div></div>'
-      +'<div class="pfh-sec">Quadrante vizinho: <b>'+T.secundario+'</b></div>'
-    +'</div>'
-    +'<div class="pfh-c">'+temperDiagram(T)+'</div>'
-    +'<div class="pfh-r"><div class="qcds">'
-      +qcard('quente',T.quente,'#d98a6a')+qcard('seco',T.seco,'#dcb877')
-      +qcard('frio',T.frio,'#7fa8d8')+qcard('úmido',T.umido,'#7fc8d8')+'</div></div>'
-   +'</div>';
-  $('temp-body').innerHTML=hero+temperFundoHTML(T)+quickReadHTML(T,A);
+  const D=(typeof RU_TEMP!=='undefined')?RU_TEMP[T.humor]:null;
+  const entrada=(ico,rot,txt)=>'<div class="tq-e"><span class="tq-i">'+ico+'</span>'
+    +'<div><em>'+rot+'</em><p>'+txt+'</p></div></div>';
+  const esq='<h3 class="tq-h">Seu temperamento pende ao <b>'+T.humor+'</b>.</h3>'
+    +'<p class="tq-lead">Seu temperamento é predominantemente <b>'+T.humor+'</b>, com ênfase nas '
+      +'qualidades <b>'+T.poloH+'</b> e <b>'+T.poloD+'</b>. '+cap1(HUMOR_TXT[T.humor])+'.</p>'
+    +entrada('✒','em poucas palavras', D?D.virtudes:(cap1(HUMOR_TXT[T.humor])+'.'))
+    +entrada('❖','o que isso significa',
+      'O par dominante é '+T.poloH+' e '+T.poloD+': '+QUAL_SENTIDO[T.poloH]+'; e '
+      +QUAL_SENTIDO[T.poloD]+'. É esse cruzamento, e não um rótulo, que define o quadrante.')
+    +entrada('⚖','como ler os eixos',
+      'Os dois eixos — quente × frio e seco × úmido — são independentes, e cada um soma 100% por si. '
+      +'Por isso os quatro números não se somam entre si: descrevem duas balanças separadas.')
+    +entrada('→','próximo perfil: '+T.secundario,
+      'O quadrante vizinho é o <b>'+T.secundario+'</b> ('+(HUMOR_QUAD[T.secundario]||'')+'), '
+      +'para onde o tipo tende a escorregar quando a qualidade dominante afrouxa'
+      +(HUMOR_TXT[T.secundario]?('. Nesse registro, '+HUMOR_TXT[T.secundario]):'')+'.');
+  const qcard=(q,v)=>'<div class="tq-q"><span class="tq-qh" style="color:'+QUAL_COR[q]+'">'
+    +QICON[q]+' '+q.toUpperCase()+'</span><b>'+v+'%</b>'
+    +'<div class="tq-qt"><i style="width:'+v+'%;background:'+QUAL_COR[q]+'"></i></div>'
+    +'<p>'+cap1(QUAL_SENTIDO[q])+'.</p></div>';
+  const dir='<div class="tq-kick">✦ seu mapa das qualidades</div>'
+    +'<div class="tq-diag">'+temperDiagram(T)+'</div>'
+    +'<div class="tq-qs">'+qcard('quente',T.quente)+qcard('frio',T.frio)
+      +qcard('seco',T.seco)+qcard('úmido',T.umido)+'</div>'
+    +'<div class="tq-conf"><span class="tq-ci">⛨</span>'
+      +'<div class="tq-cv"><em>confiança do veredito</em>'
+      +'<span><b>'+T.conf+'%</b><i>· '+T.confLabel+'</i></span></div>'
+      +'<p>Mede a concordância entre os testemunhos do mapa, não a intensidade do temperamento.</p></div>';
+  const quad=Object.keys(HUMOR_QUAD).map(h=>'<div class="tq-hq'+(h===T.humor?' on':'')+'">'
+    +'<span>'+HUMOR_ICO[h]+'</span><div><b>'+h.toUpperCase()+'</b><em>'+HUMOR_QUAD[h]+'</em></div></div>').join('');
+  $('temp-body').innerHTML=
+     '<div class="tq2"><div class="tq-l">'+esq+'</div><div class="tq-r">'+dir+'</div></div>'
+    +'<div class="tq-quads">'+quad+'</div>'
+    +temperFundoHTML(T)+quickReadHTML(T,A);
 }
-/* ---------- o temperamento em profundidade ---------- */
 const QUAL_SENTIDO={
   quente:'move, dilata e acelera — o que gasta energia para fora',
   frio:'retém, contrai e desacelera — o que poupa energia',
@@ -550,18 +573,24 @@ function temperFundoHTML(T){
   const par=v=>'<p class="tp-p">'+v+'</p>';
   let h='<div class="tpdeep">';
 
-  /* 1 · as quatro qualidades, uma a uma */
-  h+=tsec('As quatro qualidades','dois eixos independentes, cada um normalizado em 100%',
-    '<p class="tp-p">O temperamento não é um rótulo: é o cruzamento de dois eixos. '
-    +'<b>Quente × frio</b> mede quanto o organismo gasta ou poupa; <b>seco × úmido</b>, '
-    +'quanto ele separa ou mistura. Cada eixo soma 100% por si, e o quadrante em que os dois '
-    +'se cruzam dá o humor.</p>'
-    +'<div class="tpq-l">'
-      +[['quente',T.quente],['frio',T.frio],['seco',T.seco],['úmido',T.umido]].map(([q,v])=>
-        '<div class="tpq-i"><b>'+cap1(q)+'</b><i>'+v+'%</i><p>'+cap1(QUAL_SENTIDO[q])+'.</p></div>').join('')
-    +'</div>'
-    +par('No seu caso, o par dominante é <b>'+T.poloH+' e '+T.poloD+'</b> — '
-      +'daí o quadrante <b>'+T.humor+'</b>.'));
+  /* 1 · as quatro qualidades, em três colunas */
+  h+='<section class="tq-quatro"><h3>As quatro qualidades</h3>'
+    +'<div class="tq-3">'
+      +'<div><p class="tq-sub">Dois eixos independentes, cada um normalizado em 100%.</p>'
+        +'<p class="tp-p">O temperamento não é um rótulo: é o cruzamento de dois eixos. '
+        +'<b>Quente × frio</b> mede quanto o organismo gasta ou poupa; <b>seco × úmido</b>, '
+        +'quanto ele separa ou mistura. Cada eixo soma 100% por si, e o quadrante em que os dois '
+        +'se cruzam dá o humor. No seu caso, o par dominante é <b>'+T.poloH+' e '+T.poloD
+        +'</b> — daí o quadrante <b>'+T.humor+'</b>.</p></div>'
+      +'<div><p class="tq-ex">'+QICON.quente+' eixo quente × frio '+QICON.frio+'</p>'
+        +'<p class="tp-p">'+cap1(QUAL_SENTIDO.quente)+'; frio '+QUAL_SENTIDO.frio+'. '
+        +'Um representa gasto de energia para fora; o outro, poupança para dentro. '
+        +'Aqui, <b>'+T.quente+'% quente</b> contra <b>'+T.frio+'% frio</b>.</p></div>'
+      +'<div><p class="tq-ex">'+QICON.seco+' eixo seco × úmido '+QICON['úmido']+'</p>'
+        +'<p class="tp-p">'+cap1(QUAL_SENTIDO.seco)+'; úmido '+QUAL_SENTIDO['úmido']+'. '
+        +'Um mantém forma, estrutura e distinção; o outro mistura, adapta e recebe forma. '
+        +'Aqui, <b>'+T.seco+'% seco</b> contra <b>'+T.umido+'% úmido</b>.</p></div>'
+    +'</div></section>';
 
   /* 2 · o humor, em doutrina */
   if(D) h+=tsec('O humor '+T.humor,'segundo a doutrina dos quatro humores',
