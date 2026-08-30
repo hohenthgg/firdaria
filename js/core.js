@@ -29,10 +29,16 @@ function firdAt(age){
   return {major:'—',majorKey:null,sub:'—',subKey:null};
 }
 function profAt(age){
+  /* profecção anual por signos inteiros: o Ascendente avança um signo por ano.
+     O Senhor do Ano é o regente do SIGNO profectado — não o regente da cúspide
+     Placidus daquela casa, que é outro signo sempre que a casa não coincide
+     com o signo inteiro. */
   const base=NATAL?Math.floor(n360(NATAL.asc)/30):0;
   const s=(base+Math.floor(age))%12;
   const houseN=((Math.floor(age))%12)+1;
-  return {signIdx:s, sign:SIGNS[s], houseN, lordKey:NATAL.rulers[houseN]};
+  return {signIdx:s, sign:SIGNS[s], houseN,
+          lordKey:SIGN_RULER[s],
+          lordCuspide:NATAL?NATAL.rulers[houseN]:null};
 }
 function ruledHouses(k){return Object.entries(NATAL.rulers).filter(([h,r])=>r===k).map(([h])=>+h);}
 

@@ -44,10 +44,29 @@ let REV_SEL='solar';
 const REV_CACHE={};
 
 function revKinds(){return REV_KINDS.filter(k=>!k.off);}
-function revPlace(){
+/* ---------- lugar do retorno ----------
+   A tradição calcula o retorno para onde a pessoa ESTÁ no momento do
+   retorno, que nem sempre é o lugar de nascimento. Cada revolução pode
+   ter o seu próprio lugar; na falta dele, vale o do nascimento. */
+function revLocalKey(kindId,startMs){
+  return 'agx_revloc_'+kindId+'_'+(startMs?Math.round(startMs/86400000):'x');
+}
+function revLocalGet(kindId,startMs){
+  try{const v=JSON.parse(localStorage.getItem(revLocalKey(kindId,startMs))||'null');
+    return (v&&isFinite(v.lat)&&isFinite(v.lon))?v:null;}catch(e){return null;}
+}
+function revLocalSet(kindId,startMs,v){
+  try{const k=revLocalKey(kindId,startMs);
+    if(v)localStorage.setItem(k,JSON.stringify(v)); else localStorage.removeItem(k);}catch(e){}
+}
+function revPlaceNatal(){
   const p=(typeof STATE!=='undefined'&&STATE.natal&&STATE.natal.place)||null;
-  if(p&&isFinite(p.lat)&&isFinite(p.lon))return {lat:p.lat,lon:p.lon};
-  return null;   // sem lugar não há ângulos confiáveis
+  if(p&&isFinite(p.lat)&&isFinite(p.lon))return {lat:p.lat,lon:p.lon,nome:p.nome||null};
+  return null;
+}
+function revPlace(kindId,startMs){
+  if(kindId){const own=revLocalGet(kindId,startMs); if(own)return own;}
+  return revPlaceNatal();   // sem lugar não há ângulos confiáveis
 }
 const wrap180=x=>{x=((x+180)%360+360)%360-180;return x;};
 
@@ -92,10 +111,8 @@ function aspectPairs(ptsLon){
   for(let i=0;i<REV_PL.length;i++)for(let j=i+1;j<REV_PL.length;j++){
     const a=REV_PL[i],b=REV_PL[j];
     if(ptsLon[a]==null||ptsLon[b]==null)continue;
-    const sep=adiff(ptsLon[a],ptsLon[b]);
-    for(const [ang,gl,cls,verb,orb] of ASPECTS){
-      if(Math.abs(sep-ang)<=orb){out.push({a,b,ang,cls,gl,orb:Math.abs(sep-ang)});break;}
-    }
+    const asp=aspectBetween(ptsLon[a],ptsLon[b]);        // motor único de orbes
+    if(asp)out.push({a,b,ang:asp.ang,cls:asp.cls,gl:asp.gl,orb:asp.orb});
   }
   return out;
 }
@@ -105,18 +122,19 @@ function revolutionFor(kindId,date){
   const K=REV_BY_ID[kindId];
   if(!K||typeof NATAL==='undefined'||!NATAL)return null;
   if(typeof Astronomy==='undefined')return null;
-  const pl=revPlace(); if(!pl)return null;
   const nat=NATAL.pts[K.key]; if(!nat)return null;
   const Ln=nat.lon, T=date.getTime();
   const startMs=revStartBefore(K.key,Ln,T,K.per);
   if(startMs==null)return null;
-  const ck=kindId+'@'+Math.round(startMs/60000);
+  const pl=revPlace(kindId,startMs); if(!pl)return null;
+  const ck=kindId+'@'+Math.round(startMs/60000)+'@'+pl.lat.toFixed(3)+','+pl.lon.toFixed(3);
   if(REV_CACHE[ck])return REV_CACHE[ck];
   const endMs=revStartAfter(K.key,Ln,startMs+K.per*0.35*DAY,K.per);
   let ch;
   try{ch=computeChart(new Date(startMs),pl.lat,pl.lon);}catch(e){return null;}
 
   const ascLon=ch.asc, ascSign=signOf(ascLon), ascRuler=SIGN_RULER[ascSign];
+  const local=pl, localProprio=!!revLocalGet(kindId,startMs);
   const houseInRev=L=>houseByRule(L,ch.cusps);
   const houseInNatal=L=>houseByRule(L,NATAL.cusps);
   // planetas natais projetados nas casas da revolução (bi-roda natal→revolução)
@@ -146,7 +164,7 @@ function revolutionFor(kindId,date){
     ascRulerNatalHouse:NATAL.pts[ascRuler]?NATAL.pts[ascRuler].h:null,
     planetRevHouse:ch.pts[K.key]?houseInRev(ch.pts[K.key].lon):null,
     planetNatalHouseNow:ch.pts[K.key]?houseInNatal(ch.pts[K.key].lon):null,
-    overlay, repeats, contatos:contatos.slice(0,6),
+    overlay, repeats, contatos:contatos.slice(0,6), local, localProprio, startMs,
     houseOfRev:houseInRev, houseOfNatal:houseInNatal
   };
   REV_CACHE[ck]=R;

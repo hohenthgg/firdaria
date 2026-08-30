@@ -17,40 +17,8 @@
 /* --- dignidades por grau: quem é senhor do quê --- */
 const DIG_ORDEM=['domicílio','exaltação','triplicidade','termo','face'];
 /* faces (decanatos), ordem caldaica a partir de Marte em Áries */
-const CALD=['mars','sun','venus','mercury','moon','saturn','jupiter'];
-function faceLord(L){
-  const idx=Math.floor(n360(L)/10)%36;
-  return CALD[(idx+0)%7];
-}
-/* triplicidade por seita (Dorotheus): [dia, noite, participante] */
-const TRIPL={fogo:['sun','jupiter','saturn'],terra:['venus','moon','mars'],
-  ar:['saturn','mercury','jupiter'],'água':['venus','mars','moon']};
-function triplLords(L,diurno){
-  const T=TRIPL[SIGN_ELEM[signOf(L)]]||[];
-  return diurno?[T[0],T[1],T[2]]:[T[1],T[0],T[2]];
-}
-/* todos os senhores da posição, do mais forte ao mais fraco */
-function senhoresDe(L,diurno){
-  const s=signOf(L);
-  const tl=(typeof termLord==='function')?termLord(L):null;
-  const tri=triplLords(L,diurno);
-  return {
-    'domicílio':SIGN_RULER[s],
-    'exaltação':Object.keys(EXALT).find(k=>EXALT[k]===s)||null,
-    'triplicidade':tri[0]||null,
-    'termo':tl,
-    'face':faceLord(L)
-  };
-}
-/* dignidade essencial do próprio planeta na sua posição */
-function digProprias(k,L,diurno){
-  const S=senhoresDe(L,diurno), out=[];
-  DIG_ORDEM.forEach(d=>{if(S[d]===k)out.push(d);});
-  const s=signOf(L);
-  if(SIGN_RULER[(s+6)%12]===k)out.push('exílio');
-  if(FALL[k]===s)out.push('queda');
-  return out;
-}
+/* CALD, faceLord, triplLords, senhoresDe e digProprias vivem em
+   dignidades.js — motor único de dignidades. */
 
 /* ============ RECEPÇÃO ============
    A recepção é sempre NOMEADA pela dignidade que a produz. O app

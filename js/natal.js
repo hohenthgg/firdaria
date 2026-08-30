@@ -154,8 +154,12 @@ function foPar(t){
 }
 /* uma entrada: autor, obra, e o texto — ou a declaração de ausência */
 function foItem(autor,obra,txt,extra){
-  if(!txt)return '<div class="fo-i vazio"><b>'+autor+'</b>'
-    +'<span>'+obra+'</span><em>sem texto para esta colocação neste corpus</em></div>';
+  if(!txt){
+    /* distinguir corpus ainda não carregado de colocação sem texto */
+    const carregando=(typeof CORPORA_PRONTOS!=='undefined'&&!CORPORA_PRONTOS);
+    return '<div class="fo-i vazio"><b>'+autor+'</b><span>'+obra+'</span>'
+      +'<em>'+(carregando?'carregando o corpus…':'sem texto para esta colocação neste corpus')+'</em></div>';
+  }
   const n=String(txt).replace(/\s+/g,' ').length;
   return '<details class="fo-i"><summary><b>'+autor+'</b><span>'+obra+'</span>'
     +'<i>íntegra · '+(n>1200?(Math.round(n/1000)+' mil caracteres'):(n+' caracteres'))+'</i></summary>'
