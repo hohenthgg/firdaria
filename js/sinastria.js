@@ -13,13 +13,15 @@ function sinBuild(parsed,birthISO,name,place){
   const cusps=parsed.cusps.slice(), asc=parsed.asc, mc=parsed.mc!=null?parsed.mc:cusps[9];
   const rulers={}; for(let h=1;h<=12;h++)rulers[h]=SIGN_RULER[signOf(cusps[h-1])];
   const sunL=parsed.pts.sun?parsed.pts.sun.lon:0;
+  /* a seita do mapa B pelo mesmo critério geométrico do mapa A */
+  const diurno=parsed.pts.sun?(n360(parsed.pts.sun.lon-asc)>=180):false;
   const pts={};
   ['sun','moon','mercury','venus','mars','jupiter','saturn'].forEach(k=>{
     const p=parsed.pts[k]; if(!p)return;
-    const d=dignityOf(k,p.lon,!!p.retro,sunL);
+    const d=dignityOf(k,p.lon,!!p.retro,sunL,diurno);
     pts[k]={lon:p.lon,retro:!!p.retro,h:houseByRule(p.lon,cusps),dig:d.tags.join(' · '),pontos:d.pts};
   });
-  return {name:name||'Pessoa B',birth:birthISO||null,place:place||null,asc,mc,cusps,pts,rulers};
+  return {name:name||'Pessoa B',birth:birthISO||null,place:place||null,asc,mc,cusps,pts,rulers,diurno};
 }
 function sinSave(st){try{localStorage.setItem('agx_sinB',JSON.stringify(st));}catch(e){}}
 function sinLoad(){

@@ -352,13 +352,31 @@ function renderRS(){
   /* 03 · os fatos do mapa da revolução */
   const rulerNat=NATAL.pts[R.ascRuler];
   const fato=(g,k,v)=>'<div class="rv-f"><u>'+g+'</u><div><span>'+k+'</span><b>'+v+'</b></div></div>';
+  const loc=R.local||{};
   $('rs-fatos').innerHTML=
      fato(sgOf(R.ascLon),'Ascendente',R.ascSignNm+' '+Math.floor(n360(R.ascLon)%30)+'°')
     +fato((PT_GLYPH[R.ascRuler]||'')+'︎','Regente do Asc',PT_NAME[R.ascRuler]
         +(R.ascRulerRevHouse?(' · casa '+R.ascRulerRevHouse):''))
     +fato((PT_GLYPH[R.planetKey]||'')+'︎','Planeta do retorno',PT_NAME[R.planetKey]
         +(R.planetRevHouse?(' · casa '+R.planetRevHouse):''))
-    +fato('✦','Vigência',fdate(R.start)+(R.end?(' – '+fdate(R.end)):''));
+    +fato('✦','Vigência',fdate(R.start)+(R.end?(' – '+fdate(R.end)):''))
+    +'<div class="rv-loc"><span>Lugar do retorno '
+      +(R.localProprio?'<i class="rv-own">próprio</i>':'<i>o do nascimento</i>')+'</span>'
+      +'<div class="rv-loci">'
+      +'<input type="number" step="0.0001" id="rv-lat" value="'+(loc.lat!=null?loc.lat:'')+'" placeholder="latitude">'
+      +'<input type="number" step="0.0001" id="rv-lon" value="'+(loc.lon!=null?loc.lon:'')+'" placeholder="longitude (E+)">'
+      +'<button class="rv-plus" id="rv-locok">aplicar</button>'
+      +(R.localProprio?'<button class="rv-plus" id="rv-locrst">usar o do nascimento</button>':'')
+      +'</div>'
+      +'<p class="rv-lochint">O retorno é calculado para onde a pessoa está na hora do retorno. '
+      +'Mudar o lugar move os ângulos e as casas — os planetas não mudam.</p></div>';
+  const bl=$('rv-locok');
+  if(bl)bl.onclick=()=>{
+    const la=parseFloat(($('rv-lat')||{}).value), lo=parseFloat(($('rv-lon')||{}).value);
+    if(!isFinite(la)||!isFinite(lo))return;
+    revLocalSet(RS_KIND,R.startMs,{lat:la,lon:lo}); renderRS();};
+  const br=$('rv-locrst');
+  if(br)br.onclick=()=>{revLocalSet(RS_KIND,R.startMs,null); renderRS();};
 
   /* 05 · onde isso vai no natal */
   const linha=(g,k,v)=>'<div class="rv-l"><u>'+g+'</u><span>'+k+'</span><b>'+v+'</b></div>';

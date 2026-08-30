@@ -32,27 +32,7 @@ function liminalOf(L,cusps){
 function houseByRule(L,cusps){ // casa funcional (quadrante + regra dos 5°)
   return liminalOf(L,cusps).main;
 }
-function dignityOf(k,L,retro,sunLon){
-  const s=signOf(L), tags=[];
-  let pts=0;
-  if(SIGN_RULER[s]===k){tags.push('domicílio');pts+=5;}
-  else if(EXALT[k]===s){tags.push('exaltação');pts+=4;}
-  else if(SIGN_RULER[(s+6)%12]===k){tags.push('exílio');pts-=4;}
-  else if(FALL[k]===s){tags.push('queda');pts-=4;}
-  const tl=termLord(L);
-  if(tl===k){tags.push('termo próprio');pts+=1;} else tags.push('termo de '+(PT_GLYPH[tl]||tl));
-  if(k!=='sun'&&sunLon!==undefined){const d=adiff(L,sunLon);
-    if(d<0.28){tags.push('cazimi');pts+=2;}
-    else if(d<8.5){tags.push('combusto');pts-=3;}}
-  if(retro){tags.push('℞');pts-=1;}
-  return {tags,pts,term:tl};
-}
-function aspectBetween(La,Lb){
-  for(const [ang,gl,cls] of ASPECTS){
-    const orb=ang===0||ang===180?8:ang===60?6:7;
-    if(Math.abs(adiff(La,Lb)-ang)<=orb) return {ang,gl,cls,orb:Math.abs(adiff(La,Lb)-ang)};
-  } return null;
-}
+/* dignityOf e aspectBetween vivem em dignidades.js — motor único */
 /* ---------- construir NATAL a partir do parse ---------- */
 function buildChart(parsed, birthISO, sectMode, name){
   // cúspide ausente NÃO vira 0° de Áries — interrompe e informa o que falta
@@ -66,9 +46,14 @@ function buildChart(parsed, birthISO, sectMode, name){
   const cusps=parsed.cusps.slice();
   const asc=parsed.asc, mcv=parsed.mc!==null?parsed.mc:cusps[9];
   BIRTH=new Date(birthISO).getTime();
-  // seita
-  const sunH=parsed.pts.sun.h||houseByRule(parsed.pts.sun.lon,cusps);
-  let sect=sectMode&&sectMode!=='auto'?sectMode:(sunH>=7&&sunH<=12?'diurno':'noturno');
+  /* seita — posição geométrica do Sol em relação ao eixo Ascendente–Descendente.
+     O horizonte corta a eclíptica exatamente no Asc e no Desc, então o teste é
+     exato: 0°–180° a partir do Ascendente são as casas 1 a 6, abaixo do
+     horizonte; 180°–360° são as casas 7 a 12, acima. Não se aplica aqui a
+     regra dos 5°, que é de leitura de casa e chegava a inverter a seita de um
+     Sol a menos de 5° da cúspide da 7ª. */
+  const solAcimaHorizonte=n360(parsed.pts.sun.lon-asc)>=180;
+  let sect=sectMode&&sectMode!=='auto'?sectMode:(solAcimaHorizonte?'diurno':'noturno');
   FIRD=(sect==='diurno'?FIRD_DIURNAL:FIRD_NOCTURNAL).map(x=>x.slice());
   // lotes
   const sunL=parsed.pts.sun.lon, moonL=parsed.pts.moon.lon;
@@ -85,7 +70,7 @@ function buildChart(parsed, birthISO, sectMode, name){
     const lim=liminalOf(lon,cusps);
     const h=lim.main;
     let dig='—';
-    if(PT_NAME[k]){const d=dignityOf(k,lon,retro,sunL);dig=d.tags.join(' · ');
+    if(PT_NAME[k]){const d=dignityOf(k,lon,retro,sunL,sect==='diurno');dig=d.tags.join(' · ');
       // ponderação liminar: casa principal pesa w, a de fundo pesa 1-w
       let acc=lim.back?lim.w*angBonus(lim.main)+(1-lim.w)*angBonus(lim.back):angBonus(h);
       // colado num ângulo (≤3° da cúspide angular): mais forte que estar apenas dentro da casa
@@ -300,7 +285,8 @@ function addRS(parsed, year){
   // Senhor do Ano (pela profecção), sem rodeio
   const rsLord=parsed.pts[p.lordKey];
   if(rsLord){
-    const d=dignityOf(p.lordKey,rsLord.lon,rsLord.retro,parsed.pts.sun?parsed.pts.sun.lon:undefined);
+    const rsDiurno=(parsed.pts.sun&&parsed.asc!=null)?(n360(parsed.pts.sun.lon-parsed.asc)>=180):(NATAL.sect==='diurno');
+    const d=dignityOf(p.lordKey,rsLord.lon,rsLord.retro,parsed.pts.sun?parsed.pts.sun.lon:undefined,rsDiurno);
     notes.push('Pela profecção, o ano ativa a casa '+p.houseN+' — '+HOUSE_BLUNT[p.houseN]+' — e o Senhor do Ano é o regente de '+SIGNS[p.signIdx]+', <b>'+PT_NAME[p.lordKey]+'</b>. Na Revolução ele está em '+SIGNS[signOf(rsLord.lon)]+(rsLord.h?(', casa '+rsLord.h):'')+', '+d.tags.join(', ')
       +(signOf(rsLord.lon)===signOf(lord.lon)?' — e <b>repete o signo natal</b>: promessa confirmada para este ano':'')+'.');
   } else notes.push('Pela profecção, o Senhor do Ano é '+PT_NAME[p.lordKey]+', mas ele não consta nos dados da Revolução.');

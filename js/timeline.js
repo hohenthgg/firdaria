@@ -14,10 +14,15 @@ function sgOf(lon){return sgGlyph(signOf(lon));}
 function tlWindows(S){
   const f=S.f, aIni=Math.floor(S.age);
   const yr=a=>new Date(BIRTH+a*365.2425*DAY);
+  /* a profecção vira no aniversário: ancoramos no mês e no dia reais do
+     nascimento em vez de somar anos médios, que deslocavam a virada. */
+  const nasc=new Date(BIRTH);
+  const aniv=n=>{const d=new Date(Date.UTC(nasc.getUTCFullYear()+n,nasc.getUTCMonth(),
+    nasc.getUTCDate(),nasc.getUTCHours(),nasc.getUTCMinutes()));return d;};
   return {
     fird:{ini:yr(f.from||0), fim:yr((f.from||0)+(f.len||0))},
     sub:{ini:f.subStart?new Date(f.subStart):null, fim:f.subEnd?new Date(f.subEnd):null},
-    prof:{ini:yr(aIni), fim:yr(aIni+1)},
+    prof:{ini:aniv(aIni), fim:aniv(aIni+1)},
     rev:S.rev?{ini:S.rev.start, fim:S.rev.end}:null
   };
 }
@@ -167,8 +172,9 @@ function tlSideHTML(d,S){
       +'<p>'+x[4]+'</p></div></li>').join('')+'</ol>'
     +'<div class="tw-sint"><span class="tw-bg">✦</span>'
       +'<div><b>Síntese</b><p>'+tlSinteseTxt(S)+'</p></div></div>'
-    +'<button class="tw-ia" id="tl-ia">✦ Analisar com IA</button>'
-    +'<p class="tw-note">Leitura montada pelo motor local, em ordem hierárquica: '
+    +'<button class="tw-ia" id="tl-ia">✦ Gerar síntese interpretativa</button>'
+    +'<p class="tw-note">Síntese montada pelo motor interpretativo do próprio app, aqui no '
+    +'navegador, em ordem hierárquica: '
     +'firdária → fase → profecção → revolução.</p>';
 }
 /* ---------- drawer lateral: leitura longa fora do fluxo da página ---------- */

@@ -2169,6 +2169,98 @@ body.sheet-open{overflow:hidden}
 .tpg-i b i{font-style:normal;color:var(--dim2);font-weight:400;font-size:.74rem}
 .tpg-i span{display:block;font-size:.76rem;color:var(--dim);margin-top:2px}
 .tpg-i em{display:block;font-style:normal;font-size:.68rem;color:var(--dim2);margin-top:3px}
+/* ============ acessibilidade e leitura ============ */
+/* foco visível em tudo que recebe teclado — antes só existia o realce do rato */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
+textarea:focus-visible,summary:focus-visible,details:focus-visible,[tabindex]:focus-visible{
+  outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+/* alvos de toque com área mínima confortável no telemóvel */
+body.is-mobile button,body.is-mobile summary,body.is-mobile .nchip,
+body.is-mobile .tp-tab,body.is-mobile .sy-chip,body.is-mobile .gu-b{min-height:40px}
+body.is-mobile input,body.is-mobile select,body.is-mobile textarea{font-size:16px!important}
+/* corpo de texto um pouco maior e mais arejado no telemóvel */
+body.is-mobile .np-txt p,body.is-mobile .gu-p,body.is-mobile .tp-p,
+body.is-mobile .sy-via p,body.is-mobile .nl-st>p{font-size:.86rem;line-height:1.68}
+/* respeitar quem pediu menos movimento */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important}}
+/* respeitar quem pediu mais contraste */
+@media(prefers-contrast:more){
+  :root{--dim:#d6dcea;--dim2:#aab4c8;--line:rgba(255,255,255,.22);--line2:rgba(255,255,255,.34)}}
+/* salto para o conteúdo, para quem navega por teclado */
+.pular{position:absolute;left:-9999px;top:0;z-index:200;background:var(--acc);color:#0a0b0f;
+  padding:10px 16px;border-radius:0 0 10px 0;font-size:.85rem}
+.pular:focus{left:0}
+/* ============ HOJE ============ */
+.hj-top{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.hj-top>div:first-child{flex:1;min-width:0}
+.hj-k{font-family:var(--mono);font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--acc)}
+.hj-top h3{margin:3px 0 2px;font-size:1.4rem;font-weight:600;color:var(--ivory2)}
+.hj-top em{font-style:normal;font-size:.8rem;color:var(--dim2)}
+.hj-atalhos{display:flex;flex-wrap:wrap;gap:6px}
+.hj-a{font-family:inherit;font-size:.76rem;cursor:pointer;padding:7px 13px;border-radius:99px;
+  background:var(--bg2);border:1px solid var(--line);color:var(--dim);transition:.15s}
+.hj-a:hover{color:var(--acc);border-color:rgba(106,140,255,.45);background:var(--accs)}
+.hj-s{margin-bottom:20px}
+.hj-s>h4{margin:0 0 11px;font-size:.72rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--dim2);font-family:var(--mono);display:flex;flex-wrap:wrap;align-items:baseline;gap:9px}
+.hj-s>h4 i{font-style:normal;text-transform:none;letter-spacing:0;font-size:.62rem;color:var(--dim2)}
+.hj-ciclos{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.hj-c{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:13px 15px;
+  border-top:2px solid var(--acc)}
+.hj-c.k2{border-top-color:#5abec8} .hj-c.k3{border-top-color:var(--gold)}
+.hj-c.k4{border-top-color:var(--accb)}
+.hj-c>em{display:block;font-style:normal;font-family:var(--mono);font-size:.58rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--dim2);margin-bottom:6px}
+.hj-ct{display:flex;align-items:center;gap:9px}
+.hj-cg{font-size:1.25rem;line-height:1;font-variant-emoji:text;color:var(--ivory2)}
+.hj-ct b{font-size:1rem;font-weight:600;color:var(--ivory)}
+.hj-c>i{display:block;font-style:normal;font-family:var(--mono);font-size:.62rem;color:var(--dim2);margin:5px 0 6px}
+.hj-c>p{margin:0;font-size:.78rem;line-height:1.55;color:var(--dim)}
+.hj-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.hj-tr,.hj-px{list-style:none;margin:0;padding:0}
+.hj-tr li{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:9px 0;
+  border-top:1px solid var(--line)}
+.hj-tr li:first-child{border-top:none}
+.hj-tg{text-align:center;font-size:1rem;font-variant-emoji:text;color:var(--acc)}
+.hj-tr li.tens .hj-tg{color:var(--red)} .hj-tr li.harm .hj-tg{color:var(--green)}
+.hj-tt b{display:block;font-size:.82rem;font-weight:550;color:var(--ivory2)}
+.hj-tt em{display:block;font-style:normal;font-size:.7rem;color:var(--dim2);margin-top:1px}
+.hj-to{font-family:var(--mono);font-size:.68rem;color:var(--dim2)}
+.hj-px li{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;padding:9px 0;
+  border-top:1px solid var(--line)}
+.hj-px li:first-child{border-top:none}
+.hj-pd{font-family:var(--mono);font-size:.66rem;color:var(--dim2);white-space:nowrap}
+.hj-pt b{display:block;font-size:.8rem;font-weight:550;color:var(--ivory2)}
+.hj-pt em{display:block;font-style:normal;font-size:.7rem;color:var(--dim2);margin-top:1px}
+.hj-pq{font-size:.7rem;color:var(--acc);white-space:nowrap}
+.hj-vaz{margin:0;font-size:.78rem;color:var(--dim2);line-height:1.6}
+@media(max-width:1080px){.hj-ciclos{grid-template-columns:1fr 1fr}.hj-2{grid-template-columns:1fr}}
+body.is-mobile .hj-ciclos{grid-template-columns:1fr}
+body.is-mobile .hj-2{grid-template-columns:1fr}
+/* ============ BACKUP ============ */
+.bk{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-top:16px}
+.bk-h b{font-size:.95rem;color:var(--ivory2)}
+.bk-h em{font-style:normal;font-size:.74rem;color:var(--dim2);margin-left:8px}
+.bk-r{margin:7px 0 12px;font-size:.78rem;color:var(--dim);line-height:1.5}
+.bk-a{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+.bk-imp{cursor:pointer;margin:0}
+.bk-chk{display:flex;align-items:center;gap:6px;font-size:.74rem;color:var(--dim2);cursor:pointer}
+.bk-s{margin:10px 0 0;font-size:.76rem;color:var(--dim2);min-height:14px}
+.bk-s.ok{color:var(--green)} .bk-s.erro{color:var(--red)}
+.bk-n{margin:9px 0 0;font-size:.72rem;color:var(--dim2);line-height:1.55}
+/* lugar do retorno */
+.rv-loc{margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+.rv-loc>span{display:block;font-family:var(--mono);font-size:.56rem;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--dim2);margin-bottom:7px}
+.rv-loc>span i{font-style:normal;color:var(--dim)}
+.rv-loc>span i.rv-own{color:var(--acc)}
+.rv-loci{display:flex;flex-wrap:wrap;gap:6px}
+.rv-loci input{flex:1 1 90px;min-width:0;font-size:.74rem!important;padding:5px 8px!important;border-radius:8px!important}
+.rv-lochint{margin:7px 0 0;font-size:.7rem;line-height:1.5;color:var(--dim2)}
+/* separador na navegação lateral */
+.side nav .nav-sep{margin-top:10px;padding-top:12px;border-top:1px solid var(--line)}
 /* ---- guia das tipologias ---- */
 .gu-nav{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 20px;scroll-margin-top:calc(var(--tb) + 12px)}
 .gu-b{flex:0 0 auto;font-family:inherit;font-size:.8rem;cursor:pointer;padding:8px 15px;
@@ -2660,6 +2752,7 @@ body.is-mobile .rv2-sticky{position:static}
     <div class="sheet-bk" data-admclose></div>
     <div class="sheet-b" role="dialog" aria-label="menu">
       <div class="sheet-grip"></div>
+      <button class="sheet-i" data-p="sin"><span>◑</span><b>Sinastria</b><em>comparar com outro mapa</em></button>
       <button class="sheet-i" data-p="dados"><span>◇</span><b>Dados natais</b><em>importar, colar mapa, backup</em></button>
       <button class="sheet-i" data-p="config"><span>◇</span><b>Ajustes</b><em>pesos, orbes e preferências</em></button>
       <button class="sheet-i" data-admprint><span>◇</span><b>Exportar PDF</b><em>imprime a aba atual</em></button>
@@ -2670,19 +2763,21 @@ body.is-mobile .rv2-sticky{position:static}
     </div>
   </div>
 
-  <aside class="side noprint">
+  <a class="pular" href="#main">Pular para o conteúdo</a>
+  <aside class="side noprint" aria-label="navegação principal">
     <div class="brand">
       <h1>Astro<em>Graph</em></h1>
       <button class="side-min" id="side-min" title="Recolher menu">‹</button>
     </div>
-    <nav id="nav">
-      <button data-p="dados" class="on"><i>◇</i><span>Dados</span></button>
+    <nav id="nav" aria-label="seções do app">
+      <button data-p="hoje"><i>◉</i><span>Hoje</span></button>
       <button data-p="natal"><i>☉</i><span>Mapa natal</span></button>
       <button data-p="tempo"><i>◷</i><span>Tempo</span></button>
       <button data-p="rs"><i>◎</i><span>Revoluções</span></button>
       <button data-p="sin"><i>◑</i><span>Sinastria</span></button>
       <button data-p="perfil"><i>◈</i><span>Perfil geral</span></button>
       <button data-p="tipos"><i>⌘</i><span>Tipologias</span></button>
+      <button class="nav-sep" data-p="dados"><i>◇</i><span>Dados</span></button>
       <button data-p="config"><i>◌</i><span>Ajustes</span></button>
     </nav>
     <div class="foot">
@@ -2693,16 +2788,21 @@ body.is-mobile .rv2-sticky{position:static}
   <button class="imp-cta noprint" id="imp-cta" hidden>Importar mapa natal</button>
 
   <!-- navegação inferior: só o essencial, no polegar -->
-  <nav class="bnav noprint" id="bnav">
+  <nav class="bnav noprint" id="bnav" aria-label="seções principais">
+    <button data-p="hoje"><i>◉</i><span>Hoje</span></button>
     <button data-p="natal"><i>☉</i><span>Natal</span></button>
     <button data-p="tempo"><i>◷</i><span>Tempo</span></button>
     <button data-p="rs"><i>◎</i><span>Revoluções</span></button>
-    <button data-p="sin"><i>◑</i><span>Sinastria</span></button>
     <button data-p="perfil"><i>◈</i><span>Perfil</span></button>
     <button data-p="tipos"><i>⌘</i><span>Tipologias</span></button>
   </nav>
 
-  <main>
+  <main id="main" tabindex="-1">
+    <section class="panel" id="p-hoje">
+      <h2>Hoje <span>o que está vigente agora, em uma página</span></h2>
+      <div id="hoje-body"></div>
+    </section>
+
     <section class="panel on" id="p-dados">
       <div class="kicker">entrada · natal e revoluções</div>
       <h2>Dados <span>cole o mapa; o sistema gera a interpretação</span></h2>
@@ -2735,6 +2835,7 @@ body.is-mobile .rv2-sticky{position:static}
           <p class="note">Tudo fica salvo apenas no seu navegador (localStorage). Nenhum dado sai da máquina.</p>
         </div>
       </div>
+      <div id="bk-body"></div>
     </section>
 
     
@@ -2899,12 +3000,9 @@ body.is-mobile .rv2-sticky{position:static}
   </aside>
 </div>
 <script src="js/tables.js"></script>
+<script src="js/dignidades.js"></script>
+<script src="js/corpora.js"></script>
 <script src="js/olavo.js"></script>
-<script src="js/olavo_texto.js"></script>
-<script src="js/barbault.js"></script>
-<script src="js/garg.js"></script>
-<script src="js/lion.js"></script>
-<script src="js/rag_uni.js"></script>
 <script src="js/tipodata.js"></script>
 <script src="js/condicao.js"></script>
 <script src="js/parse.js"></script>
@@ -2924,6 +3022,8 @@ body.is-mobile .rv2-sticky{position:static}
 <script src="js/saude.js"></script>
 <script src="js/guia.js"></script>
 <script src="js/tipologias.js"></script>
+<script src="js/hoje.js"></script>
+<script src="js/backup.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

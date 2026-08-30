@@ -3,16 +3,27 @@
    ============================================================ */
 /* ---- navegação: sidebar (desktop), bottom nav (mobile) e folha ⋯ ---- */
 function irPara(p){
+  try{corporaParaAba(p,()=>{try{if(p==='natal')renderNatalTab();if(p==='perfil'){renderTemp();renderPers();renderSaude();}if(p==='tipos')renderTipos();}catch(e){}});}catch(e){}
   document.body.dataset.tab=p;
   const cta=document.getElementById('imp-cta'); if(cta)cta.hidden=(p!=='dados');
-  document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
-  document.querySelectorAll('#bnav button').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
-  document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));
+  /* estado da aba: visual e anunciado a leitores de ecrã */
+  document.querySelectorAll('#nav button,#bnav button').forEach(x=>{
+    const on=x.dataset.p===p;
+    x.classList.toggle('on',on);
+    if(on)x.setAttribute('aria-current','page'); else x.removeAttribute('aria-current');
+  });
+  document.querySelectorAll('.panel').forEach(x=>{
+    const on=(x.id==='p-'+p);
+    x.classList.toggle('on',on);
+    x.setAttribute('aria-hidden',on?'false':'true');
+  });
   window.scrollTo({top:0,behavior:'instant'});
   if(p==='tempo') syncTempo();
   if(p==='rs') renderRS();
   if(p==='sin'){try{renderSin();}catch(e){console.error(e);}}
   if(p==='config') renderConfig();
+  if(p==='hoje'){try{renderHoje();}catch(e){console.error(e);}}
+  if(p==='dados'){try{renderBackup();}catch(e){console.error(e);}}
   if(p==='perfil'){try{renderPerfilTabs();renderSaude();renderTemp();renderPers();}catch(e){console.error(e);}}
   if(p==='tipos'){try{renderTipos();}catch(e){console.error(e);}}
   if(p==='natal'){try{renderNatal();}catch(e){console.error(e);}}
@@ -105,7 +116,7 @@ function bindView(){
 }
 /* boot */
 function renderAll(){
-  const steps=[renderNatal,renderSaude,renderTemp,renderPers,renderRS,
+  const steps=[renderHoje,renderNatal,renderSaude,renderTemp,renderPers,renderRS,
     ()=>{CURSOR=new Date();refreshNPTS();syncTempo();},renderSin,renderLedger];
   steps.forEach(fn=>{try{fn();}catch(err){console.error('render falhou:',fn.name||'anon',err);}});
   document.getElementById('brand-sub').textContent=NATAL?(NATAL.meta.name+' · '+NATAL.sect+' · '+new Date(BIRTH).toISOString().slice(0,10)):'motor interpretativo tradicional';
@@ -201,11 +212,17 @@ function boot(){
   try{bindPreditivas();}catch(e){console.error(e);}
   try{bindSinastria();}catch(e){console.error(e);}
   try{bindNatal();}catch(e){console.error(e);}
+  document.addEventListener('click',e=>{
+    const g=e.target.closest&&e.target.closest('[data-goto-tab]');
+    if(g)irPara(g.dataset.gotoTab);
+  });
   const nh=document.getElementById('nl-help');
   if(nh)nh.onclick=()=>{const l=document.getElementById('nl-legenda');
     if(l)l.scrollIntoView({behavior:'smooth',block:'center'});};
   try{bindTipos();}catch(e){console.error(e);}
   if(loadFromState()){
+    /* com mapa carregado, a porta de entrada é o Hoje */
+    setTimeout(()=>{try{irPara('hoje');}catch(e){}},0);
     document.getElementById('in-natal').value=STATE.natal.text;
     document.getElementById('in-name').value=STATE.natal.name||'';
     document.getElementById('in-birth').value=STATE.natal.birth.slice(0,16);
