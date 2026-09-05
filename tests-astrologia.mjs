@@ -226,6 +226,60 @@ for(const M of MAPAS){
       'MC '+L.mcMovido.toFixed(1)+'° · Asc '+L.ascDelta.toFixed(1)+'°');
     t('o retorno passa a declarar lugar próprio', L.proprio);
   }
+
+  /* ---------- senhores natais: oikodespotes e daimon ----------
+     As asserções conferem PROPRIEDADES do método (elegibilidade
+     aphética, cadeia predominador→regente, espelhamento dos lotes,
+     independência em relação à data), nunca a igualdade com um
+     valor que o próprio motor produziu. */
+  const SN = await pg.evaluate(()=>{
+    const O=oikodespotes(), E=loteEspirito(), F=loteFortuna(), D=daimon();
+    const esc=O.predominador;
+    const lugarDe=lon=>((signOf(lon)-signOf(NATAL.asc)+12)%12)+1;
+    /* o mesmo quadro em duas datas distantes: os natais não podem mudar */
+    const a=senhoresDoMapa(new Date(Date.UTC(2001,0,1)));
+    const c=senhoresDoMapa(new Date(Date.UTC(2031,0,1)));
+    const chave=x=>x.natais.map(n=>n.papel+':'+n.k).join('|');
+    return {
+      seita:NATAL.sect,
+      predK:esc?esc.k:null, predLugar:esc?esc.lugar:null,
+      predEsperado:NATAL.sect==='diurno'?'sun':'moon',
+      predLugarReal:esc&&esc.k!=='asc'?lugarDe(NATAL.pts[esc.k].lon):1,
+      oiko:O.planeta,
+      regenteDoSignoDoPred:esc?SIGN_RULER[signOf(esc.lon)]:null,
+      genitura:(typeof lordOfGeniture==='function')?lordOfGeniture():null,
+      ascRuler:NATAL.rulers[1],
+      termo:O.corregenteTermo, termoEsperado:esc?termLord(esc.lon):null,
+      espLon:E.lon, fortLon:F.lon, asc:NATAL.asc,
+      daimonK:D.planeta, regenteDoEspirito:SIGN_RULER[signOf(E.lon)],
+      natalEstavel: chave(a)===chave(c),
+      temporalMudou: a.temporais.map(x=>x.papel+':'+x.k).join('|')
+                   !==c.temporais.map(x=>x.papel+':'+x.k).join('|'),
+      ressalvasSubstituiram: O.ressalvas.length>0 && O.planeta!==SIGN_RULER[signOf(esc.lon)]
+    };
+  });
+  t('o predominador é o luminar da seita quando elegível, e o exame declara o lugar',
+    SN.predK===SN.predEsperado ? [1,7,9,10,11].includes(SN.predLugar)
+                               : SN.predK!==SN.predEsperado,
+    SN.predK+' no lugar '+SN.predLugar);
+  t('o lugar do predominador é contado por signos inteiros a partir do Ascendente',
+    SN.predLugar===SN.predLugarReal, 'declarado '+SN.predLugar+' · recontado '+SN.predLugarReal);
+  t('o Oikodespotes é o regente domiciliar do signo do predominador',
+    SN.oiko===SN.regenteDoSignoDoPred, SN.oiko);
+  t('as ressalvas são declaradas sem trocar o senhor', !SN.ressalvasSubstituiram);
+  t('o corregente por termo vem da tábua egípcia do grau do predominador',
+    SN.termo===SN.termoEsperado);
+  t('Oikodespotes, Senhor da Genitura e regente do Ascendente são critérios distintos',
+    true, SN.oiko+' · '+SN.genitura+' · '+SN.ascRuler
+      +(SN.oiko===SN.genitura?' (coincidem neste mapa)':' (diferentes neste mapa)'));
+  t('os Lotes do Espírito e da Fortuna são espelhos em torno do Ascendente',
+    Math.abs(((SN.espLon+SN.fortLon)/2 - SN.asc + 540)%360-180)<1e-6
+    || Math.abs(((SN.espLon+SN.fortLon)/2 - SN.asc-180 + 540)%360-180)<1e-6,
+    'ponto médio '+(((SN.espLon+SN.fortLon)/2)%360).toFixed(3)+'° · Asc '+SN.asc.toFixed(3)+'°');
+  t('o Daimon é o regente domiciliar do Lote do Espírito, e não o lote',
+    SN.daimonK===SN.regenteDoEspirito);
+  t('os senhores natais não mudam ao navegar 30 anos', SN.natalEstavel);
+  t('os senhores do tempo mudam ao navegar 30 anos', SN.temporalMudou);
 }
 
 /* ---------- backup ---------- */

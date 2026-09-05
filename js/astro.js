@@ -54,32 +54,48 @@ function ascFromRAMC(ramc, eps, lat){
 function lonFromRA(ra, eps){ // longitude eclíptica do ponto da eclíptica com dada ascensão reta
   return n360(Math.atan2(Math.sin(ra*RAD)/Math.cos(eps*RAD), Math.cos(ra*RAD))*DEG);
 }
+/* Uma cúspide de Placidus resolve RA = RAMC + base + frac · AD, onde
+   AD = asin(tan(lat)·tan(dec)) é a diferença ascensional do próprio grau.
+   Quando |tan(lat)·tan(dec)| > 1 o grau é circumpolar — não nasce nem se
+   põe — e a equação não tem solução: Placidus é INDEFINIDO ali. A versão
+   anterior grampeava o valor em ±1 e devolvia uma cúspide artificial,
+   sem avisar. Agora o caso é declarado. */
 function placidusCusp(ramc, eps, lat, base, frac){
-  let ad=0, lon=0;
-  for(let i=0;i<20;i++){
+  let ad=0, lon=0, indefinido=false, convergiu=false;
+  for(let i=0;i<40;i++){
     const ra=n360(ramc+base+frac*ad);
     lon=lonFromRA(ra,eps);
     const dec=Math.asin(Math.sin(eps*RAD)*Math.sin(lon*RAD))*DEG;
     const x=Math.tan(lat*RAD)*Math.tan(dec*RAD);
-    const ad2=Math.asin(Math.max(-1,Math.min(1,x)))*DEG;
-    if(Math.abs(ad2-ad)<1e-7)break;
+    if(Math.abs(x)>1){indefinido=true;break;}
+    const ad2=Math.asin(x)*DEG;
+    if(Math.abs(ad2-ad)<1e-9){ad=ad2;convergiu=true;break;}
     ad=ad2;
   }
-  return lon;
+  return {lon, indefinido, convergiu};
 }
 function placidusCusps(date, lat, lonEast){
   const eps=obliquity(date), ramc=ramcOf(date,lonEast);
   const mc=mcFromRAMC(ramc,eps), asc=ascFromRAMC(ramc,eps,lat);
   const c=new Array(12).fill(null);
   c[0]=asc; c[9]=mc;
-  c[10]=placidusCusp(ramc,eps,lat,30,1/3);   // 11ª
-  c[11]=placidusCusp(ramc,eps,lat,60,2/3);   // 12ª
-  c[1]=placidusCusp(ramc,eps,lat,120,2/3);   // 2ª
-  c[2]=placidusCusp(ramc,eps,lat,150,1/3);   // 3ª
+  const r11=placidusCusp(ramc,eps,lat,30,1/3);   // 11ª
+  const r12=placidusCusp(ramc,eps,lat,60,2/3);   // 12ª
+  const r2 =placidusCusp(ramc,eps,lat,120,2/3);  // 2ª
+  const r3 =placidusCusp(ramc,eps,lat,150,1/3);  // 3ª
+  c[10]=r11.lon; c[11]=r12.lon; c[1]=r2.lon; c[2]=r3.lon;
   c[3]=n360(mc+180); c[6]=n360(asc+180);     // IC · DSC
   c[4]=n360(c[10]+180); c[5]=n360(c[11]+180);// 5ª · 6ª (opostas 11/12)
   c[7]=n360(c[1]+180); c[8]=n360(c[2]+180);  // 8ª · 9ª (opostas 2/3)
-  return {cusps:c, asc, mc, eps, ramc};
+  /* casas em que o método não pôde ser resolvido, e as suas opostas */
+  const indef=[];
+  if(r11.indefinido)indef.push(11,5);
+  if(r12.indefinido)indef.push(12,6);
+  if(r2.indefinido) indef.push(2,8);
+  if(r3.indefinido) indef.push(3,9);
+  return {cusps:c, asc, mc, eps, ramc,
+          indefinidas:[...new Set(indef)].sort((a,b)=>a-b),
+          metodo:'Placidus (semi-arcos)'};
 }
 
 /* ---------- longitudes geocêntricas (planetas tradicionais) ---------- */
@@ -135,7 +151,8 @@ function computeChart(date, lat, lonEast){
   const nn=meanNode(date);
   pts.nn={lon:nn,retro:false}; pts.sn={lon:n360(nn+180),retro:false};
   Object.values(pts).forEach(p=>{p.h=houseByRule(p.lon,H.cusps);});
-  const ch={pts,cusps:H.cusps,asc:H.asc,mc:H.mc,date};
+  const ch={pts,cusps:H.cusps,asc:H.asc,mc:H.mc,date,
+    casasIndefinidas:H.indefinidas,metodoCasas:H.metodo,ramc:H.ramc,eps:H.eps};
   ch.stars=fixedStarHits(ch);
   return ch;
 }
@@ -145,8 +162,12 @@ function computeChart(date, lat, lonEast){
    restaurar continuem funcionando sem caminho especial. */
 function chartToText(ch){
   const SGG='♈♉♊♋♌♍♎♏♐♑♒♓';
-  const dm=L=>{const d=n360(L)%30;return Math.floor(d)+'°'+String(Math.round((d%1)*60)).padStart(2,'0')+'′';};
-  const sg=L=>SGG[Math.floor(n360(L)/30)];
+  /* arredondamento com transporte: 29,9999° não pode virar 29°60′.
+     Arredonda-se o total em minutos e só então se separa signo, grau e
+     minuto — assim o transporte sobe corretamente até o signo seguinte. */
+  const minTot=L=>Math.round(n360(L)*60)%21600;      // 360° × 60′
+  const dm=L=>{const m=minTot(L)%1800;return Math.floor(m/60)+'°'+String(m%60).padStart(2,'0')+'′';};
+  const sg=L=>SGG[Math.floor(minTot(L)/1800)];
   const lines=[];
   const CUSP_LBL={1:'H1 - Asc',4:'H4 - IC',7:'H7 - Dsc',10:'H10 - MC'};
   for(let h=1;h<=12;h++){lines.push(CUSP_LBL[h]||('H'+h));lines.push(sg(ch.cusps[h-1]));lines.push(dm(ch.cusps[h-1]));lines.push('');}

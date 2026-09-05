@@ -101,14 +101,10 @@ function buildChart(parsed, birthISO, sectMode, name){
   const rulers={}; for(let h=1;h<=12;h++) rulers[h]=SIGN_RULER[signOf(cusps[h-1])];
   // aspectos entre planetas (dos dados; completar por cálculo se não vieram)
   const PL=['sun','moon','mercury','venus','mars','jupiter','saturn'];
+  /* motor único: se o arquivo não trouxe aspectos, recompõe-se por cálculo */
   let asp=(parsed.aspects||[]).slice();
-  if(!asp.length){
-    for(let a2=0;a2<PL.length;a2++)for(let b2=a2+1;b2<PL.length;b2++){
-      if(!pts[PL[a2]]||!pts[PL[b2]])continue;
-      const r=aspectBetween(pts[PL[a2]].lon,pts[PL[b2]].lon);
-      if(r)asp.push({a:PL[a2],b:PL[b2],ang:r.ang,orb:r.orb,app:null});
-    }
-  }
+  const aspRecompostos=!asp.length;
+  if(aspRecompostos)asp=aspectosDe(lonsDe(pts),PL);
   NATAL_ASP={}; HAS={};
   asp.forEach(x=>{
     const gl=ASPECTS.find(A=>A[0]===x.ang)[1], cls=ASPECTS.find(A=>A[0]===x.ang)[2];
@@ -148,7 +144,7 @@ function buildChart(parsed, birthISO, sectMode, name){
   const w3=[['asc',asc],['sun',sunL],['moon',moonL],['ruler',pts[rulers[1]]?pts[rulers[1]].lon:asc]];
   w3.forEach(([_,L])=>{EL[SIGN_ELEM[signOf(L)]]+=3;MO[SIGN_MODE[signOf(L)]]+=3;});
   PL.forEach(k=>{if(pts[k]){EL[SIGN_ELEM[signOf(pts[k].lon)]]+=1;MO[SIGN_MODE[signOf(pts[k].lon)]]+=1;}});
-  NATAL={sect,asc,mc:mcv,cusps,pts,rulers,houseTheme:HOUSE_SHORT,angStars,
+  NATAL={sect,asc,mc:mcv,cusps,pts,rulers,aspRecompostos,houseTheme:HOUSE_SHORT,angStars,
     loop:loops[0]||[], meta:{receptions,finals,loops,name:name||'mapa',ascRuler:rulers[1]}};
   // textos derivados
   buildEraTexts(); buildAspLabels(); buildOlavoFallback(); buildPromises(); buildConteudoDyn();
@@ -268,8 +264,10 @@ function buildConteudoDyn(){
 /* ---------- Revolução Solar: interpretação automática ---------- */
 function addRS(parsed, year){
   const by=new Date(BIRTH).getUTCFullYear(), age=year-by;
-  const p={signIdx:(signOf(NATAL.asc)+age)%12,houseN:(age%12)+1};
-  p.lordKey=NATAL.rulers[p.houseN];
+  /* fonte única: o senhor do ano vem de profAt(), pelo signo profectado.
+     O regente da cúspide Placidus fica disponível em p.lordCuspide como
+     critério alternativo — nomeado, nunca somado nem substituído. */
+  const p=profAt(age);
   const lord=NATAL.pts[p.lordKey];
   const rsAscHouseNatal=parsed.asc!==null?houseByRule(parsed.asc,NATAL.cusps):null;
   const notes=[], angular=[];
@@ -287,7 +285,8 @@ function addRS(parsed, year){
   if(rsLord){
     const rsDiurno=(parsed.pts.sun&&parsed.asc!=null)?(n360(parsed.pts.sun.lon-parsed.asc)>=180):(NATAL.sect==='diurno');
     const d=dignityOf(p.lordKey,rsLord.lon,rsLord.retro,parsed.pts.sun?parsed.pts.sun.lon:undefined,rsDiurno);
-    notes.push('Pela profecção, o ano ativa a casa '+p.houseN+' — '+HOUSE_BLUNT[p.houseN]+' — e o Senhor do Ano é o regente de '+SIGNS[p.signIdx]+', <b>'+PT_NAME[p.lordKey]+'</b>. Na Revolução ele está em '+SIGNS[signOf(rsLord.lon)]+(rsLord.h?(', casa '+rsLord.h):'')+', '+d.tags.join(', ')
+    notes.push('Pela profecção por signos inteiros, o ano ativa '+SIGNS[p.signIdx]+' — casa '+p.houseN+', '+HOUSE_BLUNT[p.houseN]+' — e o Senhor do Ano é o regente desse signo, <b>'+PT_NAME[p.lordKey]+'</b>.'
+      +(p.divergeCuspide?(' (Pelo critério alternativo das cúspides Placidus, a casa '+p.houseN+' começa em '+p.cuspSignNm+' e seria regida por '+PT_NAME[p.lordCuspide]+' — outro critério, não somado a este.)'):'')+'  Na Revolução ele está em '+SIGNS[signOf(rsLord.lon)]+(rsLord.h?(', casa '+rsLord.h):'')+', '+d.tags.join(', ')
       +(signOf(rsLord.lon)===signOf(lord.lon)?' — e <b>repete o signo natal</b>: promessa confirmada para este ano':'')+'.');
   } else notes.push('Pela profecção, o Senhor do Ano é '+PT_NAME[p.lordKey]+', mas ele não consta nos dados da Revolução.');
   // planetas da RS sobre pontos natais / retornos ao próprio grau

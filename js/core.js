@@ -6,28 +6,88 @@ const DAY=864e5;
 const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const fdate=d=>d.getUTCDate()+' '+MESES[d.getUTCMonth()]+' '+d.getUTCFullYear();
 
+/* ---------- idade ----------
+   ageAt devolve idade fracionária em anos médios (serve a gráficos e
+   interpolações). Para tudo que dependa da VIRADA anual — profecção,
+   firdária, seleção de revolução — usa-se a idade civil abaixo, que
+   conta aniversários de calendário.
+
+   Convenção declarada: as datas do app são tratadas em UTC (o mapa é
+   guardado com o instante UTC do nascimento); a virada ocorre no
+   aniversário civil, isto é, quando mês e dia igualam os do
+   nascimento. Nascidos em 29/02 fazem aniversário em 01/03 nos anos
+   comuns — regra explicitada em anivEm(). */
 const ageAt=d=>(d.getTime()-BIRTH)/DAY/365.2425;
-const rsYearOf=d=>{ // ano da última Revolução Solar antes de d (pelo aniversário real, não fixo)
+function anivEm(ano){
+  const n=new Date(BIRTH);
+  const mes=n.getUTCMonth(), dia=n.getUTCDate();
+  const hh=n.getUTCHours(), mm=n.getUTCMinutes(), ss=n.getUTCSeconds();
+  if(mes===1&&dia===29){
+    /* 29 de fevereiro: em ano bissexto a virada é em 29/02; nos demais,
+       em 01/03 — convenção declarada, e não um deslize de calendário */
+    const bis=(ano%4===0&&ano%100!==0)||(ano%400===0);
+    return bis?Date.UTC(ano,1,29,hh,mm,ss):Date.UTC(ano,2,1,hh,mm,ss);
+  }
+  return Date.UTC(ano,mes,dia,hh,mm,ss);
+}
+/* idade civil completa (anos inteiros já vividos) numa data */
+function idadeCivil(d){
+  const n=new Date(BIRTH);
+  let a=d.getUTCFullYear()-n.getUTCFullYear();
+  if(d.getTime()<anivEm(d.getUTCFullYear()))a--;
+  return a;
+}
+/* início e fim do ano de profecção que contém a data */
+function anoProfectado(d){
+  const idade=idadeCivil(d);
+  const anoIni=new Date(BIRTH).getUTCFullYear()+idade;
+  return {idade, ini:new Date(anivEm(anoIni)), fim:new Date(anivEm(anoIni+1))};
+}
+/* ano da última Revolução Solar anterior à data — pelo aniversário real
+   (mesma convenção de anivEm: mês, dia e hora do nascimento em UTC) */
+const rsYearOf=d=>{
   const y=d.getUTCFullYear();
   if(!BIRTH)return y;
-  const b=new Date(BIRTH);
-  const passed=(d.getUTCMonth()>b.getUTCMonth())||(d.getUTCMonth()===b.getUTCMonth()&&d.getUTCDate()>=b.getUTCDate());
-  return passed?y:y-1;
+  return d.getTime()>=anivEm(y)?y:y-1;
 };
 
-/* ---------- firdária / profecção ---------- */
+/* ---------- FIRDÁRIA ----------
+   Períodos persas (Albumasar): a sequência começa pelo Sol nos mapas
+   diurnos e pela Lua nos noturnos (FIRD é montado em chart.js conforme a
+   seita geométrica). Cada era maior divide-se em sete sub-períodos
+   iguais, começando pelo próprio senhor da era e seguindo a ordem dos
+   sete planetas. A idade aqui é fracionária em anos médios — a firdária
+   é medida por DURAÇÃO contínua, não pela virada de aniversário civil
+   que rege a profecção; a diferença de convenção está declarada. */
 function firdAt(age){
-  let a=age; for(const [k,nm,len] of FIRD){ if(a<len){
+  let a=age;
+  for(const [k,nm,len] of FIRD){
+    if(a<len){
       const subs=FIRD.slice(0,7).map(f=>f[0]);
       let si=subs.indexOf(k); if(si<0) si=0;
       const part=len/7, idx=Math.min(6,Math.floor(a/part));
       const subKey=subs[(si+idx)%7];
-      const subStart=BIRTH+ (age-a+idx*part)*365.2425*DAY;
-      return {major:nm, majorKey:k, sub:(FIRD.find(f=>f[0]===subKey)||[,subKey])[1], subKey,
-              from:age-a, len, subStart, subEnd:subStart+part*365.2425*DAY};
-    } a-=len; }
-  return {major:'—',majorKey:null,sub:'—',subKey:null};
+      const subStart=BIRTH+(age-a+idx*part)*365.2425*DAY;
+      return {major:nm, majorKey:k,
+              sub:(FIRD.find(f=>f[0]===subKey)||[,subKey])[1], subKey,
+              from:age-a, len, subStart, subEnd:subStart+part*365.2425*DAY,
+              metodo:'firdária persa · durações em anos médios a partir do nascimento'};
+    }
+    a-=len;
+  }
+  return {major:'—',majorKey:null,sub:'—',subKey:null,
+          metodo:'firdária persa · fora do ciclo de 75 anos tabelado'};
 }
+
+/* ---------- FONTE ÚNICA DO SENHOR DO ANO ----------
+   Todo o app consome profAt(). Ela distingue explicitamente:
+     signIdx  · o SIGNO ativado pela profecção anual por signos inteiros
+     lordKey  · o SENHOR DO ANO — regente domiciliar desse signo
+     houseN   · a casa contada a partir do Ascendente (1..12)
+     cuspSign · o signo da CÚSPIDE PLACIDUS dessa casa natal
+     lordCusp · o regente dessa cúspide — critério ALTERNATIVO, exibido
+                lado a lado, nunca somado nem substituído ao senhor do ano
+   O método está nomeado em `metodo` para aparecer na interface. */
 function profAt(age){
   /* profecção anual por signos inteiros: o Ascendente avança um signo por ano.
      O Senhor do Ano é o regente do SIGNO profectado — não o regente da cúspide
@@ -36,9 +96,13 @@ function profAt(age){
   const base=NATAL?Math.floor(n360(NATAL.asc)/30):0;
   const s=(base+Math.floor(age))%12;
   const houseN=((Math.floor(age))%12)+1;
+  const cuspSign=NATAL?signOf(NATAL.cusps[houseN-1]):null;
   return {signIdx:s, sign:SIGNS[s], houseN,
+          metodo:'signos inteiros a partir do Ascendente',
           lordKey:SIGN_RULER[s],
-          lordCuspide:NATAL?NATAL.rulers[houseN]:null};
+          cuspSign, cuspSignNm:cuspSign!=null?SIGNS[cuspSign]:null,
+          lordCuspide:NATAL?NATAL.rulers[houseN]:null,
+          divergeCuspide:!!(NATAL&&NATAL.rulers[houseN]!==SIGN_RULER[s])};
 }
 function ruledHouses(k){return Object.entries(NATAL.rulers).filter(([h,r])=>r===k).map(([h])=>+h);}
 
