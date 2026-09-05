@@ -87,12 +87,20 @@ function placidusCusps(date, lat, lonEast){
   c[3]=n360(mc+180); c[6]=n360(asc+180);     // IC · DSC
   c[4]=n360(c[10]+180); c[5]=n360(c[11]+180);// 5ª · 6ª (opostas 11/12)
   c[7]=n360(c[1]+180); c[8]=n360(c[2]+180);  // 8ª · 9ª (opostas 2/3)
-  /* casas em que o método não pôde ser resolvido, e as suas opostas */
+  /* Casas em que o método não pôde ser resolvido, e as suas opostas.
+     Duas maneiras de não se resolver, e AS DUAS contam:
+       · circumpolar — |tan(lat)·tan(dec)| > 1, a equação não tem solução;
+       · sem convergência — a iteração de ponto fixo oscila e esgota as
+         40 voltas sem fechar. Nesse caso o último valor calculado NÃO é
+         a cúspide: em latitudes altas ele chega a errar mais de um grau
+         contra a definição do próprio método. Antes esse caso passava em
+         silêncio, porque só `indefinido` era consultado. */
   const indef=[];
-  if(r11.indefinido)indef.push(11,5);
-  if(r12.indefinido)indef.push(12,6);
-  if(r2.indefinido) indef.push(2,8);
-  if(r3.indefinido) indef.push(3,9);
+  const naoResolvida=r=>r.indefinido||!r.convergiu;
+  if(naoResolvida(r11))indef.push(11,5);
+  if(naoResolvida(r12))indef.push(12,6);
+  if(naoResolvida(r2)) indef.push(2,8);
+  if(naoResolvida(r3)) indef.push(3,9);
   return {cusps:c, asc, mc, eps, ramc,
           indefinidas:[...new Set(indef)].sort((a,b)=>a-b),
           metodo:'Placidus (semi-arcos)'};

@@ -369,7 +369,17 @@ function renderRS(){
       +(R.localProprio?'<button class="rv-plus" id="rv-locrst">usar o do nascimento</button>':'')
       +'</div>'
       +'<p class="rv-lochint">O retorno é calculado para onde a pessoa está na hora do retorno. '
-      +'Mudar o lugar move os ângulos e as casas — os planetas não mudam.</p></div>';
+      +'Mudar o lugar move os ângulos e as casas — os planetas não mudam.</p>'
+      /* cúspides que o método de Placidus não resolve naquela latitude:
+         declaradas, e não substituídas em silêncio por um valor plausível */
+      +((R.chart&&R.chart.casasIndefinidas&&R.chart.casasIndefinidas.length)
+        ? ('<p class="rv-indef"><b>Casas '+R.chart.casasIndefinidas.join(', ')
+           +' indefinidas por '+(R.chart.metodoCasas||'Placidus')+'</b> nesta latitude: '
+           +'o grau da cúspide é circumpolar, ou a iteração do método não converge. '
+           +'O app declara em vez de fixar um valor: as leituras que dependem dessas '
+           +'casas ficam sem apoio, e não com apoio inventado.</p>')
+        : '')
+      +'</div>';
   const bl=$('rv-locok');
   if(bl)bl.onclick=()=>{
     const la=parseFloat(($('rv-lat')||{}).value), lo=parseFloat(($('rv-lon')||{}).value);
