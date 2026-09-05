@@ -2239,6 +2239,47 @@ body.is-mobile .sy-via p,body.is-mobile .nl-st>p{font-size:.86rem;line-height:1.
 @media(max-width:1080px){.hj-ciclos{grid-template-columns:1fr 1fr}.hj-2{grid-template-columns:1fr}}
 body.is-mobile .hj-ciclos{grid-template-columns:1fr}
 body.is-mobile .hj-2{grid-template-columns:1fr}
+/* ============ QUEM CONDUZ O SEU MAPA ============ */
+.sn-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sn-c{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+  border-top:2px solid var(--acc)}
+.sn-c.sn-daimon{border-top-color:var(--accb)}
+.sn-c>header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:9px}
+.sn-c>header em{font-style:normal;font-family:var(--mono);font-size:.58rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--dim2)}
+.sn-c>header i{font-style:normal;font-size:.68rem;color:var(--dim2)}
+.sn-id{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.sn-g{font-size:1.3rem;line-height:1;font-variant-emoji:text;color:var(--ivory2)}
+.sn-id b{font-size:1.02rem;font-weight:600;color:var(--ivory)}
+.sn-pos{font-family:var(--mono);font-size:.64rem;color:var(--dim2)}
+.sn-d{margin:11px 0 0;display:grid;gap:6px}
+.sn-d>div{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:baseline}
+.sn-d dt{font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--dim2);white-space:nowrap}
+.sn-d dd{margin:0;font-size:.76rem;line-height:1.5;color:var(--dim)}
+.sn-x{margin:11px 0 0;padding-top:9px;border-top:1px solid var(--line);
+  font-size:.72rem;line-height:1.55;color:var(--dim2)}
+.sn-compl{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.sn-compl li{display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:baseline;
+  background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.sn-cg{font-size:.95rem;font-variant-emoji:text;color:var(--dim)}
+.sn-compl b{font-size:.78rem;font-weight:600;color:var(--ivory2)}
+.sn-compl span{font-size:.78rem;color:var(--dim)}
+.sn-compl em{display:block;font-style:normal;font-size:.7rem;line-height:1.5;color:var(--dim2);margin-top:3px}
+.sn-ac{margin:11px 0 0;font-size:.76rem;line-height:1.6;color:var(--dim)}
+.sn-ac b{color:var(--ivory2);font-weight:600}
+.sn-tempo{margin-top:12px;padding:12px 14px;border:1px dashed var(--line);border-radius:14px}
+.sn-tk{display:block;font-family:var(--mono);font-size:.56rem;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--dim2);margin-bottom:9px}
+.sn-tempo ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.sn-tempo li{display:flex;align-items:baseline;gap:7px;background:var(--bg2);
+  border:1px solid var(--line);border-radius:99px;padding:6px 12px}
+.sn-tempo li i{font-style:normal;font-size:.9rem;font-variant-emoji:text;color:var(--dim)}
+.sn-tempo li b{font-size:.68rem;font-weight:550;color:var(--dim2)}
+.sn-tempo li em{font-style:normal;font-size:.76rem;color:var(--ivory2)}
+.sn-tempo p{margin:9px 0 0;font-size:.72rem;line-height:1.55;color:var(--dim2)}
+@media(max-width:1080px){.sn-cards,.sn-compl{grid-template-columns:1fr}}
+body.is-mobile .sn-cards,body.is-mobile .sn-compl{grid-template-columns:1fr}
 /* ============ BACKUP ============ */
 .bk{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-top:16px}
 .bk-h b{font-size:.95rem;color:var(--ivory2)}
@@ -3022,6 +3063,7 @@ body.is-mobile .rv2-sticky{position:static}
 <script src="js/saude.js"></script>
 <script src="js/guia.js"></script>
 <script src="js/tipologias.js"></script>
+<script src="js/senhores.js"></script>
 <script src="js/hoje.js"></script>
 <script src="js/backup.js"></script>
 <script src="js/main.js"></script>

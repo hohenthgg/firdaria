@@ -69,16 +69,31 @@ const W=new Proxy({},{get:(_,k)=>((typeof CFG!=='undefined'&&CFG.cw&&CFG.cw[k]!=
 function testemunhos(k, houseN, d, S){
   S=S||tempoState(d); if(!S)return {score:0,itens:[],papeis:0};
   const it=[]; let sc=0, papeis=0;
-  const add=(w,txt)=>{sc+=w;it.push([w,txt]);};
-  if(k===S.mk){add(W.firdaria,'senhor da firdária maior');papeis++;}
-  if(k===S.sk){add(W.sub,'senhor da sub-firdária');papeis++;}
-  if(k===S.lord){add(W.senhorAno,'Senhor do Ano');papeis++;}
-  if(houseN&&S.profHouse===houseN){add(W.casaProf,'a casa da promessa é a casa profectada do ano');papeis++;}
-  if(k&&ruledHouses(k).includes(S.profHouse)) add(W.sub,'administra a casa profectada ('+ordinal(S.profHouse)+')');
+  /* cada testemunho carrega a ORIGEM do fato. Dois textos diferentes que
+     descrevem o mesmo fato (por exemplo, o aspecto natal repetido na
+     revolução, que revReinforces e testemunhos relatavam cada um à sua
+     maneira) contam UMA vez — descrição não é confirmação independente. */
+  const vistos=new Set();
+  const add=(w,txt,origem)=>{
+    const id=origem||txt;
+    if(vistos.has(id))return;      // mesmo fato, outra redação
+    vistos.add(id);
+    sc+=w; it.push([w,txt,id]);
+  };
+  if(k===S.mk){add(W.firdaria,'senhor da firdária maior','fird:'+k);papeis++;}
+  if(k===S.sk){add(W.sub,'senhor da sub-firdária','sub:'+k);papeis++;}
+  if(k===S.lord){add(W.senhorAno,'Senhor do Ano','ano:'+k);papeis++;}
+  if(houseN&&S.profHouse===houseN){add(W.casaProf,'a casa da promessa é a casa profectada do ano','casaprof:'+houseN);papeis++;}
+  if(k&&ruledHouses(k).includes(S.profHouse)) add(W.sub,'administra a casa profectada ('+ordinal(S.profHouse)+')','regeprof:'+k);
   if(S.rev){
-    (revReinforces(S.rev,k,houseN)||[]).forEach(([nv,txt])=>{
-      add(nv==='alto'?W.revAlta:W.revMedia,txt); if(nv==='alto')papeis++;});
-    if(k&&S.rev.repeats.some(r=>r.a===k||r.b===k)) add(W.repete,'aspecto natal seu repetido na '+S.rev.label);
+    (revReinforces(S.rev,k,houseN)||[]).forEach(([nv,txt,origem])=>{
+      const antes=vistos.size;
+      add(nv==='alto'?W.revAlta:W.revMedia,txt,origem);
+      if(nv==='alto'&&vistos.size>antes)papeis++;});
+    /* o aspecto natal repetido na revolução tem a MESMA origem que a
+       linha equivalente de revReinforces: entra uma vez só */
+    if(k&&S.rev.repeats.some(r=>r.a===k||r.b===k))
+      add(W.repete,'aspecto natal seu repetido na '+S.rev.label,'repete:'+k);
   }
   if(papeis>=3) add(W.bonus,'o mesmo planeta acumula '+papeis+' funções temporais');
   return {score:sc, itens:it, papeis};

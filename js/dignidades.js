@@ -89,3 +89,31 @@ function dignityOf(k,L,retro,sunLon,diurno){
   if(retro){tags.push('℞');pts-=1;}
   return {tags,pts,term:tl,dignidades:props,luz};
 }
+
+/* ---------- aspectos de um conjunto de pontos ----------
+   Um só caminho para natal, revoluções e mapas importados: quando o
+   arquivo de origem não traz aspectos (é o caso de tudo que passa por
+   chartToText, que só serializa posições), eles são recompostos aqui.
+   Antes o natal recompunha e a revolução não, e a RS importada ficava
+   sem aspectos — o que apagava os ecos usados no ranking dos trânsitos. */
+const ASP_PL=['sun','moon','mercury','venus','mars','jupiter','saturn'];
+function aspectosDe(ptsLon,lista){
+  const PL=(lista||ASP_PL).filter(k=>ptsLon[k]!=null);
+  const out=[];
+  for(let i=0;i<PL.length;i++)for(let j=i+1;j<PL.length;j++){
+    const a=PL[i],b=PL[j];
+    const r=aspectBetween(ptsLon[a],ptsLon[b]);
+    if(r)out.push({a,b,ang:r.ang,gl:r.gl,cls:r.cls,orb:r.orb,app:null});
+  }
+  return out;
+}
+/* aceita pts no formato {k:{lon}} ou {k:lon} */
+function lonsDe(pts){
+  const o={};
+  Object.keys(pts||{}).forEach(k=>{
+    const v=pts[k];
+    if(v==null)return;
+    o[k]=(typeof v==='number')?v:(v.lon!=null?v.lon:null);
+  });
+  return o;
+}
