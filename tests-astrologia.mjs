@@ -280,7 +280,151 @@ for(const M of MAPAS){
     SN.daimonK===SN.regenteDoEspirito);
   t('os senhores natais não mudam ao navegar 30 anos', SN.natalEstavel);
   t('os senhores do tempo mudam ao navegar 30 anos', SN.temporalMudou);
+
+
 }
+
+/* ---------- janela do trânsito: entrada, exatidão, saída ----------
+   Um trânsito é um intervalo, não um instante. As asserções conferem
+   propriedades geométricas, recalculadas a partir das longitudes: nas
+   bordas o orbe tem de valer o limite da tabela; nas passagens exatas,
+   a separação tem de igualar o ângulo do aspecto; e a data de hoje tem
+   de cair dentro da janela. */
+console.log('\n### janela do trânsito');
+const TJ = await pg.evaluate(()=>{
+  const d=new Date();
+  const L=(typeof scoredHits==='function')?scoredHits(d,0).slice(0,6):[];
+  const out=[];
+  L.forEach(h=>{
+    const orbMax=orbeDe(h.ang);
+    const J=transitoJanela(h.tn,h.np.lon,h.ang,orbMax,d);
+    if(!J)return;
+    const sepEm=t=>adiff(tlon(h.tn,new Date(t)), h.np.lon);
+    out.push({
+      par:PT_NAME[h.tKey]+' '+h.gl+' '+h.np.nm, ang:h.ang, orbMax,
+      /* na borda, a distância ao aspecto exato é o próprio orbe da tabela */
+      erroEntrada:J.entrada!=null?Math.abs(Math.abs(sepEm(J.entrada)-h.ang)-orbMax):null,
+      erroSaida:J.saida!=null?Math.abs(Math.abs(sepEm(J.saida)-h.ang)-orbMax):null,
+      /* na passagem exata, a separação é o ângulo do aspecto */
+      errosExatos:J.exatos.map(t=>Math.abs(Math.abs(sepEm(t))-h.ang)),
+      contemHoje:(J.entrada==null||J.entrada<=d.getTime())
+               &&(J.saida==null||J.saida>=d.getTime()),
+      ordenado:(J.entrada==null||J.saida==null||J.entrada<J.saida)
+               && J.exatos.every(t=>(J.entrada==null||t>=J.entrada)
+                                  &&(J.saida==null||t<=J.saida)),
+      repetido:J.repetido, semPerfazer:J.exatos.length===0,
+      temNota:!!J.nota, dias:J.duracaoDias});
+  });
+  return out;
+});
+if(!TJ.length){ t('há trânsitos com janela calculável hoje', false); }
+else {
+  const bordas=TJ.flatMap(x=>[x.erroEntrada,x.erroSaida]).filter(v=>v!=null);
+  t('nas bordas da janela o orbe iguala o limite da tabela',
+    bordas.every(e=>e<0.02), TJ.length+' trânsitos · pior erro de borda '
+    +Math.max(...bordas).toFixed(4)+'°');
+  const exatos=TJ.flatMap(x=>x.errosExatos);
+  t('nas passagens exatas a separação iguala o ângulo do aspecto',
+    exatos.every(e=>e<0.02),
+    exatos.length?('pior erro '+Math.max(...exatos).toFixed(4)+'°'):'nenhuma passagem exata hoje');
+  t('a data de hoje cai dentro de toda janela apresentada',
+    TJ.every(x=>x.contemHoje));
+  t('entrada, exatidão e saída vêm em ordem cronológica',
+    TJ.every(x=>x.ordenado));
+  t('contato que não perfaz, ou que se repete, vem explicado',
+    TJ.every(x=>(!x.semPerfazer&&!x.repetido)||x.temNota),
+    TJ.filter(x=>x.semPerfazer).length+' sem perfazer · '
+    +TJ.filter(x=>x.repetido).length+' com passagem repetida');
+}
+
+/* ---------- Placidus contra a sua definição ----------
+   O motor Placidus do app é o que serve às cartas COMPUTADAS (as
+   revoluções); as cúspides do mapa natal vêm do texto importado. Por
+   isso a conferência aqui chama placidusCusps() diretamente, sobre uma
+   grade de latitudes e tempos siderais.
+
+   Não foi possível conferir contra uma efeméride de terceiros: o proxy
+   de rede deste ambiente bloqueia o acesso a esses serviços. A
+   verificação é, então, contra a DEFINIÇÃO do método — e é feita no
+   sentido inverso ao do cálculo. O app itera do ângulo horário para a
+   longitude; o teste parte da longitude produzida, deduz declinação,
+   ascensão reta e diferença ascensional, e confere se o ponto divide o
+   seu próprio semi-arco na proporção que define cada cúspide: a 11ª a
+   um terço do semi-arco diurno desde o MC, a 12ª a dois terços, a 2ª a
+   um terço do semi-arco noturno depois do Ascendente, a 3ª a dois
+   terços. Erro de quadrante, iteração não convergida ou truncamento
+   silencioso apareceriam aqui. */
+console.log('\n### Placidus — propriedade definidora dos semi-arcos');
+const PL = await pg.evaluate(()=>{
+  const R=Math.PI/180, D=180/Math.PI;
+  const norm=x=>{x%=360;return x<0?x+360:x;};
+  const casos=[[11,1/3,'diurno'],[12,2/3,'diurno'],[2,1/3,'noturno'],[3,2/3,'noturno']];
+  const piores=[]; let indefDeclaradas=0, indefSilenciosas=0, avaliadas=0;
+  let piorAsc=0, piorMC=0, piorOposta=0;
+  /* grade: latitudes dos dois hemisférios, incluindo alta latitude, e
+     tempos siderais espalhados pelas 24 horas */
+  for(let lat=-78; lat<=78; lat+=6){
+    for(let hh=0; hh<24; hh+=3){
+      const d=new Date(Date.UTC(2000,5,21,hh,0,0));
+      const H=placidusCusps(d, lat, 0);
+      const eps=H.eps, ramc=H.ramc;
+      const decl=L=>Math.asin(Math.sin(eps*R)*Math.sin(L*R))*D;
+      const raDe=L=>norm(Math.atan2(Math.sin(L*R)*Math.cos(eps*R), Math.cos(L*R))*D);
+      /* Ascendente no horizonte: altitude zero, por fórmula horizontal —
+         formulação diferente da usada pelo app */
+      const dA=decl(H.asc), HA=norm(raDe(H.asc)-ramc);
+      const alt=Math.asin(Math.sin(lat*R)*Math.sin(dA*R)
+          +Math.cos(lat*R)*Math.cos(dA*R)*Math.cos(HA*R))*D;
+      if(Math.abs(alt)>piorAsc)piorAsc=Math.abs(alt);
+      /* MC com ascensão reta igual ao RAMC */
+      const dm=Math.abs(raDe(H.mc)-ramc);
+      const eMC=Math.min(dm,360-dm);
+      if(eMC>piorMC)piorMC=eMC;
+      /* cúspides opostas a 180° exatos */
+      for(let i=0;i<6;i++){
+        const dd=Math.abs(norm(H.cusps[i]-H.cusps[i+6])-180);
+        if(dd>piorOposta)piorOposta=dd;
+      }
+      casos.forEach(([casa,fr,arco])=>{
+        const declarada=H.indefinidas.indexOf(casa)>=0;
+        const L=H.cusps[casa-1];
+        const dd=decl(L), ra=raDe(L);
+        const x=Math.tan(lat*R)*Math.tan(dd*R);
+        if(Math.abs(x)>1){
+          /* o método não se resolve aqui: o app tem de ter declarado */
+          if(declarada)indefDeclaradas++; else indefSilenciosas++;
+          return;
+        }
+        if(declarada)return;
+        const ad=Math.asin(x)*D;
+        const esperado = arco==='diurno' ? fr*(90+ad) : (90+ad)+fr*(90-ad);
+        const hAng=norm(ra-ramc);
+        const erro=Math.min(Math.abs(hAng-esperado), 360-Math.abs(hAng-esperado));
+        avaliadas++;
+        if(erro>0.005)piores.push({lat, hh, casa, erro:+erro.toFixed(4)});
+      });
+    }
+  }
+  return {avaliadas, piores:piores.slice(0,5), nPiores:piores.length,
+    indefDeclaradas, indefSilenciosas,
+    piorAsc:+piorAsc.toFixed(5), piorMC:+piorMC.toFixed(5),
+    piorOposta:+piorOposta.toFixed(9),
+    metodo:placidusCusps(new Date(Date.UTC(2000,5,21,12,0,0)),40,0).metodo};
+});
+t('cada cúspide intermédia divide o seu semi-arco na proporção do método',
+  PL.nPiores===0, PL.avaliadas+' cúspides conferidas em 27 latitudes (−78° a +78°) × 8 tempos siderais'
+  +(PL.nPiores?(' · pior: '+JSON.stringify(PL.piores[0])):''));
+t('o Ascendente fica no horizonte (altitude zero, por fórmula horizontal)',
+  PL.piorAsc<0.01, 'pior altitude '+PL.piorAsc+'°');
+t('o Meio do Céu tem ascensão reta igual ao RAMC',
+  PL.piorMC<0.01, 'pior erro '+PL.piorMC+'°');
+t('cúspides opostas ficam a 180° exatos', PL.piorOposta<1e-6,
+  'pior desvio '+PL.piorOposta+'°');
+t('onde o método não se resolve, a cúspide é declarada e não fixada em silêncio',
+  PL.indefSilenciosas===0,
+  PL.indefDeclaradas+' cúspides indefinidas declaradas · '
+  +PL.indefSilenciosas+' silenciosas');
+t('o método das casas vem nomeado', !!PL.metodo, PL.metodo);
 
 /* ---------- backup ---------- */
 console.log('\n### backup');

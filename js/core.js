@@ -136,6 +136,75 @@ function transitHits(d){
   hits.sort((a,b)=>a.orb-b.orb); return hits;
 }
 
+/* ---------- janela de um trânsito: entrada no orbe, exatidão, saída ----------
+   Um trânsito não é um instante: é um intervalo. O app passa a mostrar
+   as três datas — quando o corpo ENTRA no orbe, quando o aspecto fica
+   EXATO e quando SAI —, em vez de apenas o orbe de hoje.
+
+   Corpos retrógrados podem cruzar o mesmo grau três vezes; por isso a
+   varredura recolhe TODAS as passagens exatas dentro da janela, e não
+   só a primeira. Nenhuma delas é apresentada como acontecimento certo:
+   é a geometria do contato, e nada mais. */
+function transitoJanela(tn, natalLon, ang, orb, d, limiteDias){
+  const f=t=>Math.abs(adiff(tlon(tn,new Date(t)), natalLon))-ang;   // 0 no exato
+  const dentro=t=>Math.abs(f(t))<=orb;
+  const t0=d.getTime();
+  if(!dentro(t0))return null;
+  const lim=(limiteDias||900)*DAY;
+  /* passo proporcional à velocidade do corpo: fino para a Lua, largo para
+     os lentos. A bissecção refina depois, então o passo só precisa ser
+     pequeno o bastante para não pular uma passagem exata. */
+  const PASSO_DIAS={Moon:0.02, Mercury:0.2, Venus:0.25, Sun:0.25,
+                    Mars:0.5, Jupiter:1, Saturn:1};
+  const passo=(PASSO_DIAS[tn]||0.25)*DAY;
+  const borda=dir=>{
+    let t=t0;
+    while(Math.abs(t-t0)<lim){
+      const p=t+dir*passo;
+      if(!dentro(p)){
+        let a=t, b=p;                       // bissecção na borda do orbe
+        for(let i=0;i<40;i++){
+          const m=(a+b)/2;
+          if(dentro(m))a=m; else b=m;
+        }
+        return (a+b)/2;
+      }
+      t=p;
+    }
+    return null;                            // não saiu dentro do limite
+  };
+  const entrada=borda(-1), saida=borda(1);
+  /* passagens exatas: mudanças de sinal de f dentro da janela */
+  const exatos=[];
+  const ini=entrada!=null?entrada:t0-lim, fim=saida!=null?saida:t0+lim;
+  let tA=ini, fA=f(tA);
+  for(let t=ini+passo; t<=fim; t+=passo){
+    const fB=f(t);
+    if((fA<=0)!==(fB<=0)&&Math.abs(fB-fA)<orb*4){
+      let a=tA,b=t;
+      for(let i=0;i<40;i++){const m=(a+b)/2; if((f(a)<=0)===(f(m)<=0))a=m; else b=m;}
+      exatos.push((a+b)/2);
+    }
+    tA=t; fA=fB;
+  }
+  return {entrada, saida, exatos,
+    passagens:exatos.length,
+    repetido:exatos.length>1,
+    duracaoDias:(entrada!=null&&saida!=null)?((saida-entrada)/DAY):null,
+    incompleta:(entrada==null||saida==null),
+    nota:exatos.length>1
+      ? 'O aspecto fica exato '+exatos.length+' vezes: o corpo retrograda sobre '
+        +'o mesmo grau. É a mesma configuração revisitada, e não '+exatos.length
+        +' acontecimentos.'
+      : exatos.length===0
+      ? 'O aspecto entra e sai do orbe sem chegar a perfazer: aproxima-se do '
+        +'ângulo exato, volta atrás e afasta-se. Contato parcial.'
+      : (entrada==null||saida==null)
+      ? 'A janela excede o intervalo varrido — o contato é mais longo do que o '
+        +'período examinado.'
+      : null};
+}
+
 /* ---------- motor de relevância (auditável) ---------- */
 function scoreHit(hit,d){
   const age=ageAt(d), f=firdAt(age), p=profAt(age), y=rsYearOf(d);

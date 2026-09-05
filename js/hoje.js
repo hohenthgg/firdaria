@@ -39,11 +39,29 @@ function hojeTransitosHTML(d){
   let L=[];
   try{ L=(typeof scoredHits==='function')?scoredHits(d,0).slice(0,5):[]; }catch(e){ L=[]; }
   if(!L.length)return '<p class="hj-vaz">Nenhum trânsito dentro do orbe sobre pontos natais sensíveis hoje.</p>';
+  /* cada trânsito é mostrado como INTERVALO: entrada no orbe, exatidão e
+     saída — e não como um instante nem como um acontecimento */
+  const janela=h=>{
+    let J=null;
+    try{ J=(typeof transitoJanela==='function')
+      ? transitoJanela(h.tn, h.np.lon, h.ang, h.orbMax||orbeDe(h.ang), d) : null; }
+    catch(e){ J=null; }
+    if(!J)return '';
+    const dt=t=>t==null?'—':fdate(new Date(t));
+    const ex=J.exatos.length
+      ? J.exatos.map(t=>dt(t)).join(' · ')
+      : 'não chega a perfazer';
+    return '<span class="hj-jan">'
+      +'<i>entra</i> '+dt(J.entrada)+' <i>exato</i> '+ex+' <i>sai</i> '+dt(J.saida)
+      +(J.duracaoDias?(' <i>·</i> '+Math.round(J.duracaoDias)+' dias no orbe'):'')
+      +(J.nota?('<em>'+J.nota+'</em>'):'')+'</span>';
+  };
   return '<ul class="hj-tr">'+L.map(h=>
     '<li class="'+(h.cls||'')+'">'
     +'<span class="hj-tg">'+(PT_GLYPH[h.tKey]||'')+'︎</span>'
     +'<span class="hj-tt"><b>'+PT_NAME[h.tKey]+' '+h.gl+' '+(h.np?h.np.nm:'')+'</b>'
-    +'<em>'+(h.rel&&h.rel.txt?h.rel.txt:'')+'</em></span>'
+    +'<em>'+(h.rel&&h.rel.txt?h.rel.txt:'')+'</em>'
+    +janela(h)+'</span>'
     +'<span class="hj-to">'+h.orb.toFixed(1)+'°</span></li>').join('')+'</ul>';
 }
 
