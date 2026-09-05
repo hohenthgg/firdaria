@@ -149,6 +149,10 @@ function buildChart(parsed, birthISO, sectMode, name){
   // textos derivados
   buildEraTexts(); buildAspLabels(); buildOlavoFallback(); buildPromises(); buildConteudoDyn();
   CHARTMETA.temper=(typeof temperEngine==='function')?temperEngine():null;
+  /* mapa novo (ou reconstruído com outra configuração) invalida a hipótese
+     tipológica em cache. Navegar no TEMPO não a invalida — só o mapa muda
+     os fatos de que ela depende. */
+  if(typeof tipInvalidar==='function')tipInvalidar();
   return NATAL;
 }
 function fmtOrb(o){return Math.floor(o)+'°'+String(Math.round((o%1)*60)).padStart(2,'0')+'′';}

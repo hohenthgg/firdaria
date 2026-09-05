@@ -8,7 +8,7 @@
    Fontes estruturais: Filatova, Gulenko, Palmer, Pietrak (grafo),
    Olavo/48 eixos (estimativa), Michel de Socoa (tipos planetários).
    ============================================================ */
-let TP_TAB='mbti';
+let TP_TAB='visao';
 
 /* ---------- vocabulário comum: as dicotomias de base ---------- */
 const TP_DICO={
@@ -45,29 +45,14 @@ function tpY(){
 const tpSec=(t,c)=>'<section class="tps"><h3>'+t+'</h3>'+c+'</section>';
 const tpNote='<p class="pf-aviso">Estimativa derivada do padrão global do mapa (48 eixos) — aproximação auditável, nunca diagnóstico. O tipo verdadeiro se confirma por observação.</p>';
 
-/* ============ MBTI ============ */
-function tpMBTI(){
-  const Y=tpY();
-  let h='';
-  if(Y){
-    h+='<div class="card tpe"><div class="kicker">seu tipo estimado</div>'
-      +'<div class="tpe-h"><b>'+Y.mbti+'</b><em>'+((typeof MBTI_FRASE!=='undefined'&&MBTI_FRASE[Y.mbti])||'')+'</em></div>'
-      +'<p class="np-sub">alternativa: '+Y.mbtiAlt+' · dimensões agregadas E '+Y.dims.E+'% · N '+Y.dims.N+'% · F '+Y.dims.F+'% · J '+Y.dims.J+'%</p>'
-      +(typeof tipCalcHTML==='function'?('<details class="np-int"><summary>Como foi estimado</summary>'+tipCalcHTML(Y,'mbti')+'</details>'):'')
-      +tpNote+'</div>';
-    if(typeof perfilMBTI==='function')
-      h+='<div class="card">'+perfilMBTI(Y)+'</div>';
-  } else h+='<p class="note">Carregue um mapa para ver o tipo estimado.</p>';
-  h+=tpSec('As quatro dicotomias, uma a uma',tpDicoHTML()
-    +'<p class="tpq2">O código MBTI (ex.: ENFJ) é só o endereço: E/I diz a orientação, S/N a percepção preferida, T/F o juízo preferido, J/P qual dos dois comanda a vida externa. O conteúdo real do tipo está nas funções que esse endereço implica.</p>');
-  h+=tpSec('As oito funções cognitivas, uma a uma',
-    Object.entries(TP_FN_DEEP).map(([k,d])=>{
-      const v=(typeof FN!=='undefined')?FN[k]:null;
-      return '<div class="tpx"><b>'+k+(v?(' — '+v.nome):'')+'</b><p>'+d+'</p>'
-        +(v?('<p class="tpq3">Como dominante: '+v.dom+'<br>Como inferior: '+v.inf+'</p>'):'')+'</div>';}).join('')
-    +'<p class="tpq2">Cada tipo usa as oito, mas em ordem fixa de conforto (convenção de Grant): dominante, auxiliar, terciária e inferior — a inferior é a porta do estresse e também do crescimento.</p>');
-  return h;
-}
+/* ============ MBTI e Sociônica ============
+   As duas seções antigas foram substituídas pela camada tipológica
+   nova (tip-ui.js), em seis seções: Visão geral, Funções e elementos,
+   Hipóteses, Comparação entre sistemas, Refinar com respostas e
+   Fontes e método. A estimativa deixou de vir de uma conversão de
+   eixos em letras e passa a ser uma ordenação de estruturas completas,
+   com o que a sustenta e o que a contraria declarados.
+   ======================================================= */
 
 /* ============ ENEAGRAMA ============ */
 function tpENN(){
@@ -134,60 +119,6 @@ const SOC_MICRO=[
 const SOC_TEMP={'linear-assertive':'linear-assertivo (EJ): ritmo contínuo e dirigido — age, corrige agindo','flexible-maneuvering':'flexível-manobrante (EP): ritmo de rajadas e oportunidade — muda de ângulo sem aviso','balanced-stable':'equilibrado-estável (IJ): ritmo constante e regrado — não começa sem necessidade, não para no meio','receptive-adaptive':'receptivo-adaptativo (IP): ritmo ondulado — acompanha o ambiente e economiza esforço'};
 const SOC_CLUB={Researchers:'pesquisadores (NT): estruturas, teorias e o porquê das coisas',Socials:'sociais (SF): pessoas concretas, cuidado e convívio',Humanitarians:'humanitários (NF): sentido, ideais e a alma alheia',Pragmatists:'pragmáticos (ST): matéria, técnica e resultado tangível'};
 
-/* ============ SOCIÔNICA ============ */
-function tpSOC(){
-  const Y=tpY(); let h='';
-  if(Y){
-    h+='<div class="card tpe"><div class="kicker">seu tipo estimado</div>'
-      +'<div class="tpe-h"><b>'+Y.soc+' · '+((typeof SOC_NOME!=='undefined'&&SOC_NOME[Y.soc])||'')+'</b>'
-      +'<em>'+((typeof SOC_FRASE!=='undefined'&&SOC_FRASE[Y.soc])||'')+'</em></div>'
-      +'<p class="np-sub">alternativa: '+Y.socAlt+'</p>'
-      +(typeof tipCalcHTML==='function'?('<details class="np-int"><summary>Como foi estimado</summary>'+tipCalcHTML(Y,'soc')+'</details>'):'')
-      +tpNote+'</div>';
-    if(typeof perfilSOC==='function')h+='<div class="card">'+perfilSOC(Y)+'</div>';
-  }
-  h+=tpSec('Metabolismo informacional — o que a sociônica realmente propõe',
-    '<div class="tpx"><b>A ideia de Kępiński</b><p>Assim como o corpo metaboliza alimento, a psique metaboliza INFORMAÇÃO: recebe, digere, incorpora e devolve. Aušra Augustinavičiūtė uniu essa ideia às funções de Jung: cada psique digere bem certos tipos de informação e mal outros — e isso é estrutural, não falta de esforço.</p></div>'
-    +'<div class="tpx"><b>Oito aspectos da informação</b><p>A realidade chega dividida em oito aspectos (os elementos abaixo). O seu tipo é a ordem fixa em que sua psique os processa — quais digere com prazer, quais tolera, quais a intoxicam.</p></div>'
-    +'<div class="tpx"><b>Diferença para o MBTI</b><p>O MBTI descreve preferências declaradas; a sociônica descreve uma ESTRUTURA de processamento e, principalmente, as RELAÇÕES entre estruturas — dualidade, conflito, supervisão. É uma teoria de pares e grupos, não só de indivíduos.</p></div>');
-  const KG=(typeof TIPO_KG!=='undefined')?TIPO_KG:null;
-  if(KG){
-    h+=tpSec('Os oito elementos, um a um',KG.im.map(e=>{
-      return '<div class="tpx"><b>'+e.symbol+' — '+e.socionics_name+' <i>('+e.jung_name+' de Jung)</i></b>'
-        +'<p>'+(SOC_IM_DEEP[e.symbol]||'')+'</p>'
-        +'<p class="tpq3">'+(e.kind==='object'?'objeto':'campo')+' · '
-        +(e['class'].startsWith('rational')?'racional (julga)':'irracional (percebe)')+' · '
-        +(e.dynamics==='static'?'estático (estados)':'dinâmico (processos)')+'</p></div>';}).join(''));
-    h+=tpSec('Os microconceitos por trás do julgamento',SOC_MICRO.map(([a,b])=>
-      '<div class="tpx"><b>'+a+'</b><p>'+b+'</p></div>').join(''));
-    h+=tpSec('Temperamentos e clubes',
-      Object.values(SOC_TEMP).map(x=>'<div class="tpx"><b>'+cap1(x.split(':')[0])+'</b><p>'+x.split(': ').slice(1).join(': ')+'.</p></div>').join('')
-      +Object.values(SOC_CLUB).map(x=>'<div class="tpx"><b>Clube dos '+x.split(':')[0]+'</b><p>Interesse de fundo: '+x.split(': ').slice(1).join(': ')+'.</p></div>').join('')
-      +'<p class="tpq2">Temperamento = ritmo de energia (cruzamento extro/intro × racional/irracional). Clube = área de interesse (lógica/ética × sensação/intuição). Dois cortes transversais aos 16 tipos.</p>');
-    h+=tpSec('Modelo A — as oito posições',KG.modelA.sort((a,b)=>a.position-b.position).map(p=>{
-      const desc={1:'a função que opera o tempo todo, sem esforço — o ar que se respira',
-        2:'a ferramenta criativa: usada ativamente para resolver e produzir',
-        3:'o papel social: sustenta-se por um tempo, com esforço e sem prazer',
-        4:'o ponto vulnerável: a crítica aqui dói desproporcionalmente',
-        5:'a sugestiva: o que se recebe do outro com gratidão — a base da dualidade',
-        6:'a mobilizável: cresce quando alguém de confiança ativa',
-        7:'a ignorada: forte, mas deliberadamente posta de lado',
-        8:'a demonstrativa: forte e silenciosa, usada para proteger os seus'}[p.position];
-      return '<div class="tpx"><b>'+p.position+' · '+p.position_name+' <i>('+p.block+' · anel '+(p.ring==='mental'?'mental':'vital')+')</i></b><p>'+desc+'</p></div>';}).join(''));
-    h+=tpSec('As quatro quadras',KG.quadras.map(q=>{
-      const nm={'Alpha Quadra':'Alfa','Beta Quadra':'Beta','Gamma Quadra':'Gama','Delta Quadra':'Delta'}[q.name]||q.name;
-      const sp={'Alpha Quadra':'discussão aberta de ideias, conforto, leveza','Beta Quadra':'hierarquia, drama, lealdade de grupo, força de vontade','Gamma Quadra':'pragmatismo, vínculos pessoais, resultado, crítica','Delta Quadra':'humanismo, praticidade, aperfeiçoamento discreto'}[q.name]||q.spirit;
-      return '<div class="tpx"><b>'+nm+' <i>('+q.valued_elements.join(' · ')+')</i></b><p>Clima do grupo: '+sp+'.</p></div>';}).join('')
-      +'<p class="tpq2">Cada quadra valoriza quatro elementos; tipos da mesma quadra se entendem sem tradução, e o par ideal (o DUAL) está sempre dentro dela.</p>');
-    h+=tpSec('Os dezesseis tipos','<div class="tpg">'+KG.stypes.map(s=>
-      '<div class="tpg-i"><b>'+s.acronym+' <i>'+s.code+'</i></b>'
-      +'<span>'+s.gulenko_name+' · “'+s.pseudonym+'”</span>'
-      +'<em>'+({Alpha:'Alfa',Beta:'Beta',Gamma:'Gama',Delta:'Delta'})[s.quadra]+' · '+s.leading+'-'+s.creative+' · clube '+({Researchers:'dos pesquisadores',Socials:'social',Humanitarians:'humanitário',Pragmatists:'pragmático'})[s.club]+'</em></div>').join('')+'</div>');
-    h+=tpSec('Relações intertípicas','<p class="tpq2">A sociônica prevê '+KG.rel.length+' relações fixas entre os tipos — da dualidade (complementação plena) à supervisão e ao conflito (o vulnerável de um sob o forte do outro). É o único dos sistemas desta aba cuja unidade básica é o PAR, não o indivíduo.</p>');
-  }
-  return h;
-}
-
 /* ============ DISC ============ */
 const DISC_FATORES=[
   ['D','Dominância','como você lida com problemas e desafios.','Percebe-se mais forte que um ambiente hostil: avança. Direto, competitivo, decidido; motiva-se por desafio e controle; medo de fundo: ser usado, perder o comando. Sob pressão vira impaciência e imposição; em equipe, precisa de resultado à vista e detesta microgestão.'],
@@ -253,13 +184,28 @@ function tpSOCOA(){
 }
 
 /* ---------- render ---------- */
-const TP_TABS=[['mbti','MBTI'],['enn','Eneagrama'],['soc','Sociônica'],['disc','DISC'],['socoa','Socoa'],['guia','Guia']];
+/* A aba abre pelas seis seções da camada tipológica (tip-ui.js). Os
+   demais sistemas — Eneagrama, DISC, Socoa — e o Guia continuam
+   acessíveis, na segunda faixa, sem perder nada do que havia. */
+const TP_TABS=(typeof TIP_SECOES!=='undefined'?TIP_SECOES.map(x=>[x[0],x[1]]):[])
+  .concat([['enn','Eneagrama'],['disc','DISC'],['socoa','Socoa'],['guia','Guia']]);
+const TP_PRINCIPAIS=(typeof TIP_SECOES!=='undefined'?TIP_SECOES.length:0);
+function tpRender(id){
+  if(typeof TIP_SECOES!=='undefined'){
+    const S=TIP_SECOES.find(x=>x[0]===id);
+    if(S)return S[2]();
+  }
+  const outros={enn:tpENN,disc:tpDISC,socoa:tpSOCOA,guia:tpGUIA};
+  return outros[id]?outros[id]():'';
+}
 function renderTipos(){
   const bar=$('tp-tabs'), body=$('tp-body'); if(!bar||!body)return;
-  bar.innerHTML=TP_TABS.map(([id,lab])=>
-    '<button class="tp-tab'+(TP_TAB===id?' on':'')+'" data-tptab="'+id+'">'+lab+'</button>').join('');
+  if(!TP_TABS.some(x=>x[0]===TP_TAB))TP_TAB=TP_TABS[0][0];
+  bar.innerHTML=TP_TABS.map(([id,lab],i)=>
+    (i===TP_PRINCIPAIS&&TP_PRINCIPAIS?'<span class="tp-sep" aria-hidden="true"></span>':'')
+    +'<button class="tp-tab'+(TP_TAB===id?' on':'')+'" data-tptab="'+id+'">'+lab+'</button>').join('');
   try{
-    body.innerHTML={mbti:tpMBTI,enn:tpENN,soc:tpSOC,disc:tpDISC,socoa:tpSOCOA,guia:tpGUIA}[TP_TAB]();
+    body.innerHTML=tpRender(TP_TAB);
   }catch(e){console.error('tipologias',e);body.innerHTML='<p class="note">não foi possível montar esta seção.</p>';}
 }
 function bindTipos(){
@@ -271,5 +217,24 @@ function bindTipos(){
     if(g){TP_G=g.dataset.tpg;renderTipos();
       const a=document.querySelector('.gu-nav');
       if(a)a.scrollIntoView({behavior:'smooth',block:'start'});}
+    /* ---- camada tipológica nova ---- */
+    const sec=e.target.closest&&e.target.closest('[data-tipsec]');
+    if(sec){TP_TAB=sec.dataset.tipsec;renderTipos();window.scrollTo({top:0,behavior:'instant'});return;}
+    const fn=e.target.closest&&e.target.closest('[data-tipfn]');
+    if(fn){
+      const v=fn.dataset.tipfn;
+      TIP_SEL=v||null; TIP_SEL_SIS=v?(fn.dataset.tipsis||'mbti'):null;
+      renderTipos();
+      if(v){const d=document.querySelector('.tip-det');
+            if(d)d.scrollIntoView({behavior:'smooth',block:'start'});}
+      return;}
+    const q=e.target.closest&&e.target.closest('[data-tipq]');
+    if(q){autoResponder(q.dataset.tipq,q.dataset.tipv);renderTipos();return;}
+    const dc=e.target.closest&&e.target.closest('[data-tipdecl]');
+    if(dc){
+      const m=$('tip-decl-mbti'), so=$('tip-decl-soc');
+      autoTipoDeclarado('mbti',m?m.value.trim().toUpperCase():'');
+      autoTipoDeclarado('socionica',so?so.value.trim().toUpperCase():'');
+      renderTipos();return;}
   });
 }
