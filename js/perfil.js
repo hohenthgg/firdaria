@@ -420,24 +420,36 @@ function constitution(T){
 }
 
 /* ============================================================
-   4 · CORRESPONDÊNCIAS TIPOLÓGICAS — do padrão GLOBAL dos eixos
+   4 · CORRESPONDÊNCIAS TIPOLÓGICAS
+
+   O que havia aqui — e foi REMOVIDO — era uma conversão direta de
+   eixos caracterológicos em quatro letras do MBTI e, a partir das
+   MESMAS quatro dimensões, num sotipo sociônico. Aquela rotina:
+
+     · igualava extroversão a sociabilidade e expressividade;
+     · igualava intuição a abstração, imaginação e idealismo;
+     · igualava sentimento a emotividade, e pensamento à mera
+       ausência dela;
+     · igualava julgamento a ordem, planejamento e disciplina;
+     · escolhia cada letra por um corte em 50;
+     · produzia a “alternativa” invertendo a dicotomia menos
+       distante do meio;
+     · derivava o sociotipo das mesmas dimensões, por tabela;
+     · chamava de “compatibilidade” a distância média ao ponto médio.
+
+   Nenhum desses passos se sustenta, e todos foram retirados. A
+   inferência tipológica passou a ser feita por comparação de
+   estruturas completas, em módulos próprios e independentes:
+   tip-ponte.js, tip-inf-mbti.js e tip-inf-soc.js.
+
+   O que permanece aqui é apenas a estimativa do ENEAGRAMA, que
+   é um sistema de motivação e não de processos cognitivos, e cuja
+   derivação por eixos nunca dependeu daquelas equivalências.
    ============================================================ */
 function axisPos(A,nome){const a=A.find(x=>x.name.startsWith(nome));return a?a.pos:50;}
 function typology(A){
   if(!A.length)return null;
-  // dimensões agregadas a partir de vários eixos (nunca de um signo isolado)
   const E=(axisPos(A,'Extroversão')+axisPos(A,'Sociabilidade')+axisPos(A,'Expressividade'))/3;
-  const N=(axisPos(A,'Abstração')+axisPos(A,'Imaginação')+axisPos(A,'Idealismo'))/3;
-  const Fp=(axisPos(A,'Emotividade')+axisPos(A,'Sensibilidade')+(100-axisPos(A,'Análise')))/3;
-  const J=(axisPos(A,'Ordem')+axisPos(A,'Planejamento')+axisPos(A,'Disciplina'))/3;
-  const mbti=(E>=50?'E':'I')+(N>=50?'N':'S')+(Fp>=50?'F':'T')+(J>=50?'J':'P');
-  const dist=[['E/I',Math.abs(E-50)],['N/S',Math.abs(N-50)],['F/T',Math.abs(Fp-50)],['J/P',Math.abs(J-50)]];
-  const fraca=dist.slice().sort((a,b)=>a[1]-b[1])[0];
-  const alt=mbti.split('');
-  const idx={'E/I':0,'N/S':1,'F/T':2,'J/P':3}[fraca[0]];
-  alt[idx]={E:'I',I:'E',N:'S',S:'N',F:'T',T:'F',J:'P',P:'J'}[alt[idx]];
-  const mbtiAlt=alt.join('');
-  const compat=pct(dist.reduce((a,d)=>a+d[1],0)/4/50*100);
   // Eneagrama: por tríade de centro e orientação
   const assert_=axisPos(A,'Assertividade'), auton=axisPos(A,'Autonomia'),
         ordem=axisPos(A,'Ordem'), perf=axisPos(A,'Perfeccionismo'),
@@ -448,19 +460,12 @@ function typology(A){
     [4,(sensi_+axisPos(A,'Imaginação'))/2],[5,(axisPos(A,'Concentração')+(100-E))/2],
     [6,(vig+axisPos(A,'Tradição'))/2],[7,(hed+axisPos(A,'Expansão'))/2],
     [8,(dom+auton)/2],[9,(conc+axisPos(A,'Tolerância'))/2]].sort((a,b)=>b[1]-a[1]);
-  // Sociônica: dicotomias funcionais (Gulenko como material de comparação)
-  const so3=(E>=50?'E':'I')+(N>=50?'N':'S')+(Fp>=50?'F':'T');
-  const SOC={'ENFj':'EIE','ENFp':'IEE','ENTj':'LIE','ENTp':'ILE','ESFj':'ESE','ESFp':'SEE',
-    'ESTj':'LSE','ESTp':'SLE','INFj':'EII','INFp':'IEI','INTj':'LII','INTp':'ILI',
-    'ISFj':'ESI','ISFp':'SEI','ISTj':'LSI','ISTp':'SLI'};
-  const socio=SOC[so3+(J>=50?'j':'p')]||'—';
   const sust=A.filter(x=>x.conf>=70).slice(0,4).map(x=>x.name);
-  const diverg=dist.filter(d=>d[1]<10).map(d=>'a dicotomia '+d[0]+' está quase no meio ('+pct(50+d[1])+'%)');
-  return {mbti,mbtiAlt,compat,
-    compatLabel:compat>=40?'boa':compat>=22?'parcial':'fraca',
-    enn:enn[0][0],ennAlt:enn[1][0],ennScore:pct(enn[0][1]),
-    soc:socio, socAlt:SOC[(E>=50?'I':'E')+so3.slice(1)+(J>=50?'j':'p')]||'—',
-    dims:{E:pct(E),N:pct(N),F:pct(Fp),J:pct(J)}, sust, diverg};
+  return {enn:enn[0][0], ennAlt:enn[1][0], ennScore:pct(enn[0][1]), sust,
+    /* o app não deriva mais MBTI nem sociotipo daqui — ver tip-inf-*.js */
+    mbti:null, soc:null,
+    nota:'Estimativa restrita ao Eneagrama. MBTI e Sociônica são inferidos '
+      +'noutro lugar, por comparação de estruturas, e não por estas dimensões.'};
 }
 const ENN_NOME={1:'Perfeccionista',2:'Prestativo',3:'Realizador',4:'Individualista',5:'Investigador',
   6:'Leal',7:'Entusiasta',8:'Confrontador',9:'Pacificador'};
