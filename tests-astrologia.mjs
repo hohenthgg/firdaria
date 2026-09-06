@@ -101,6 +101,32 @@ for(const M of MAPAS){
   t('a casa profectada percorre 1..12 em ciclo',
     P.amostra.every(x=>x.casa===(x.idade%12)+1));
 
+  /* a VIRADA: um minuto antes e um minuto depois de cada aniversário.
+     Com anos médios o índice da idade adiantava — perto de um bissexto
+     chegava a trocar o signo por completo — e a janela exibida vinha de
+     uma segunda implementação, que podia discordar da primeira. */
+  const VIR = await pg.evaluate(()=>{
+    const n=new Date(BIRTH); const falhas=[];
+    for(let a=1;a<=60;a++){
+      const t=anivEm(n.getUTCFullYear()+a);
+      const antes=tempoState(new Date(t-60e3)), depois=tempoState(new Date(t+60e3));
+      const base=Math.floor(n360(NATAL.asc)/30);
+      if(antes.p.signIdx!==(base+a-1)%12||depois.p.signIdx!==(base+a)%12)
+        falhas.push('idade '+a+': o signo não virou no aniversário');
+      if(antes.idade!==a-1||depois.idade!==a)
+        falhas.push('idade '+a+': idade civil errada na virada');
+      const W=tlWindows(depois);
+      if(!W.prof.ini||W.prof.ini.getTime()>t+60e3||W.prof.fim.getTime()<=t+60e3)
+        falhas.push('idade '+a+': a janela não contém a data');
+      if(W.prof.ini&&(W.prof.ini.getUTCMonth()!==n.getUTCMonth()
+                    ||W.prof.ini.getUTCDate()!==n.getUTCDate()))
+        falhas.push('idade '+a+': a janela não começa no aniversário');
+    }
+    return {falhas:falhas.slice(0,4), n:falhas.length};
+  });
+  t('a profecção vira no aniversário civil, e não por anos médios',
+    VIR.n===0, VIR.n?VIR.falhas.join(' | '):'60 viradas conferidas, um minuto antes e depois');
+
   /* ---------- dignidades ---------- */
   const D = await pg.evaluate(()=>{
     const diurno=NATAL.sect==='diurno';

@@ -207,7 +207,9 @@ function transitoJanela(tn, natalLon, ang, orb, d, limiteDias){
 
 /* ---------- motor de relevância (auditável) ---------- */
 function scoreHit(hit,d){
-  const age=ageAt(d), f=firdAt(age), p=profAt(age), y=rsYearOf(d);
+  /* mesma distinção de tempoState: firdária por duração, profecção por
+     aniversário civil */
+  const age=ageAt(d), f=firdAt(age), p=profAt(idadeCivil(d)), y=rsYearOf(d);
   const F=[]; let s=0;
   const add=(pts,label)=>{s+=pts;F.push([pts,label]);};
   if(hit.tKey===f.majorKey) add(3,'transitante é senhor da firdária maior ('+f.major+')');
