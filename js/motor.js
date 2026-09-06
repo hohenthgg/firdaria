@@ -30,11 +30,17 @@ const cap1=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
 /* ---------- estado temporal completo numa data ---------- */
 function tempoState(d){
   if(typeof NATAL==='undefined'||!NATAL)return null;
-  const age=ageAt(d), f=firdAt(age), p=profAt(age);
+  /* DUAS idades, porque as técnicas contam o tempo de modos diferentes:
+       age   · anos médios contínuos — a firdária mede DURAÇÃO;
+       idade · aniversários civis    — a profecção vira no ANIVERSÁRIO.
+     Usar anos médios na profecção adiantava a virada em até um dia (e,
+     nos anos logo após um bissexto, trocava o signo por completo). */
+  const age=ageAt(d), idade=idadeCivil(d);
+  const f=firdAt(age), p=profAt(idade);
   const mk=f.majorKey, sk=(f.subKey&&f.subKey!==mk&&PT_NAME[f.subKey])?f.subKey:null;
   const rev=(typeof revNow==='function')?revNow(d):null;
   return {
-    d, age, f, mk, sk, p,
+    d, age, idade, f, mk, sk, p,
     lord:p.lordKey,                              // Senhor do Ano
     profHouse:p.houseN,
     rulesMk:mk?ruledHouses(mk):[],               // casas administradas pela firdária

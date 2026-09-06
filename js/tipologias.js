@@ -1,39 +1,19 @@
 /* ============================================================
    TIPOLOGIAS.JS — a aba extensa de tipologias.
 
-   Cinco sistemas em subabas: MBTI, Eneagrama, Sociônica, DISC e
-   Socoa. Cada um traz (1) o tipo estimado a partir do mapa, com a
-   auditoria de como foi estimado, e (2) o sistema explicado
-   elemento por elemento — dicotomias, funções, tríades, blocos.
-   Fontes estruturais: Filatova, Gulenko, Palmer, Pietrak (grafo),
-   Olavo/48 eixos (estimativa), Michel de Socoa (tipos planetários).
+   Monta a aba: primeiro as seis seções da camada tipológica nova
+   (tip-ui.js), depois Eneagrama, DISC, Socoa e o Guia, que continuam
+   aqui com a sua estrutura própria.
+
+   MBTI e Sociônica NÃO são montados neste arquivo: têm módulos de
+   definição, de inferência e de apresentação próprios, justamente
+   para não voltarem a depender da conversão de eixos que existia aqui.
+   Fontes estruturais desta aba: Palmer e Pietrak (Eneagrama),
+   Marston (DISC), Michel de Socoa (tipos planetários).
    ============================================================ */
 let TP_TAB='visao';
 
-/* ---------- vocabulário comum: as dicotomias de base ---------- */
-const TP_DICO={
-  ei:{t:'Introversão × Extroversão',
-    d:'Para onde a energia flui por padrão. O extrovertido orienta-se pelo OBJETO: pessoas, coisas e fatos externos o carregam, e a solidão o esvazia. O introvertido orienta-se pelo SUJEITO: processa por dentro, gasta energia no contato e a recupera sozinho. Não é timidez nem sociabilidade — é a direção do investimento psíquico.'},
-  sn:{t:'Sensação × Intuição',
-    d:'Como se colhe informação. A sensação registra o que ESTÁ presente: dados concretos, detalhes, o real verificável. A intuição registra o que PODE estar: padrões, ligações, possibilidades por trás do dado. São as duas funções irracionais (perceptivas) de Jung: colhem, não julgam.'},
-  tf:{t:'Pensamento × Sentimento',
-    d:'Como se decide. O pensamento julga por critérios impessoais: verdadeiro/falso, funciona/não funciona. O sentimento julga por valor: importa/não importa, aproxima/afasta. São as duas funções racionais (julgadoras) de Jung — o sentimento é tão avaliativo e consistente quanto o pensamento, apenas usa outro critério.'},
-  jp:{t:'Racionalidade × Irracionalidade (J × P)',
-    d:'Qual classe de função comanda a vida externa. O racional (J) vive pelo juízo: fecha, decide, agenda, incomoda-se com o aberto. O irracional (P) vive pela percepção: mantém aberto, adapta, improvisa, incomoda-se com o fechado cedo demais. Na sociônica esta dicotomia é definida pela função DOMINANTE; no MBTI, pela função extrovertida — por isso os códigos dos introvertidos podem divergir entre os dois sistemas.'}
-};
-const tpDicoHTML=()=>Object.values(TP_DICO).map(x=>
-  '<div class="tpx"><b>'+x.t+'</b><p>'+x.d+'</p></div>').join('');
 
-/* o que cada função É, antes de qualquer posição na pilha */
-const TP_FN_DEEP={
-  Ni:'Percepção voltada para dentro e para o tempo: comprime muitas observações num único fio — "para onde isto vai". Trabalha por imagens e convicções que chegam prontas, sem mostrar o caminho. Força: antecipação, síntese, sentido de destino. Custo: difícil de comunicar e de corrigir, porque o processo é invisível até para o dono.',
-  Ne:'Percepção voltada para fora e para o possível: cada objeto irradia alternativas — o que ele poderia ser, com o que se conecta. Trabalha por associação e analogia, em leque. Força: geração de ideias, faro para potencial. Custo: dispersão e dificuldade genuína de fechar.',
-  Si:'Percepção voltada para dentro e para o corpo: registra como as coisas afetam o organismo e compara com o arquivo do vivido. É a função do lastro — conforto, hábito, continuidade. Força: estabilidade, memória fina, cuidado com o concreto. Custo: aversão ao novo e apego ao já conhecido mesmo quando ruim.',
-  Se:'Percepção voltada para fora e para o presente: o real imediato em máxima resolução — força, espaço, oportunidade, quem ocupa o quê. Força: presença, tempo de reação, capacidade de impor-se. Custo: impaciência com o abstrato e apetite por estímulo.',
-  Ti:'Juízo voltado para dentro pela lógica: constrói um sistema interno de definições e exige coerência entre as partes. Não pergunta "funciona?", pergunta "fecha?". Força: precisão, independência de critério. Custo: lentidão prática e desprezo pelo que funciona sem estar bem definido.',
-  Te:'Juízo voltado para fora pela lógica: ordena o mundo por eficácia — meta, método, medida, resultado verificável. Não pergunta "fecha?", pergunta "funciona?". Força: execução, organização, decisão rápida por dados. Custo: atropela nuances e pessoas quando o indicador vira fim.',
-  Fi:'Juízo voltado para dentro pelo valor: mantém uma hierarquia íntima do que importa e mede cada ato contra ela. Silencioso e inegociável. Força: autenticidade, lealdade profunda, senso do que é digno. Custo: opacidade — os outros não sabem o que foi violado até a ruptura.',
-  Fe:'Juízo voltado para fora pelo valor: lê o campo emocional do grupo e o regula — acolhe, celebra, apazigua, mobiliza. O critério é o que aproxima e sustenta o laço. Força: coesão, tato, liderança afetiva. Custo: a própria vontade se perde no consenso, e a autenticidade individual paga o preço.'};
 
 /* ---------- helpers ---------- */
 function tpY(){
@@ -96,28 +76,6 @@ function tpENN(){
   return h;
 }
 
-/* os oito elementos do metabolismo informacional, em profundidade.
-   Cada um é um ASPECTO da realidade que a psique digere — não um traço. */
-const SOC_IM_DEEP={
-  Ne:'Intuição das possibilidades: percebe o potencial oculto dos objetos e das pessoas — o que algo PODE ser, a essência por trás da aparência. Quem a tem forte enxerga talentos e alternativas de saída onde nada parece haver; quem a tem fraca sofre para avaliar potencial e teme apostar errado.',
-  Ni:'Intuição do tempo: percebe o desenvolvimento dos processos — de onde vêm, para onde vão, quando maduram. É o senso de momento certo, de história e de consequência. Forte, dá previsão e paciência estratégica; fraca, dá atropelo dos prazos e cegueira para o desdobramento.',
-  Se:'Sensação volitiva: percebe força, território e mobilização — quem ocupa o espaço, quanta pressão o real suporta, como impor e resistir. Forte, dá capacidade de conquista e defesa; fraca, dá dificuldade de brigar pelo próprio lugar e de sustentar confronto.',
-  Si:'Sensação experiencial: percebe o bem-estar do corpo e a qualidade do ambiente — conforto, saúde, estética do cotidiano, o ajuste fino entre organismo e entorno. Forte, dá o dom de cuidar e harmonizar o concreto; fraca, dá desatenção crônica ao corpo e ao ambiente.',
-  Te:'Lógica prática: digere fatos, procedimentos e utilidade — como as coisas funcionam, quanto custam, se valem o esforço. Forte, dá competência executiva e faro para o eficiente; fraca, dá insegurança com dados, dinheiro e método.',
-  Ti:'Lógica estrutural: digere sistemas, definições e hierarquias conceituais — o que pertence a quê, o que decorre de quê. Forte, dá clareza classificatória e rigor; fraca, dá aversão a esquemas e sensação de sufoco diante de regras formais.',
-  Fe:'Ética das emoções: digere o clima emocional visível — entusiasmo, luto, festa, moral do grupo — e sabe acendê-lo ou apagá-lo. Forte, dá expressividade e contágio; fraca, dá rosto fechado e desconforto com efusão alheia.',
-  Fi:'Ética das relações: digere a distância psicológica entre as pessoas — quem é próximo, quem é hostil, o que a relação comporta. Forte, dá julgamento seguro de caráter e vínculos profundos; fraca, dá dúvida constante sobre "como estamos" e gafes de proximidade.'};
-/* os pares de conceitos que estruturam a sociônica */
-const SOC_MICRO=[
- ['Objeto × Campo (extrovertido × introvertido)','Elementos de OBJETO (Ne, Se, Te, Fe) digerem propriedades das coisas em si: potencial, força, utilidade, emoção expressa. Elementos de CAMPO (Ni, Si, Ti, Fi) digerem as RELAÇÕES entre as coisas: tempo, ajuste, estrutura, distância afetiva. É a versão sociônica da introversão/extroversão de Jung — por elemento, não por pessoa.'],
- ['Racional × Irracional','Ti, Te, Fi e Fe são racionais: avaliam e concluem. Ne, Ni, Se e Si são irracionais: registram e acompanham. O tipo é racional ou irracional conforme a função DOMINANTE — e disso derivam ritmos de vida diferentes (decidir primeiro × perceber primeiro).'],
- ['Estático × Dinâmico','Elementos estáticos (Ne, Se, Ti, Fi) fotografam ESTADOS: estruturas, posições, qualidades fixas. Dinâmicos (Ni, Si, Te, Fe) filmam PROCESSOS: fluxos, mudanças, desenvolvimento. Tipos estáticos pensam em quadros; dinâmicos, em filmes.'],
- ['Forte × Fraca','As funções 1-2-7-8 do Modelo A são fortes: processam muita informação sem fadiga. As 3-4-5-6 são fracas: processam pouco e cansam. Fraqueza não é defeito moral — é limite estrutural de banda; a vida boa se organiza para receber dos outros o que as fracas não produzem.'],
- ['Mental × Vital','O anel mental (funções 1-4) opera consciente e verbalizável: é de onde se fala. O anel vital (5-8) opera automático, no corpo e no hábito: aparece no que se faz sem perceber. Muita incompreensão entre pessoas é um anel mental tentando discutir com o vital do outro.'],
- ['Valorizada × Não valorizada','Cada quadra valoriza 4 dos 8 elementos. Informação valorizada é bem-vinda mesmo quando fraca (a sugestiva é fraca e adorada); a não valorizada irrita mesmo quando forte (a ignorada é forte e posta de lado). Amor e alergia informacional não seguem a força — seguem o valor.']];
-/* temperamentos e clubes */
-const SOC_TEMP={'linear-assertive':'linear-assertivo (EJ): ritmo contínuo e dirigido — age, corrige agindo','flexible-maneuvering':'flexível-manobrante (EP): ritmo de rajadas e oportunidade — muda de ângulo sem aviso','balanced-stable':'equilibrado-estável (IJ): ritmo constante e regrado — não começa sem necessidade, não para no meio','receptive-adaptive':'receptivo-adaptativo (IP): ritmo ondulado — acompanha o ambiente e economiza esforço'};
-const SOC_CLUB={Researchers:'pesquisadores (NT): estruturas, teorias e o porquê das coisas',Socials:'sociais (SF): pessoas concretas, cuidado e convívio',Humanitarians:'humanitários (NF): sentido, ideais e a alma alheia',Pragmatists:'pragmáticos (ST): matéria, técnica e resultado tangível'};
 
 /* ============ DISC ============ */
 const DISC_FATORES=[

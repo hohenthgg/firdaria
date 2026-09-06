@@ -79,7 +79,8 @@ function tipVisaoGeral(){
       +card('MBTI','convenção de dinâmica de tipo declarada', I.mbti, 'mbti',
         p=>MBTI_FRASE_CURTA[p.tipo]||'')
       +card('Sociônica','Modelo A · inferência independente', I.soc, 'soc',
-        p=>p.nome+' · '+p.quadra+' · '+p.racionalidade.rotulo)
+        p=>(SOC_FRASE[p.tipo]||p.nome)+' — quadra '+p.quadra+', tipo '
+           +p.racionalidade.rotulo)
     +'</div>'
     +'<p class="tip-nota">Os dois candidatos acima foram produzidos por motores '
       +'separados, com regras próprias. Não há no app nenhuma conversão de letras '
@@ -135,6 +136,20 @@ function tipFuncoes(){
     h+='<p class="tip-nota"><b>Posição, força e valoração são três coisas diferentes.</b> '
       +'As posições 7 e 8 são fortes e NÃO valoradas; as 5 e 6 são fracas e valoradas. '
       +'Os rótulos acima dizem qual é qual, e não se substituem uns aos outros.</p>';
+    /* que dimensões a evidência cobre — e o que fica indeterminado sem elas */
+    if(I.soc.dimensoes){
+      const Dm=I.soc.dimensoes;
+      h+='<div class="tip-dim"><span class="tip-bl">dimensões da evidência</span>'
+        +'<ul>'
+        +'<li><b>capacidade</b> <i>'+(Dm.capacidade?'com apoio':'sem apoio')+'</i>'
+          +'<em>'+INF_SOC_DIMENSOES.capacidade.afirma+' — apoia as posições fortes, '
+          +'contraria as fracas</em></li>'
+        +'<li><b>valoração</b> <i>'+(Dm.valoracao?'com apoio':'sem apoio')+'</i>'
+          +'<em>'+INF_SOC_DIMENSOES.valoracao.afirma+' — apoia as valoradas, '
+          +'contraria as não valoradas</em></li>'
+        +'<li><b>busca</b> <i>sem fonte</i><em>'+Dm.buscaNota+'</em></li>'
+        +'</ul><p>'+Dm.nota+'</p></div>';
+    }
   } else h+='<p class="tip-nada">Sem candidato sociônico: evidência insuficiente.</p>';
   h+='</section>';
   if(TIP_SEL)h+=tipDetalheFuncao(TIP_SEL,TIP_SEL_SIS);
@@ -301,6 +316,7 @@ function tipRefinar(){
     +'<button class="tip-salvar" data-tipdecl="1">guardar</button></div>';
   /* confronto das três fontes */
   const C=autoConfronto(I?I.mbti:null, I?I.soc:null);
+  if(C.avisoHerdado)h+='<p class="tip-inst">'+C.avisoHerdado+'</p>';
   h+='<h4 class="tip-h4">As três fontes, lado a lado</h4>'
     +C.linhas.map(l=>'<div class="tip-conf"><b>'+(l.sistema==='mbti'?'MBTI':'Sociônica')+'</b>'
       +'<ul><li><span>hipótese natal</span><i>'+(l.natal||'—')+'</i></li>'
@@ -326,6 +342,44 @@ function tipFontes(){
   h+='<h4 class="tip-h4">Os quatro estágios da ponte</h4><ol class="tip-est">'
     +PONTE_ESTAGIOS.map(e=>'<li><b>'+e.nome+'</b> <i>'+e.natureza+'</i><p>'+e.o_que_e+'</p></li>').join('')
     +'</ol>';
+  /* as definições cruas de cada sistema — estavam nos módulos e não
+     apareciam em lugar nenhum da interface */
+  h+='<h4 class="tip-h4">Jung · as quatro funções e as duas atitudes</h4>'
+    +'<p class="tip-sub">'+JUNG_DOMINANCIA.o_que_e+'</p>'
+    +'<p class="tip-lim">'+JUNG_DOMINANCIA.o_que_nao_diz+'</p>'
+    +'<div class="tip-defs">'
+    +Object.values(JUNG_FUNCOES).map(f=>'<div><b>'+f.nome+'</b>'
+      +'<i>'+f.classe+'</i><p>'+f.o_que_e+'</p>'
+      +'<p class="tip-lim">'+f.nao_e+'</p></div>').join('')
+    +Object.values(JUNG_ATITUDES).map(a=>'<div><b>'+a.nome+'</b>'
+      +'<i>atitude</i><p>'+a.o_que_e+'</p>'
+      +'<p class="tip-lim">'+a.nao_e+'</p></div>').join('')
+    +'</div>'
+    +'<p class="tip-nota">Combinando as quatro funções com as duas atitudes '
+    +'chegam-se às oito que Jung nomeou: '
+    +JUNG_OITO.map(x=>x[2]).join(' · ')+'. '
+    +'A divisão racional/irracional é dele e classifica FUNÇÕES — '
+    +JUNG_RACIONALIDADE.racional.o_que_e+' '+JUNG_RACIONALIDADE.irracional.o_que_e+'</p>';
+
+  h+='<h4 class="tip-h4">MBTI · as quatro dicotomias, e o que elas não são</h4>'
+    +'<div class="tip-defs">'
+    +Object.values(MBTI_DICOTOMIAS).map(d=>'<div><b>'+d.nome+'</b>'
+      +'<i>'+d.par.join(' × ')+'</i><p>'+d.o_que_e+'</p>'
+      +'<p class="tip-lim">'+d.nao_e+'</p></div>').join('')
+    +'</div>'
+    +'<p class="tip-nota">A convenção de pilha adotada é «'+MBTI_CONVENCAO.nome
+    +'», e as suas regras são estas: '+MBTI_CONVENCAO.regra.join(' ')+'</p>';
+
+  h+='<h4 class="tip-h4">Sociônica · notação e relações intertipo</h4>'
+    +'<p class="tip-sub">A identificação primária é o código de três letras. '
+    +'Ao lado, a notação sociônica de quatro letras — que não é a do MBTI:</p>'
+    +'<div class="tip-not">'+SOC_TIPOS.map(t=>'<span><b>'+t+'</b> '+SOC_QUATRO[t]
+      +'<i>'+SOC_NOMES[t]+'</i></span>').join('')+'</div>'
+    +'<p class="tip-lim">'+SOC_FONTE.notacao+'</p>'
+    +'<div class="tip-defs">'+Object.entries(SOC_RELACOES).map(([k,v])=>
+      '<div><b>'+k+'</b><p>'+v+'</p></div>').join('')+'</div>'
+    +'<p class="tip-lim">'+SOC_RELACOES_AVISO+'</p>';
+
   h+='<h4 class="tip-h4">Os três vocabulários, separados</h4>'
     +'<div class="tip-voc">'
     +'<div><b>Jung</b><p>'+JUNG_FONTE.obra+' — '+JUNG_FONTE.loc+'.</p>'

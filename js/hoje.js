@@ -19,9 +19,20 @@ function hojeCiclosHTML(S){
     ['k2','Subfirdária',(PT_GLYPH[S.sk||S.f.majorKey]||'✦')+'︎',PT_NAME[S.sk||S.f.majorKey]||'—',
       W&&W.sub.fim?('até '+fdate(W.sub.fim)):'—',
       S.sk?('Traz '+casasTag(S.rulesSk)+' como assunto imediato.'):'A fase repete o regente do ciclo.'],
-    ['k3','Profecção',(PT_GLYPH[S.lord]||'✦')+'︎','Casa '+S.profHouse+' · '+PT_NAME[S.lord],
+    /* o SIGNO ativado vem escrito no rótulo: é ele que define o Senhor do
+       Ano, e sem nomeá-lo a casa 12 parece contradizer a cúspide natal */
+    ['k3','Profecção',(PT_GLYPH[S.lord]||'✦')+'︎',
+      'Casa '+S.profHouse+' · '+(S.p&&S.p.sign?S.p.sign:'')+' · '+PT_NAME[S.lord],
       W?per(W.prof.ini,W.prof.fim):'—',
-      'O ano trata de '+casaTag(S.profHouse)+', sob '+PT_NAME[S.lord]+'.'],
+      'O ano trata de '+casaTag(S.profHouse)+', sob '+PT_NAME[S.lord]+'.'
+      +(S.p&&S.p.divergeCuspide
+        ? ('<span class="hj-alt">Contado por signos inteiros, o '+S.profHouse
+           +'º lugar a partir do Ascendente é <b>'+S.p.sign+'</b> — por isso o '
+           +'Senhor do Ano é '+PT_NAME[S.p.lordKey]+'. A cúspide Placidus dessa '
+           +'casa cai em '+S.p.cuspSignNm+', que daria '+PT_NAME[S.p.lordCuspide]
+           +': critério alternativo, mostrado ao lado e nunca somado nem '
+           +'substituído a este.</span>')
+        : '')],
     S.rev
       ? ['k4','Revolução '+S.rev.label,sgOf(S.rev.ascLon),S.rev.ascSignNm,
          per(S.rev.start,S.rev.end),
@@ -105,7 +116,10 @@ function renderHoje(){
   const el=$('hoje-body'); if(!el)return;
   if(typeof NATAL==='undefined'||!NATAL){el.innerHTML=emptyState();return;}
   const d=new Date(), S=(typeof tempoState==='function')?tempoState(d):null;
-  const idade=(typeof ageAt==='function')?Math.floor(ageAt(d)):null;
+  /* idade CIVIL — a mesma que decide a profecção. Com anos médios, o
+     cabeçalho podia dizer 22 enquanto o card mostrava a casa dos 23. */
+  const idade=(typeof idadeCivil==='function')?idadeCivil(d)
+            : (typeof ageAt==='function'?Math.floor(ageAt(d)):null);
   el.innerHTML=
      '<div class="hj-top"><div><span class="hj-k">hoje</span>'
       +'<h3>'+fdate(d)+'</h3>'

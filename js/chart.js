@@ -153,6 +153,7 @@ function buildChart(parsed, birthISO, sectMode, name){
      tipológica em cache. Navegar no TEMPO não a invalida — só o mapa muda
      os fatos de que ela depende. */
   if(typeof tipInvalidar==='function')tipInvalidar();
+  if(typeof rsAnoInvalidar==='function')rsAnoInvalidar();
   return NATAL;
 }
 function fmtOrb(o){return Math.floor(o)+'°'+String(Math.round((o%1)*60)).padStart(2,'0')+'′';}
@@ -309,8 +310,24 @@ function addRS(parsed, year){
   // aglomerados por casa da RS
   const byH={}; Object.entries(parsed.pts).forEach(([k,rp])=>{if(PT_NAME[k]&&rp.h){(byH[rp.h]=byH[rp.h]||[]).push(PT_NAME[k]);}});
   Object.entries(byH).forEach(([h,arr])=>{if(arr.length>=3)notes.push('Três ou mais planetas ('+arr.join(', ')+') concentram-se na casa '+h+' da Revolução: o ano converge para '+HOUSE_SHORT[h]);});
+  /* ---- aspectos da Revolução: recompostos quando o arquivo não os traz ----
+     O natal já fazia isto; a Revolução não, e por isso a pontuação de
+     trânsitos ficava dependente de o arquivo importado trazer a lista de
+     aspectos. Sem ela, RSMETA.echo[ano] saía vazio e o critério “repete
+     aspecto presente na Revolução” nunca somava. Uma técnica, um motor. */
+  let rsAsp=(parsed.aspects||[]).filter(a=>a.orb!==null);
+  const rsAspRecompostos=!rsAsp.length;
+  let rsAspErro=null;
+  if(rsAspRecompostos){
+    /* ASP_PL vem de dignidades.js, que é o motor único de aspectos. Não se
+       usa aqui a lista local de buildChart: ela é privada daquela função,
+       e referenciá-la lançava ReferenceError — que um catch silencioso
+       transformava em "zero aspectos", exatamente o sintoma relatado. */
+    try{ rsAsp=aspectosDe(lonsDe(parsed.pts), ASP_PL); }
+    catch(e){ rsAsp=[]; rsAspErro=e.message; console.error('RS: aspectos não recompostos —',e); }
+  }
   // aspectos mais apertados
-  const asps=(parsed.aspects||[]).filter(a=>a.orb!==null).sort((a,b)=>a.orb-b.orb).slice(0,3)
+  const asps=rsAsp.slice().sort((a,b)=>a.orb-b.orb).slice(0,3)
     .map(a=>PT_NAME[a.a]+' '+({harm:'em harmonia com',tens:'em tensão com',conj:'em conjunção com'})[ASPECTS.find(A=>A[0]===a.ang)[2]]+' '+PT_NAME[a.b]+' ('+fmtOrb(a.orb)+')');
   if(asps.length)notes.push('Os aspectos mais exatos da Revolução: '+asps.join('; '));
   // estrelas nos ângulos e no senhor
@@ -318,9 +335,10 @@ function addRS(parsed, year){
     .map(s=>'o '+s.who.toUpperCase()+' da Revolução em conjunção com a estrela '+s.star+(STAR_MEANINGS[s.star]?(' — '+STAR_MEANINGS[s.star]):''));
   const lordSt=(parsed.stars||[]).filter(s=>s.who===p.lordKey).map(s=>PT_NAME[s.who]+' em conjunção com a estrela '+s.star+(STAR_MEANINGS[s.star]?(' — '+STAR_MEANINGS[s.star]):''));
   RSMETA.angular[year]=angular;
-  RSMETA.echo[year]=(parsed.aspects||[]).map(a=>[a.a,a.b,a.ang]);
+  RSMETA.echo[year]=rsAsp.map(a=>[a.a,a.b,a.ang]);
   RS_DATA[year]={
     asc:ascTxt,
+    aspectos:rsAsp, aspRecompostos:rsAspRecompostos, aspErro:rsAspErro,
     destaque:notes.join('. ')+'.',
     estrelas:(angSt.concat(lordSt).join('; ')||'sem estrelas nos ângulos da Revolução'),
     raw:parsed};

@@ -469,6 +469,3 @@ function typology(A){
 }
 const ENN_NOME={1:'Perfeccionista',2:'Prestativo',3:'Realizador',4:'Individualista',5:'Investigador',
   6:'Leal',7:'Entusiasta',8:'Confrontador',9:'Pacificador'};
-const SOC_NOME={EIE:'Mentor',IEE:'Conselheiro',LIE:'Empreendedor',ILE:'Inventor',ESE:'Entusiasta',
-  SEE:'Político',LSE:'Administrador',SLE:'Comandante',EII:'Humanista',IEI:'Lírico',LII:'Analista',
-  ILI:'Crítico',ESI:'Guardião',SEI:'Mediador',LSI:'Inspetor',SLI:'Artesão'};
