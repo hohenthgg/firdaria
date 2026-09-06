@@ -1955,6 +1955,17 @@ body.sheet-open{overflow:hidden}
 .tip-not span{background:var(--bg2);border:1px solid var(--line);border-radius:99px;
   padding:5px 11px;font-family:var(--mono);font-size:.68rem;color:var(--dim2)}
 .tip-not b{color:var(--ivory2);font-weight:600}
+.tip-dim{margin-top:12px;padding:12px 14px;border:1px dashed var(--line2);border-radius:13px}
+.tip-dim ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.tip-dim li{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:baseline}
+.tip-dim b{font-size:.82rem;color:var(--ivory2)}
+.tip-dim i{font-style:normal;font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--dim2);border:1px solid var(--line2);
+  border-radius:99px;padding:2px 8px}
+.tip-dim em{font-style:normal;font-size:.74rem;line-height:1.5;color:var(--dim2)}
+.tip-dim>p{margin:10px 0 0;padding-top:9px;border-top:1px solid var(--line);
+  font-size:.77rem;line-height:1.6;color:var(--dim)}
+body.is-mobile .tip-dim li{grid-template-columns:1fr}
 .tip-not i{font-style:normal;font-family:var(--sans);color:var(--dim);margin-left:6px}
 @media(max-width:1080px){.tip-defs{grid-template-columns:1fr}}
 body.is-mobile .tip-defs{grid-template-columns:1fr}

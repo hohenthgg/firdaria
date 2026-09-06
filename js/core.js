@@ -43,13 +43,35 @@ function anoProfectado(d){
   const anoIni=new Date(BIRTH).getUTCFullYear()+idade;
   return {idade, ini:new Date(anivEm(anoIni)), fim:new Date(anivEm(anoIni+1))};
 }
-/* ano da última Revolução Solar anterior à data — pelo aniversário real
-   (mesma convenção de anivEm: mês, dia e hora do nascimento em UTC) */
-const rsYearOf=d=>{
-  const y=d.getUTCFullYear();
-  if(!BIRTH)return y;
-  return d.getTime()>=anivEm(y)?y:y-1;
-};
+/* ---------- ano da Revolução Solar vigente numa data ----------
+   Havia duas convenções em uso: esta escolhia o ano pelo ANIVERSÁRIO
+   civil, enquanto o motor de revoluções determina o RETORNO ASTRONÔMICO
+   — o instante em que o Sol volta ao grau natal. Os dois não coincidem:
+   o retorno cai até cerca de um dia antes ou depois do aniversário, e
+   nesse intervalo os módulos consultavam anos diferentes.
+
+   Agora a fonte primária é o próprio retorno astronômico: o ano é o do
+   INÍCIO do período de revolução que contém a data. O aniversário fica
+   como reserva, para quando o motor de efemérides não estiver
+   disponível — e é isso que a interface declara.
+
+   O resultado é memorizado por dia, porque scoreHit() consulta uma vez
+   por trânsito avaliado e a busca do retorno é cara. */
+let _rsAnoCache={};
+function rsAnoInvalidar(){ _rsAnoCache={}; }
+function rsYearOf(d){
+  const yCiv=d.getUTCFullYear();
+  if(!BIRTH)return yCiv;
+  const chave=Math.floor(d.getTime()/DAY);
+  if(_rsAnoCache[chave]!=null)return _rsAnoCache[chave];
+  let y=null;
+  try{
+    const R=(typeof revolutionFor==='function')?revolutionFor('solar',d):null;
+    if(R&&R.start)y=new Date(R.start).getUTCFullYear();
+  }catch(e){ y=null; }
+  if(y==null)y=(d.getTime()>=anivEm(yCiv)?yCiv:yCiv-1);   // reserva
+  return (_rsAnoCache[chave]=y);
+}
 
 /* ---------- FIRDÁRIA ----------
    Períodos persas (Albumasar): a sequência começa pelo Sol nos mapas
@@ -146,8 +168,24 @@ function transitHits(d){
    só a primeira. Nenhuma delas é apresentada como acontecimento certo:
    é a geometria do contato, e nada mais. */
 function transitoJanela(tn, natalLon, ang, orb, d, limiteDias){
-  const f=t=>Math.abs(adiff(tlon(tn,new Date(t)), natalLon))-ang;   // 0 no exato
-  const dentro=t=>Math.abs(f(t))<=orb;
+  /* ---- por que NÃO se procura raiz em |separação| − ângulo ----
+     Aquela função é sempre ≥ 0 na conjunção (ângulo 0) e sempre ≤ 0 na
+     oposição (ângulo 180): ela TOCA o zero no instante exato, sem trocar
+     de sinal. Uma varredura por mudança de sinal, portanto, nunca via a
+     exatidão desses dois aspectos — e o app ainda concluía, por engano,
+     que o corpo se aproximara e voltara atrás.
+
+     A busca correta usa o resíduo COM SINAL. Com a separação orientada
+     sep(t) = wrap180(longitude − ponto natal), o aspecto é exato quando
+     sep vale +ângulo ou −ângulo; cada um desses resíduos cruza o zero de
+     verdade, trocando de sinal. Os dois ramos são varridos (a quadratura
+     perfaz por qualquer um dos lados) e as raízes coincidentes são
+     unificadas — na conjunção e na oposição os dois ramos são o mesmo
+     ponto. Cada raiz encontrada é depois VALIDADA pelo resíduo angular. */
+  const lonEm=t=>tlon(tn,new Date(t));
+  const sep=t=>wrap180(lonEm(t)-natalLon);          // separação com sinal
+  const desvio=t=>Math.abs(adiff(lonEm(t),natalLon)-ang);  // distância ao exato
+  const dentro=t=>desvio(t)<=orb;
   const t0=d.getTime();
   if(!dentro(t0))return null;
   const lim=(limiteDias||900)*DAY;
@@ -174,20 +212,39 @@ function transitoJanela(tn, natalLon, ang, orb, d, limiteDias){
     return null;                            // não saiu dentro do limite
   };
   const entrada=borda(-1), saida=borda(1);
-  /* passagens exatas: mudanças de sinal de f dentro da janela */
-  const exatos=[];
+  /* ---- passagens exatas, pelos dois ramos do resíduo com sinal ---- */
   const ini=entrada!=null?entrada:t0-lim, fim=saida!=null?saida:t0+lim;
-  let tA=ini, fA=f(tA);
-  for(let t=ini+passo; t<=fim; t+=passo){
-    const fB=f(t);
-    if((fA<=0)!==(fB<=0)&&Math.abs(fB-fA)<orb*4){
-      let a=tA,b=t;
-      for(let i=0;i<40;i++){const m=(a+b)/2; if((f(a)<=0)===(f(m)<=0))a=m; else b=m;}
-      exatos.push((a+b)/2);
+  const brutas=[];
+  [+1,-1].forEach(sinal=>{
+    const r=t=>wrap180(sep(t)-sinal*ang);
+    let tA=ini, rA=r(tA);
+    for(let t=ini+passo; t<=fim; t+=passo){
+      const rB=r(t);
+      /* o salto de +180 para −180 do próprio wrap180 também troca o sinal:
+         só conta como raiz quando o passo é pequeno em módulo */
+      if((rA<0)!==(rB<0) && Math.abs(rB-rA)<90){
+        let a=tA, b=t;
+        for(let i=0;i<50;i++){
+          const m=(a+b)/2;
+          if((r(a)<0)===(r(m)<0))a=m; else b=m;
+        }
+        brutas.push((a+b)/2);
+      }
+      tA=t; rA=rB;
     }
-    tA=t; fA=fB;
-  }
-  return {entrada, saida, exatos,
+  });
+  /* validação do resíduo angular: uma raiz só é aceita se o aspecto está
+     de fato exato ali. Descarta raízes espúrias do wrap e da bissecção. */
+  const TOL=1e-3;                                   // grau
+  const validas=brutas.filter(t=>desvio(t)<=TOL);
+  const descartadas=brutas.length-validas.length;
+  /* os dois ramos coincidem na conjunção e na oposição: unifica raízes
+     separadas por menos de uma hora */
+  validas.sort((a,b)=>a-b);
+  const exatos=[];
+  validas.forEach(t=>{ if(!exatos.length||t-exatos[exatos.length-1]>3600e3)exatos.push(t); });
+  const residuoMax=exatos.length?Math.max(...exatos.map(t=>desvio(t))):null;
+  return {entrada, saida, exatos, residuoMax, descartadas,
     passagens:exatos.length,
     repetido:exatos.length>1,
     duracaoDias:(entrada!=null&&saida!=null)?((saida-entrada)/DAY):null,
@@ -197,8 +254,10 @@ function transitoJanela(tn, natalLon, ang, orb, d, limiteDias){
         +'o mesmo grau. É a mesma configuração revisitada, e não '+exatos.length
         +' acontecimentos.'
       : exatos.length===0
-      ? 'O aspecto entra e sai do orbe sem chegar a perfazer: aproxima-se do '
-        +'ângulo exato, volta atrás e afasta-se. Contato parcial.'
+      ? 'Dentro da janela varrida o aspecto não chega a perfazer: entra no orbe '
+        +'e sai sem que a separação atinja o ângulo exato. Contato parcial — o '
+        +'que pode ocorrer por afastamento, por retrogradação antes do encontro, '
+        +'ou porque a elongação máxima do corpo não alcança esse ângulo.'
       : (entrada==null||saida==null)
       ? 'A janela excede o intervalo varrido — o contato é mais longo do que o '
         +'período examinado.'

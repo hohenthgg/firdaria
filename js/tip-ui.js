@@ -136,6 +136,20 @@ function tipFuncoes(){
     h+='<p class="tip-nota"><b>Posição, força e valoração são três coisas diferentes.</b> '
       +'As posições 7 e 8 são fortes e NÃO valoradas; as 5 e 6 são fracas e valoradas. '
       +'Os rótulos acima dizem qual é qual, e não se substituem uns aos outros.</p>';
+    /* que dimensões a evidência cobre — e o que fica indeterminado sem elas */
+    if(I.soc.dimensoes){
+      const Dm=I.soc.dimensoes;
+      h+='<div class="tip-dim"><span class="tip-bl">dimensões da evidência</span>'
+        +'<ul>'
+        +'<li><b>capacidade</b> <i>'+(Dm.capacidade?'com apoio':'sem apoio')+'</i>'
+          +'<em>'+INF_SOC_DIMENSOES.capacidade.afirma+' — apoia as posições fortes, '
+          +'contraria as fracas</em></li>'
+        +'<li><b>valoração</b> <i>'+(Dm.valoracao?'com apoio':'sem apoio')+'</i>'
+          +'<em>'+INF_SOC_DIMENSOES.valoracao.afirma+' — apoia as valoradas, '
+          +'contraria as não valoradas</em></li>'
+        +'<li><b>busca</b> <i>sem fonte</i><em>'+Dm.buscaNota+'</em></li>'
+        +'</ul><p>'+Dm.nota+'</p></div>';
+    }
   } else h+='<p class="tip-nada">Sem candidato sociônico: evidência insuficiente.</p>';
   h+='</section>';
   if(TIP_SEL)h+=tipDetalheFuncao(TIP_SEL,TIP_SEL_SIS);
@@ -302,6 +316,7 @@ function tipRefinar(){
     +'<button class="tip-salvar" data-tipdecl="1">guardar</button></div>';
   /* confronto das três fontes */
   const C=autoConfronto(I?I.mbti:null, I?I.soc:null);
+  if(C.avisoHerdado)h+='<p class="tip-inst">'+C.avisoHerdado+'</p>';
   h+='<h4 class="tip-h4">As três fontes, lado a lado</h4>'
     +C.linhas.map(l=>'<div class="tip-conf"><b>'+(l.sistema==='mbti'?'MBTI':'Sociônica')+'</b>'
       +'<ul><li><span>hipótese natal</span><i>'+(l.natal||'—')+'</i></li>'

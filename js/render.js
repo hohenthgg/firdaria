@@ -175,7 +175,9 @@ function renderLedger(){
 /* retrospectiva */
 function renderRetro(dateStr,evtTxt){
   const d=dateStr?new Date(dateStr+'T12:00:00Z'):CURSOR;
-  const a=Math.floor(ageAt(d)); if(a<0){$('retro-body').innerHTML='<div class="card">data anterior ao nascimento.</div>';return;}
+  /* idade civil: este relatório consome profAt() logo abaixo */
+  const a=(typeof idadeCivil==='function')?idadeCivil(d):Math.floor(ageAt(d));
+  if(a<0){$('retro-body').innerHTML='<div class="card">data anterior ao nascimento.</div>';return;}
   const top=scoredHits(d,0).slice(0,4);
   const key=d.toISOString().slice(0,10);
   const proms=PROMESSAS.filter(pr=>pr.casas.includes(profAt(a).houseN)||pr.pl===profAt(a).lordKey);

@@ -307,6 +307,40 @@ for(const M of MAPAS){
   t('os senhores natais não mudam ao navegar 30 anos', SN.natalEstavel);
   t('os senhores do tempo mudam ao navegar 30 anos', SN.temporalMudou);
 
+  /* o predominador compara a ANGULARIDADE dos dois luminares. A versão
+     anterior tomava o luminar da seita assim que ele estivesse em lugar
+     aphético, e dava o Sol num mapa diurno com Sol no lugar 9 (cadente)
+     e Lua no lugar 1 (angular) — o caso da referência. */
+  const PRE = await pg.evaluate(()=>{
+    const orig={sun:NATAL.pts.sun.lon, moon:NATAL.pts.moon.lon, sect:NATAL.sect};
+    const sgAsc=signOf(NATAL.asc);
+    const põe=(k,lugar)=>{NATAL.pts[k].lon=n360((sgAsc+lugar-1)*30+15);};
+    const roda=(seita,lugSol,lugLua)=>{
+      NATAL.sect=seita; põe('sun',lugSol); põe('moon',lugLua);
+      const P=predominador();
+      return {escolhido:P.escolhido.k, criterio:P.escolhido.criterio};
+    };
+    const r={
+      referencia: roda('diurno',9,1),      // deve dar a Lua
+      inverso:    roda('diurno',1,9),      // deve dar o Sol
+      noturno:    roda('noturno',1,9),     // angularidade acima da seita
+      empate:     roda('diurno',10,10),    // desempate pela seita
+      nenhum:     roda('diurno',6,12)      // recurso ao Ascendente
+    };
+    NATAL.pts.sun.lon=orig.sun; NATAL.pts.moon.lon=orig.moon; NATAL.sect=orig.sect;
+    return r;
+  });
+  t('o luminar mais angular vence o da seita (Sol na 9 × Lua na 1 → Lua)',
+    PRE.referencia.escolhido==='moon', PRE.referencia.criterio);
+  t('invertidos os lugares, a escolha inverte (Sol na 1 × Lua na 9 → Sol)',
+    PRE.inverso.escolhido==='sun');
+  t('num mapa noturno a angularidade continua acima da seita',
+    PRE.noturno.escolhido==='sun', PRE.noturno.criterio);
+  t('empate de angularidade é desempatado pela seita',
+    PRE.empate.escolhido==='sun', PRE.empate.criterio);
+  t('sem luminar em lugar aphético, recorre-se ao Ascendente',
+    PRE.nenhum.escolhido==='asc');
+
 
 }
 
@@ -362,6 +396,71 @@ else {
     TJ.filter(x=>x.semPerfazer).length+' sem perfazer · '
     +TJ.filter(x=>x.repetido).length+' com passagem repetida');
 }
+
+/* ---------- exatidão de conjunção e oposição ----------
+   A busca anterior procurava raiz em |separação| − ângulo. Essa função é
+   sempre ≥ 0 na conjunção e ≤ 0 na oposição: TOCA o zero sem trocar de
+   sinal, e a exatidão passava despercebida — com o agravante de o app
+   concluir que o corpo se aproximara e voltara atrás. O teste constrói
+   um alvo a 0,1° à frente do trânsito e exige a passagem exata. */
+console.log('\n### exatidão dos aspectos');
+const EX = await pg.evaluate(()=>{
+  const d=new Date(), out=[];
+  const solHoje=tlon('Sun',d);
+  [0,180,90,120,60].forEach(ang=>{
+    const alvo=n360(solHoje+0.1-ang);
+    const J=transitoJanela('Sun',alvo,ang,6,d,60);
+    out.push({ang, exatos:J?J.exatos.length:0,
+      residuo:J&&J.residuoMax!=null?J.residuoMax:null,
+      descartadas:J?J.descartadas:null,
+      /* o resíduo é reconferido aqui, a partir das longitudes */
+      confere:J&&J.exatos.length
+        ? J.exatos.every(t=>Math.abs(adiff(tlon('Sun',new Date(t)),alvo)-ang)<0.01)
+        : false});
+  });
+  return out;
+});
+t('conjunção e oposição têm a sua passagem exata detectada',
+  EX.filter(x=>x.ang===0||x.ang===180).every(x=>x.exatos>=1),
+  EX.map(x=>x.ang+'°: '+x.exatos).join(' · '));
+t('todo aspecto do teste tem exatidão encontrada', EX.every(x=>x.exatos>=1));
+t('o resíduo angular de cada contato é validado',
+  EX.every(x=>x.confere && (x.residuo==null||x.residuo<0.01)),
+  'pior resíduo '+Math.max(...EX.map(x=>x.residuo||0)).toFixed(6)+'°');
+t('nenhuma raiz espúria sobrevive à validação',
+  EX.every(x=>x.descartadas===0));
+
+/* ---------- ecos da Revolução recompostos ---------- */
+console.log('\n### ecos da Revolução');
+const ECO = await pg.evaluate(()=>{
+  const anos=Object.keys(RSMETA.echo||{});
+  const vazios=anos.filter(y=>(RSMETA.echo[y]||[]).length===0);
+  const comErro=anos.filter(y=>RS_DATA[y]&&RS_DATA[y].aspErro);
+  return {anos:anos.length, vazios:vazios.length, comErro:comErro.length,
+    total:anos.reduce((a,y)=>a+(RSMETA.echo[y]||[]).length,0)};
+});
+if(ECO.anos){
+  t('nenhuma Revolução fica sem ecos por falta de aspectos no arquivo',
+    ECO.vazios===0, ECO.anos+' revoluções · '+ECO.total+' ecos · '+ECO.vazios+' vazias');
+  t('a recomposição dos aspectos da Revolução não falha em silêncio',
+    ECO.comErro===0);
+}
+
+/* ---------- uma só convenção para o ano da Revolução ---------- */
+const CONV = await pg.evaluate(()=>{
+  const out=[];
+  for(let i=-3;i<=3;i++){
+    const d=new Date(Date.now()+i*DAY);
+    const R=revolutionFor('solar',d);
+    if(!R)continue;
+    out.push({rsYearOf:rsYearOf(d), doRetorno:new Date(R.start).getUTCFullYear()});
+  }
+  return out;
+});
+if(CONV.length)
+  t('o ano da Revolução vem do retorno astronômico, não de outra convenção',
+    CONV.every(x=>x.rsYearOf===x.doRetorno),
+    CONV.length+' dias em torno de hoje conferidos');
 
 /* ---------- Placidus contra a sua definição ----------
    O motor Placidus do app é o que serve às cartas COMPUTADAS (as

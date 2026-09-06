@@ -31,20 +31,32 @@ const OIKO_FONTE={
     {autor:'Cláudio Ptolomeu', obra:'Tetrabiblos', loc:'livro III, cap. 13 — Do Senhor da Natividade'},
     {autor:'Porfírio de Tiro', obra:'Introdução ao Tetrabiblos', loc:'cap. 30 — do predominador e do oikodespotes'}
   ],
-  naoVerificado:'A página do The Astrology Podcast indicada como referência inicial não '
-    +'pôde ser aberta deste ambiente (bloqueio do proxy de rede). A sua formulação '
-    +'específica não foi conferida; o que está implementado segue as fontes primárias '
-    +'acima, com as regras declaradas uma a uma.',
+  naoVerificado:'A página do The Astrology Podcast indicada como referência — o episódio '
+    +'de Chris Brennan e Nick Schaim sobre o Mestre da Natividade, a partir de Porfírio — '
+    +'NÃO pôde ser aberta deste ambiente: o proxy de rede bloqueia o domínio. Não a li. '
+    +'O critério de comparar a ANGULARIDADE dos dois luminares, em vez de tomar o luminar '
+    +'da seita assim que ele esteja num lugar aphético, foi relatado pelo utilizador como '
+    +'o método apresentado ali, com o exemplo de Sol no lugar 9 e Lua no lugar 1 sendo '
+    +'resolvido a favor da Lua. É esse critério que está implementado, e a sua origem é '
+    +'esta: relato do utilizador sobre uma fonte que eu não pude conferir. Não é '
+    +'verificação minha, e não deve ser lido como tal.',
+  correcao:'A primeira versão deste módulo escolhia o luminar da seita sempre que ele '
+    +'estivesse em lugar aphético — o que dava o Sol num mapa diurno com Sol no lugar 9 '
+    +'(cadente) e Lua no lugar 1 (angular). Isso foi corrigido: a angularidade decide, e '
+    +'a seita passa a servir de desempate.',
   casas:'lugares por signos inteiros a partir do Ascendente — não Placidus. '
     +'A elegibilidade aphética é de tradição helenística e conta lugares, não cúspides de quadrante.',
   termos:'tábua egípcia de termos (TERMS, em tables.js)'
 };
 const REGRAS_OIKO=[
-  'O predominador é escolhido entre três candidatos, nesta ordem de precedência: '
-    +'de dia o Sol, depois a Lua, depois o Ascendente; de noite a Lua, depois o Sol, depois o Ascendente.',
-  'Um luminar só é elegível se estiver em lugar aphético — os lugares 1, 7, 9, 10 e 11 '
-    +'contados por signos inteiros a partir do Ascendente. Não sendo elegível, passa-se ao candidato seguinte.',
-  'O Ascendente é sempre elegível e serve de último recurso, por ser ele próprio um lugar aphético.',
+  'Candidatos a predominador: os dois luminares e, em último recurso, o Ascendente.',
+  'Um luminar só é candidato se estiver em lugar aphético — os lugares 1, 7, 9, 10 e 11 '
+    +'contados por signos inteiros a partir do Ascendente.',
+  'Entre os luminares candidatos, escolhe-se o MAIS ANGULAR: o lugar 1 tem precedência '
+    +'sobre o 10, este sobre o 7, depois o 11 (sucedente) e por fim o 9 (cadente). '
+    +'A seita NÃO decide sozinha — serve para desempatar quando os dois luminares '
+    +'estão em lugares de mesma dignidade angular.',
+  'O Ascendente é o recurso final, quando nenhum luminar está em lugar aphético.',
   'O Oikodespotes é o REGENTE DOMICILIAR do signo em que cai o predominador.',
   'O regente do termo do grau do predominador é registrado como corregente, pela tábua egípcia.',
   'A condição do Oikodespotes é relatada, não usada para trocá-lo: aversão ao predominador, '
@@ -52,35 +64,60 @@ const REGRAS_OIKO=[
 ];
 /* lugares aphéticos, por signos inteiros a partir do Ascendente */
 const LUGARES_APHETICOS=[1,7,9,10,11];
+/* precedência por angularidade dentro dos lugares aphéticos.
+   Um luminar cadente (lugar 9) não prevalece sobre um luminar angular
+   (lugar 1) só por ser o da seita — era esse o erro corrigido aqui. */
+const PRECEDENCIA_APHETICA={1:5, 10:4, 7:3, 11:2, 9:1};
+const CLASSE_LUGAR=l=>[1,4,7,10].indexOf(l)>=0?'angular'
+                    :[2,5,8,11].indexOf(l)>=0?'sucedente':'cadente';
 
 function lugarInteiro(lon){
   if(typeof NATAL==='undefined'||!NATAL)return null;
   return ((signOf(lon)-signOf(NATAL.asc)+12)%12)+1;
 }
-/* ---------- 1 · predominador ---------- */
+/* ---------- 1 · predominador ----------
+   Compara os DOIS luminares pela angularidade do lugar que ocupam, em
+   vez de tomar o da seita assim que ele esteja num lugar aphético. */
 function predominador(){
   if(typeof NATAL==='undefined'||!NATAL)return null;
   const diurno=NATAL.sect==='diurno';
-  const cand=diurno
-    ? [['sun','Sol'],['moon','Lua'],['asc','Ascendente']]
-    : [['moon','Lua'],['sun','Sol'],['asc','Ascendente']];
   const exame=[];
-  for(const [k,nm] of cand){
-    if(k==='asc'){
-      exame.push({k,nome:nm,lon:NATAL.asc,lugar:1,elegivel:true,
-        porque:'o Ascendente é ele próprio lugar aphético'});
-      return {escolhido:{k,nome:nm,lon:NATAL.asc,lugar:1}, exame, seita:NATAL.sect};
-    }
+  const cands=[];
+  [['sun','Sol'],['moon','Lua']].forEach(([k,nm])=>{
     const p=NATAL.pts[k];
-    if(!p){exame.push({k,nome:nm,elegivel:false,porque:'não consta no mapa'});continue;}
+    if(!p){exame.push({k,nome:nm,elegivel:false,porque:'não consta no mapa'});return;}
     const lug=lugarInteiro(p.lon);
     const eleg=LUGARES_APHETICOS.indexOf(lug)>=0;
-    exame.push({k,nome:nm,lon:p.lon,lugar:lug,elegivel:eleg,
-      porque:eleg?('está no lugar '+lug+', aphético')
-                 :('está no lugar '+lug+', que não é aphético')});
-    if(eleg)return {escolhido:{k,nome:nm,lon:p.lon,lugar:lug}, exame, seita:NATAL.sect};
+    const prec=eleg?PRECEDENCIA_APHETICA[lug]:0;
+    const daSeita=(diurno&&k==='sun')||(!diurno&&k==='moon');
+    exame.push({k, nome:nm, lon:p.lon, lugar:lug, classe:CLASSE_LUGAR(lug),
+      elegivel:eleg, precedencia:prec, daSeita,
+      porque:eleg
+        ? ('está no lugar '+lug+' ('+CLASSE_LUGAR(lug)+'), aphético'
+           +(daSeita?', e é o luminar da seita':''))
+        : ('está no lugar '+lug+' ('+CLASSE_LUGAR(lug)+'), que não é aphético')});
+    if(eleg)cands.push({k, nome:nm, lon:p.lon, lugar:lug, prec, daSeita});
+  });
+  if(cands.length){
+    /* mais angular primeiro; empate resolvido pela seita */
+    cands.sort((a,b)=>b.prec-a.prec || (b.daSeita?1:0)-(a.daSeita?1:0));
+    const esc=cands[0], perdedor=cands[1]||null;
+    esc.criterio = perdedor
+      ? (esc.prec>perdedor.prec
+          ? ('mais angular que '+perdedor.nome+': lugar '+esc.lugar+' ('
+             +CLASSE_LUGAR(esc.lugar)+') contra lugar '+perdedor.lugar+' ('
+             +CLASSE_LUGAR(perdedor.lugar)+')')
+          : ('empate de angularidade com '+perdedor.nome+' — desempatado pela '
+             +'seita, mapa '+NATAL.sect))
+      : (esc.nome+' é o único luminar em lugar aphético');
+    return {escolhido:esc, exame, seita:NATAL.sect, candidatos:cands};
   }
-  return {escolhido:null, exame, seita:NATAL.sect};
+  exame.push({k:'asc', nome:'Ascendente', lon:NATAL.asc, lugar:1, classe:'angular',
+    elegivel:true, precedencia:PRECEDENCIA_APHETICA[1],
+    porque:'nenhum luminar está em lugar aphético; o Ascendente é o recurso final'});
+  return {escolhido:{k:'asc', nome:'Ascendente', lon:NATAL.asc, lugar:1,
+    criterio:'nenhum luminar em lugar aphético — recorre-se ao Ascendente'},
+    exame, seita:NATAL.sect, candidatos:[]};
 }
 /* ---------- 2 · oikodespotes ---------- */
 function oikodespotes(){

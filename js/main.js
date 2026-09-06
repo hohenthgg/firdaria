@@ -84,7 +84,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest&&e.target.closest('[data-rvcta]')){
     const b=document.getElementById('rs-body');
     try{ const R=revolutionFor(RS_KIND,rsCursor());
-      if(R&&b){ b.innerHTML=buildYearReport(Math.floor(ageAt(R.start)));
+      if(R&&b){ b.innerHTML=buildYearReport((typeof idadeCivil==='function')
+          ?idadeCivil(R.start):Math.floor(ageAt(R.start)));
         b.scrollIntoView({behavior:'smooth',block:'start'}); } }catch(x){console.error(x);}
   }
 });
