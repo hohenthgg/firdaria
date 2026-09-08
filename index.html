@@ -2058,9 +2058,133 @@ body.is-mobile .sy-via p,body.is-mobile .nl-st>p{font-size:.86rem;line-height:1.
 .hj-pt em{display:block;font-style:normal;font-size:.7rem;color:var(--dim2);margin-top:1px}
 .hj-pq{font-size:.7rem;color:var(--acc);white-space:nowrap}
 .hj-vaz{margin:0;font-size:.78rem;color:var(--dim2);line-height:1.6}
+.hj-prob{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.hj-pt3{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.hj-pt3 li{display:grid;gap:2px}
+.hj-pt3 b{font-size:.86rem;color:var(--ivory2)}
+.hj-pt3 span{font-family:var(--mono);font-size:.6rem;color:var(--dim2)}
+.hj-pt3 i{font-style:normal;font-size:1.15rem;font-weight:650;color:var(--acc)}
+.hj-pmeta{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:11px;
+  padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;color:var(--dim2)}
+.hj-pmeta b{color:var(--ivory2)}
+.hj-pmeta .hj-a{margin-left:auto}
+.hj-pav{margin:9px 0 0;font-size:.68rem;color:var(--dim2)}
+body.is-mobile .hj-pt3{grid-template-columns:1fr}
+body.is-mobile .hj-pmeta .hj-a{margin-left:0}
 @media(max-width:1080px){.hj-ciclos{grid-template-columns:1fr 1fr}.hj-2{grid-template-columns:1fr}}
 body.is-mobile .hj-ciclos{grid-template-columns:1fr}
 body.is-mobile .hj-2{grid-template-columns:1fr}
+/* ============ PROBABILIDADES ============ */
+.pb-top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:10px}
+.pb-nav{display:flex;align-items:center;gap:8px}
+.pb-nav b{font-size:1.05rem;color:var(--ivory2);min-width:120px;text-align:center}
+.pb-b{background:var(--bg2);border:1px solid var(--line);border-radius:99px;
+  color:var(--dim);font-family:inherit;font-size:.76rem;padding:6px 12px;cursor:pointer}
+.pb-b:hover{color:var(--acc);border-color:rgba(106,140,255,.45)}
+.pb-hoje{color:var(--acc)}
+.pb-seg{display:flex;gap:5px;margin-left:auto}
+.pb-p{background:var(--bg2);border:1px solid var(--line);border-radius:99px;
+  color:var(--dim2);font-family:inherit;font-size:.74rem;padding:6px 12px;cursor:pointer}
+.pb-p.on{background:var(--accs);border-color:transparent;color:var(--acc);font-weight:550}
+.pb-cfg{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:.74rem;
+  color:var(--dim2);max-width:100%;min-width:0}
+.pb-cfg label{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+.pb-cfg select{background:var(--bg2);border:1px solid var(--line2);border-radius:9px;
+  color:var(--ivory);font-family:inherit;font-size:.76rem;padding:5px 9px;
+  max-width:100%;min-width:0;flex:1 1 auto;text-overflow:ellipsis}
+.pb-tz{font-family:var(--mono);font-size:.68rem}
+.pb-aviso{margin:0 0 10px;padding:8px 12px;border:1px dashed var(--line2);border-radius:10px;
+  font-size:.73rem;color:var(--dim2)}
+.pb-alerta{margin:0 0 10px;padding:9px 12px;border-left:2px solid var(--gold);
+  font-size:.76rem;line-height:1.55;color:var(--dim)}
+.pb-nota{margin:9px 0 0;font-size:.74rem;line-height:1.6;color:var(--dim2)}
+.pb-vazio{margin:0;font-size:.8rem;color:var(--dim2);line-height:1.6}
+.pb-s{margin:20px 0}
+.pb-s>h4,.pb-h2{margin:0 0 11px;font-size:.7rem;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--dim2);font-family:var(--mono);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:9px}
+.pb-s>h4 i,.pb-h2 i{font-style:normal;text-transform:none;letter-spacing:0;
+  font-size:.66rem;color:var(--dim2)}
+.pb-h2{margin-top:18px}
+.pb-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.pb-c{background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:11px 13px}
+.pb-c em{display:block;font-style:normal;font-family:var(--mono);font-size:.55rem;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--dim2)}
+.pb-c b{display:block;font-size:1.05rem;font-weight:650;color:var(--ivory2);margin:4px 0 2px}
+.pb-c i{font-style:normal;font-size:.7rem;color:var(--dim2);line-height:1.45}
+.pb-c.pb-idx b{font-size:1.7rem;letter-spacing:-.02em}
+.pb-c.q-facilitada{border-left:2px solid var(--green,#6fae86)}
+.pb-c.q-pressionada{border-left:2px solid var(--red,#c96a6a)}
+.pb-c.q-mista{border-left:2px solid var(--gold)}
+.pb-graf{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.pb-svg{width:100%;height:auto;display:block}
+.pb-leg{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:12px}
+.pb-leg li{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--dim)}
+.pb-leg i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.pb-leg span{color:var(--dim2);font-size:.66rem}
+.pb-leg2 li{color:var(--dim2)}
+.pb-esc{width:34px!important;height:9px!important;border-radius:3px!important;
+  background:linear-gradient(90deg,rgba(106,140,255,.08),rgba(106,140,255,.9))}
+.pb-heat{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--bg2)}
+.pb-tab{border-collapse:collapse;width:100%;font-size:.7rem}
+.pb-tab caption{text-align:left;padding:11px 13px 0;font-size:.72rem;line-height:1.55;
+  color:var(--dim2);caption-side:top}
+.pb-tab th,.pb-tab td{padding:2px;text-align:center}
+.pb-tab thead th{font-family:var(--mono);font-size:.6rem;color:var(--dim2);font-weight:500;
+  padding:8px 2px}
+.pb-tab tbody th{text-align:left;font-weight:400;padding-left:11px}
+.pb-th{background:none;border:none;color:var(--dim);font-family:inherit;font-size:.72rem;
+  cursor:pointer;text-align:left;padding:3px 0;white-space:nowrap}
+.pb-th:hover{color:var(--acc)}
+.pb-cel{width:100%;min-width:30px;min-height:26px;border:1px solid var(--line);
+  border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:.6rem;
+  color:var(--ivory2);display:grid;gap:0;line-height:1.05;padding:3px 1px;
+  background:rgba(106,140,255,var(--a,.05))}
+.pb-cel:hover{outline:1px solid var(--acc)}
+.pb-q{font-size:.62rem;color:var(--ivory2);opacity:.75}
+.pb-v{font-size:.6rem}
+.pb-termos{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:9px}
+.pb-tm{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pb-tg{font-size:1.05rem;font-variant-emoji:text;color:var(--dim);margin-right:7px}
+.pb-tm b{font-size:.86rem;color:var(--ivory2)}
+.pb-tm em{display:block;font-style:normal;font-size:.74rem;color:var(--dim);margin-top:3px}
+.pb-tm i{display:block;font-style:normal;font-family:var(--mono);font-size:.62rem;
+  color:var(--dim2);margin-top:3px}
+.pb-conf{display:block;margin-top:5px;font-size:.68rem;color:var(--gold)}
+.pb-tema{background:var(--bg2);border:1px solid var(--line);border-radius:14px;
+  padding:13px 15px;margin-bottom:11px}
+.pb-tema>summary{cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:9px;
+  list-style:none}
+.pb-tema>summary::-webkit-details-marker{display:none}
+.pb-tema>summary::before{content:"▸";color:var(--dim2);font-size:.7rem}
+.pb-tema[open]>summary::before{content:"▾"}
+.pb-tema>summary b{font-size:.95rem;color:var(--ivory2)}
+.pb-tema>summary span{font-family:var(--mono);font-size:.62rem;color:var(--dim2)}
+.pb-badge{font-style:normal;font-size:.64rem;border:1px solid var(--line2);border-radius:99px;
+  padding:2px 9px;color:var(--dim2)}
+.pb-badge.q-facilitada{color:var(--green,#6fae86)}
+.pb-badge.q-pressionada{color:var(--red,#c96a6a)}
+.pb-badge.q-mista{color:var(--gold)}
+.pb-ev{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.pb-evh{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px}
+.pb-evh b{font-size:.86rem;color:var(--ivory2)}
+.pb-tag{font-size:.62rem;color:var(--dim2);border:1px solid var(--line2);
+  border-radius:99px;padding:1px 8px}
+.pb-tag.pb-ex{color:var(--acc);border-color:rgba(106,140,255,.45)}
+.pb-dl{margin:8px 0 0;display:grid;gap:6px}
+.pb-dl>div{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:baseline}
+.pb-dl dt{font-family:var(--mono);font-size:.57rem;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--dim2);white-space:nowrap}
+.pb-dl dd{margin:0;font-size:.75rem;line-height:1.55;color:var(--dim)}
+.pb-obs{color:var(--dim2)}
+.pb-tst{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.pb-tst li{font-size:.74rem;color:var(--dim)}
+.pb-tst b{font-family:var(--mono);font-size:.66rem;color:var(--acc);margin-right:5px}
+.pb-src{font-family:var(--mono);font-size:.6rem;color:var(--dim2);margin-left:5px}
+@media(max-width:1080px){.pb-cards{grid-template-columns:1fr 1fr}.pb-seg{margin-left:0}}
+body.is-mobile .pb-cards{grid-template-columns:1fr 1fr}
+body.is-mobile .pb-seg{margin-left:0}
+body.is-mobile .pb-dl>div{grid-template-columns:1fr}
 /* ============ QUEM CONDUZ O SEU MAPA ============ */
 .sn-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sn-c{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
@@ -2505,6 +2629,7 @@ body.is-mobile .rv2-sticky{position:static}
     <div class="sheet-bk" data-admclose></div>
     <div class="sheet-b" role="dialog" aria-label="menu">
       <div class="sheet-grip"></div>
+      <button class="sheet-i" data-p="tipos"><span>⌘</span><b>Tipologias</b><em>hipóteses, método e fontes</em></button>
       <button class="sheet-i" data-p="sin"><span>◑</span><b>Sinastria</b><em>comparar com outro mapa</em></button>
       <button class="sheet-i" data-p="dados"><span>◇</span><b>Dados natais</b><em>importar, colar mapa, backup</em></button>
       <button class="sheet-i" data-p="config"><span>◇</span><b>Ajustes</b><em>pesos, orbes e preferências</em></button>
@@ -2524,6 +2649,7 @@ body.is-mobile .rv2-sticky{position:static}
     </div>
     <nav id="nav" aria-label="seções do app">
       <button data-p="hoje"><i>◉</i><span>Hoje</span></button>
+      <button data-p="prob"><i>◍</i><span>Probabilidades</span></button>
       <button data-p="natal"><i>☉</i><span>Mapa natal</span></button>
       <button data-p="tempo"><i>◷</i><span>Tempo</span></button>
       <button data-p="rs"><i>◎</i><span>Revoluções</span></button>
@@ -2543,14 +2669,18 @@ body.is-mobile .rv2-sticky{position:static}
   <!-- navegação inferior: só o essencial, no polegar -->
   <nav class="bnav noprint" id="bnav" aria-label="seções principais">
     <button data-p="hoje"><i>◉</i><span>Hoje</span></button>
+    <button data-p="prob"><i>◍</i><span>Probab.</span></button>
     <button data-p="natal"><i>☉</i><span>Natal</span></button>
     <button data-p="tempo"><i>◷</i><span>Tempo</span></button>
     <button data-p="rs"><i>◎</i><span>Revoluções</span></button>
     <button data-p="perfil"><i>◈</i><span>Perfil</span></button>
-    <button data-p="tipos"><i>⌘</i><span>Tipologias</span></button>
   </nav>
 
   <main id="main" tabindex="-1">
+    <section class="panel" id="p-prob">
+      <h2>Probabilidades <span>convergência simbólica entre técnicas, dia a dia</span></h2>
+      <div id="prob-body"></div>
+    </section>
     <section class="panel" id="p-hoje">
       <h2>Hoje <span>o que está vigente agora, em uma página</span></h2>
       <div id="hoje-body"></div>
@@ -2760,6 +2890,7 @@ body.is-mobile .rv2-sticky{position:static}
 <script src="js/condicao.js"></script>
 <script src="js/parse.js"></script>
 <script src="js/chart.js"></script>
+<script src="js/termos.js"></script>
 <script src="js/astro.js"></script>
 <script src="js/interp.js"></script>
 <script src="js/core.js"></script>
@@ -2785,6 +2916,9 @@ body.is-mobile .rv2-sticky{position:static}
 <script src="js/tip-ui.js"></script>
 <script src="js/tipologias.js"></script>
 <script src="js/senhores.js"></script>
+<script src="js/fuso.js"></script>
+<script src="js/probabilidades.js"></script>
+<script src="js/prob-ui.js"></script>
 <script src="js/hoje.js"></script>
 <script src="js/backup.js"></script>
 <script src="js/main.js"></script>

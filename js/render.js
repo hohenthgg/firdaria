@@ -756,6 +756,67 @@ const CFG_LBL={
   cw:{promessa:'Promessa natal explícita',firdaria:'Senhor da firdária',sub:'Sub-regente',
       casaProf:'Casa da promessa = profectada',senhorAno:'Senhor do Ano',revAlta:'Reforço alto da revolução',
       revMedia:'Reforço médio da revolução',repete:'Aspecto repetido no retorno',bonus:'Bônus de convergência'}};
+/* ---------- sistema de termos e fuso, em Ajustes ---------- */
+function cfgTermosHTML(){
+  const T=(typeof termosEstado==='function')?termosEstado():null;
+  const F=(typeof fusoEstado==='function')?fusoEstado():null;
+  if(!T)return '';
+  return '<div class="card cfg"><div class="kicker">Termos e fuso</div>'
+    +'<p class="note" style="margin-top:0">O sistema de limites escolhido aparece '
+    +'em toda leitura que use termos — dignidades, recepções, Senhor da Genitura, '
+    +'Oikodespotes, revoluções e trânsitos.</p>'
+    +'<div class="cfg-r"><span>Sistema de termos</span>'
+      +'<select id="cfg-termos">'
+      +T.disponiveis.map(x=>'<option value="'+x.id+'"'+(x.id===T.emUso?' selected':'')
+        +'>'+x.nome+'</option>').join('')
+      +(T.pendente?('<option disabled>'+T.pendente.nome+' — pendente</option>'):'')
+      +'</select><i>em uso: '+T.nome+'</i></div>'
+    +(T.pendente?('<p class="note">'+T.pendente.porQue+'</p>'):'')
+    +'<p class="note">'+T.nota+'</p>'
+    +'<div class="cfg-r"><span>Comparar sistemas</span>'
+      +'<button class="btn" id="cfg-termos-cmp">Ver egípcio × ptolomaico</button>'
+      +'<i></i></div>'
+    +'<div id="cfg-termos-tab"></div>'
+    +(F?('<div class="cfg-r"><span>Fuso do mapa</span>'
+      +'<button class="btn" id="cfg-fuso">'+(F.definido?F.tz:'definir fuso')+'</button>'
+      +'<i>'+(F.definido?'usado para recortar os dias':'não definido')+'</i></div>'
+      +(F.aviso?('<p class="note">'+F.aviso+'</p>'):'')):'')
+    +'</div>';
+}
+function cfgLigarTermos(el){
+  const sel=el.querySelector('#cfg-termos');
+  if(sel)sel.onchange=()=>{
+    if(typeof termosDefinirSistema==='function')termosDefinirSistema(sel.value);
+    if(typeof probInvalidar==='function')probInvalidar();
+    renderConfig();
+  };
+  const cmp=el.querySelector('#cfg-termos-cmp');
+  if(cmp)cmp.onclick=()=>{
+    const alvo=el.querySelector('#cfg-termos-tab');
+    if(alvo)alvo.innerHTML=cfgTermosComparaHTML();
+  };
+  const fz=el.querySelector('#cfg-fuso');
+  if(fz)fz.onclick=()=>{
+    if(typeof probPedirFuso==='function'){probPedirFuso();renderConfig();}
+  };
+}
+/* comparação lado a lado dos dois sistemas, signo a signo */
+function cfgTermosComparaHTML(){
+  if(typeof TERM_SYSTEMS==='undefined')return '';
+  const eg=TERM_SYSTEMS.egyptian, pt=TERM_SYSTEMS.ptolemaic;
+  const fmt=(sis,i)=>{
+    if(!sis||!sis.limites)return '<em>não transcrito</em>';
+    let a=0;
+    return sis.limites[i].map(([f,l])=>{const r=a+'–'+f+' '+(PT_GLYPH[l]||l);a=f;return r;}).join(' · ');
+  };
+  return '<div class="cfg-cmp"><table class="pb-tab"><thead><tr>'
+    +'<th scope="col">Signo</th><th scope="col">'+eg.nome+'</th>'
+    +'<th scope="col">'+pt.nome+'</th></tr></thead><tbody>'
+    +SIGNS.map((nm,i)=>'<tr><th scope="row">'+nm+'</th><td>'+fmt(eg,i)+'</td>'
+      +'<td>'+fmt(pt,i)+'</td></tr>').join('')
+    +'</tbody></table>'
+    +(pt.limites?'':'<p class="note">'+pt.porQue+'</p>')+'</div>';
+}
 function renderConfig(){
   const el=$('config-body'); if(!el)return;
   const grp=(tit,sub,obj,lbls,defs)=>'<div class="card cfg"><div class="kicker">'+tit+'</div>'
@@ -766,8 +827,10 @@ function renderConfig(){
     +'</div>';
   el.innerHTML=grp('tw','Pesos do temperamento — hierarquia dos testemunhos (quente/frio × seco/úmido).',CFG.tw,CFG_LBL.tw,CFG_DEF.tw)
     +grp('cw','Pesos da convergência — ordenam promessas e o ranking de planetas acionados.',CFG.cw,CFG_LBL.cw,CFG_DEF.cw)
+    +cfgTermosHTML()
     +'<div class="toolrow"><button class="btn" id="cfg-reset">Restaurar padrões</button>'
     +'<span class="note">As mudanças aplicam na hora e ficam salvas neste navegador.</span></div>';
+  cfgLigarTermos(el);
   el.querySelectorAll('[data-cfg]').forEach(inp=>{
     inp.oninput=function(){
       const [g,k]=this.dataset.cfg.split(':');

@@ -27,6 +27,7 @@ function irPara(p){
   if(p==='perfil'){try{renderPerfilTabs();renderSaude();renderTemp();renderPers();}catch(e){console.error(e);}}
   if(p==='tipos'){try{renderTipos();}catch(e){console.error(e);}}
   if(p==='natal'){try{renderNatal();}catch(e){console.error(e);}}
+  if(p==='prob'){try{renderProb();}catch(e){console.error(e);}}
 }
 ['nav','bnav'].forEach(id=>{
   const el=document.getElementById(id); if(!el)return;

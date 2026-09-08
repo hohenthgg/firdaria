@@ -71,7 +71,12 @@ function hojeTransitosHTML(d){
     '<li class="'+(h.cls||'')+'">'
     +'<span class="hj-tg">'+(PT_GLYPH[h.tKey]||'')+'︎</span>'
     +'<span class="hj-tt"><b>'+PT_NAME[h.tKey]+' '+h.gl+' '+(h.np?h.np.nm:'')+'</b>'
-    +'<em>'+(h.rel&&h.rel.txt?h.rel.txt:'')+'</em>'
+    /* scoreHit devolve {score, tier, factors} — nunca houve um `txt`, e
+       por isso esta linha saía sempre vazia. A explicação é montada dos
+       fatores reais, que são os mesmos que compõem a pontuação. */
+    +'<em>'+((h.rel&&h.rel.tier)?(h.rel.tier
+        +(h.rel.factors&&h.rel.factors.length
+          ? ' · '+h.rel.factors.map(f=>f[1]).join(' · ') : '')):'')+'</em>'
     +janela(h)+'</span>'
     +'<span class="hj-to">'+h.orb.toFixed(1)+'°</span></li>').join('')+'</ul>';
 }
@@ -112,6 +117,27 @@ function hojeProximosHTML(d,S){
     +'<span class="hj-pq">'+dias(x.t)+'</span></li>').join('')+'</ul>';
 }
 
+/* resumo curto da aba Probabilidades — três temas, índice, qualidade e
+   um atalho. Nada é recalculado aqui: chama o mesmo motor. */
+function hojeProbResumoHTML(){
+  if(typeof dailyActivation!=='function')return '';
+  let R=null;
+  try{ R=dailyActivation(hojeLocal(),{}); }catch(e){ return ''; }
+  if(!R||R.semMapa)return '';
+  const top=R.temas.filter(t=>t.bruto>0).slice(0,3);
+  if(!top.length)return '<p class="hj-vaz">Nenhum tema ativado hoje.</p>';
+  const gl=(typeof PROB_QGLIFO!=='undefined')?PROB_QGLIFO:{};
+  return '<div class="hj-prob">'
+    +'<ul class="hj-pt3">'+top.map(t=>'<li><b>'+t.rotulo+'</b>'
+      +'<span>casa '+t.casa+'</span><i>'+t.indice+'</i></li>').join('')+'</ul>'
+    +'<div class="hj-pmeta">'
+      +'<span>índice <b>'+R.indice+'</b></span>'
+      +'<span>qualidade <b>'+(gl[R.qualidade.rotulo]||'')+' '+R.qualidade.rotulo+'</b></span>'
+      +'<span>confiança <b>'+R.confianca.rotulo+'</b></span>'
+      +'<button class="hj-a" data-goto-tab="prob">Ver probabilidades</button>'
+    +'</div>'
+    +'<p class="hj-pav">'+PROB_AVISO+'</p></div>';
+}
 function renderHoje(){
   const el=$('hoje-body'); if(!el)return;
   if(typeof NATAL==='undefined'||!NATAL){el.innerHTML=emptyState();return;}
@@ -133,6 +159,9 @@ function renderHoje(){
     +'<section class="hj-s"><h4>Quem conduz o seu mapa '
       +'<i>senhores natais — não mudam com a data</i></h4>'
       +((typeof senhoresHTML==='function')?senhoresHTML(d):'')+'</section>'
+    +'<section class="hj-s"><h4>Convergência de hoje '
+      +'<i>resumo — a leitura completa fica na aba Probabilidades</i></h4>'
+      +hojeProbResumoHTML()+'</section>'
     +'<section class="hj-s"><h4>Ciclos vigentes</h4>'+hojeCiclosHTML(S)+'</section>'
     +'<div class="hj-2">'
       +'<section class="hj-s"><h4>Principais trânsitos de hoje '

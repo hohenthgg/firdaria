@@ -1,0 +1,20 @@
+{
+  "name": "astrograph",
+  "version": "2.0.0",
+  "private": true,
+  "description": "AstroGraph — motor interpretativo tradicional. App estático: não há build, não há servidor, nada sai do navegador. Este package.json existe apenas para declarar as dependências dos TESTES, que rodam num Chromium controlado por Playwright.",
+  "scripts": {
+    "serve": "python3 -m http.server 8099",
+    "test": "node tests-astrologia.mjs && node tests-tipologia.mjs && node tests-probabilidades.mjs && node tests-preditivas.mjs",
+    "test:astrologia": "node tests-astrologia.mjs",
+    "test:tipologia": "node tests-tipologia.mjs",
+    "test:probabilidades": "node tests-probabilidades.mjs",
+    "test:preditivas": "node tests-preditivas.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.55.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

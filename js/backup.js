@@ -9,7 +9,7 @@
    devolva o app ao mesmo estado.
    ============================================================ */
 
-const BK_VERSAO=1;
+const BK_VERSAO=2;
 /* prefixos usados pelo app; qualquer chave nova entra sozinha */
 const BK_PREFIXOS=['ag_','agx_'];
 
@@ -35,6 +35,9 @@ function bkColeta(){
 const BK_ROTULOS=[
   [/^ag_chart$|^agx_natal/,'mapa natal'],
   [/^agx_sinB$/,'mapa da sinastria'],
+  [/^agx_sistema_termos$/,'sistema de termos (egípcio ou ptolomaico)'],
+  [/^agx_fuso$/,'fuso horário do mapa'],
+  [/^agx_autorrelato/,'respostas do autorrelato tipológico'],
   [/^ag_events$/,'eventos marcados'],
   [/^ag_eval$/,'avaliações retrospectivas'],
   [/^agx_rv_.*_notas$/,'anotações de revolução'],
@@ -73,7 +76,20 @@ function bkRestaurar(txt,apagarAntes){
     if(!BK_PREFIXOS.some(x=>k.indexOf(x)===0))return;   // não escreve fora do app
     try{localStorage.setItem(k,v);n++;}catch(e){}
   });
-  return {n, resumo:bkResumo(p.dados), gerado:p.gerado||null};
+  /* backups anteriores à versão 2 não trazem sistema de termos nem fuso.
+     Isso NÃO é erro: as chaves ausentes simplesmente não são escritas, e
+     as preferências atuais permanecem. A versão é informada para que o
+     utilizador saiba o que veio no arquivo. */
+  const faltando=[];
+  if(!p.dados['agx_sistema_termos'])faltando.push('sistema de termos');
+  if(!p.dados['agx_fuso'])faltando.push('fuso horário');
+  return {n, resumo:bkResumo(p.dados), gerado:p.gerado||null,
+    versao:p.versao||1, versaoAtual:BK_VERSAO,
+    faltando,
+    nota:faltando.length
+      ? 'Backup da versão '+(p.versao||1)+': não traz '+faltando.join(' nem ')
+        +'. As preferências atuais foram mantidas — nada foi sobrescrito em branco.'
+      : null};
 }
 
 /* ---------- interface, dentro da aba Dados ---------- */

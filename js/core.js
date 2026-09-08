@@ -148,14 +148,30 @@ function natalPoints(){
 let NPTS=[];
 function refreshNPTS(){NPTS=natalPoints();}
 
-function transitHits(d){
+/* ---------- a REGRA de contato, escrita uma só vez ----------
+   Recebe as longitudes dos transitantes e devolve os contatos com os
+   pontos natais. transitHits() a usa para um instante; o motor diário
+   de probabilidades.js a usa com a sua própria cadência de amostragem.
+   Assim não existem duas regras de orbe capazes de discordar. */
+function hitsDeLongitudes(lons){
   const hits=[]; if(!NATAL)return hits;
-  TB.forEach(([bn,key,g])=>{const L=tlon(bn,d), spd=null;
+  TB.forEach(([bn,key,g])=>{
+    const L=lons[key]; if(L==null)return;
     NPTS.forEach(np=>{
-      ASPECTS.forEach(([ang,gl,cls,verb,orb])=>{const o=Math.abs(adiff(L,np.lon)-ang);
-        if(o<=orb) hits.push({tKey:key,tg:g,tn:bn,lon:L,nk:np.k,np,gl,ang,cls,verb,orb:o});});
-    });});
+      ASPECTS.forEach(([ang,gl,cls,verb,orb])=>{
+        const o=Math.abs(adiff(L,np.lon)-ang);
+        if(o<=orb) hits.push({tKey:key,tg:g,tn:bn,lon:L,nk:np.k,np,gl,ang,cls,verb,
+                              orb:o, orbMax:orb});
+      });
+    });
+  });
   hits.sort((a,b)=>a.orb-b.orb); return hits;
+}
+function transitHits(d){
+  if(!NATAL)return [];
+  const lons={};
+  TB.forEach(([bn,key])=>{lons[key]=tlon(bn,d);});
+  return hitsDeLongitudes(lons);
 }
 
 /* ---------- janela de um trânsito: entrada no orbe, exatidão, saída ----------

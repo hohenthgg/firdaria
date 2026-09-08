@@ -11,7 +11,8 @@ const n360=x=>{x%=360;return x<0?x+360:x;};
 const adiff=(a,b)=>{let d=Math.abs(n360(a)-n360(b))%360;return d>180?360-d:d;};
 const zfmt=L=>{const s=Math.floor(n360(L)/30),d=n360(L)%30;return SG[s]+' '+Math.floor(d)+'°'+String(Math.round((d%1)*60)).padStart(2,'0')+'′';};
 const signOf=L=>Math.floor(n360(L)/30);
-function termLord(L){const s=signOf(L),d=n360(L)%30;for(const [lim,p] of TERMS[s])if(d<lim)return p;return TERMS[s][4][1];}
+/* termLord vive agora em termos.js, que trata os limites como SISTEMAS
+   selecionáveis (egípcio e ptolomaico) e devolve também o segmento. */
 /* ---------- regra dos 5°: posição liminar graduada ----------
    Um planeta a menos de 5° da cúspide seguinte NÃO troca simplesmente de casa:
    participa fortemente da casa seguinte (main) e conserva a anterior como fundo (back).
