@@ -429,6 +429,110 @@ for(const [w,h,nome] of [[390,844,'telemóvel'],[820,1180,'tablet'],[1400,1000,'
   t('sem rolagem horizontal em '+nome+' ('+w+'px)', over<=1, 'excesso '+over+'px');
 }
 
+/* ============ 21 · manifestações: formas possíveis ============ */
+console.log('\n### manifestações — formas possíveis');
+const MF = await pg.evaluate(()=>{
+  const R=dailyActivation(hojeLocal(),{recalcular:true});
+  const M=manifRanking(R,{limite:9});
+  /* a hipótese de base tem de cair de forma monotônica com o índice */
+  const curva=[0,20,40,60,80,100].map(i=>manifNada(i,100).peso);
+  /* toda forma de casa tem de nomear planetas que a produzem */
+  const coerentes=M.barras.filter(b=>b.tipo==='casa').every(b=>{
+    const F=MANIF_CASA_FORMAS.find(f=>f.t===b.texto&&f.casa===b.casa);
+    return !!F && b.planetas.length>0
+        && b.planetas.every(p=>F.pl.indexOf(p.pl)>=0);
+  });
+  /* nenhuma forma pode citar uma casa sem ativação */
+  const casasAtivas=R.temas.filter(t=>t.bruto>0).map(t=>t.casa);
+  const casasOk=M.barras.filter(b=>b.casa!=null)
+    .every(b=>casasAtivas.indexOf(b.casa)>=0);
+  /* origem da casa: regência e ocupação nunca se confundem */
+  const origens=new Set();
+  M.barras.forEach(b=>(b.porque||[]).forEach(x=>{
+    if(/por ocupação/.test(x))origens.add('ocupação');
+    if(/por regência do alvo/.test(x))origens.add('regência do alvo');
+    if(/por regência do transitante/.test(x))origens.add('regência do transitante');
+  }));
+  return {
+    n:M.barras.length,
+    soma:+M.barras.reduce((a,b)=>a+b.share,0).toFixed(1),
+    temNada:M.barras.some(b=>b.tipo==='nada'),
+    nadaShare:M.nada.share,
+    ordenado:M.barras.every((b,i)=>i===0||M.barras[i-1].share>=b.share),
+    curva, coerentes, casasOk,
+    origens:[...origens],
+    porqueTodos:M.barras.every(b=>Array.isArray(b.porque)&&b.porque.length>0),
+    aviso:M.aviso, nota:M.nota, formula:M.formulaNada,
+    naturais:Object.keys(MANIF_NATURAL).length,
+    naturaisCompletos:Object.values(MANIF_NATURAL)
+      .every(N=>N.humor&&N.humor.f&&N.humor.p&&N.pessoa&&N.corpo),
+    ajusteF:[manifAjuste('f','facilitada'),manifAjuste('f','mista'),
+             manifAjuste('f','pressionada')],
+    ajusteP:[manifAjuste('p','facilitada'),manifAjuste('p','mista'),
+             manifAjuste('p','pressionada')],
+    tipos:[...new Set(M.barras.map(b=>b.tipo))]
+  };
+});
+t('o ranking devolve formas concretas ordenadas', MF.n>1 && MF.ordenado,
+  MF.n+' barras');
+t('as barras somam 100% da lista', Math.abs(MF.soma-100)<0.6, MF.soma+'%');
+t('a hipótese “nada perceptível” está sempre na lista', MF.temNada,
+  MF.nadaShare+'%');
+t('o peso de “nada” decresce monotonicamente com o índice',
+  MF.curva.every((v,i)=>i===0||MF.curva[i-1]>v)&&MF.curva[5]>0,
+  MF.curva.map(v=>v.toFixed(1)).join(' > '));
+t('cada forma só é gerada por planetas que a produzem naturalmente',
+  MF.coerentes);
+t('nenhuma forma cita uma casa sem ativação no dia', MF.casasOk);
+t('regência e ocupação aparecem nomeadas e distintas nas justificações',
+  MF.origens.length>0 && MF.origens.every(o=>/ocupação|regência/.test(o)),
+  MF.origens.join(' | '));
+t('toda barra traz a sua justificação auditável', MF.porqueTodos);
+t('o aviso separa plausibilidade relativa de probabilidade estatística',
+  /não são probabilidades estatísticas/.test(MF.aviso)
+  && /plausibilidade relativa/i.test(MF.aviso));
+t('a nota esclarece que a soma é da lista, não do mundo',
+  /100% da LISTA/.test(MF.nota));
+t('a fórmula da hipótese de base está declarada', /índice\/100/.test(MF.formula));
+t('os sete planetas têm humor, pessoa e corpo', MF.naturais===7
+  && MF.naturaisCompletos);
+t('a qualidade inclina sem determinar: forma facilitada nunca é zerada',
+  MF.ajusteF[0]>MF.ajusteF[1] && MF.ajusteF[1]>MF.ajusteF[2] && MF.ajusteF[2]>0,
+  MF.ajusteF.join(' > '));
+t('o ajuste é simétrico para formas pressionadas',
+  MF.ajusteP[2]>MF.ajusteP[1] && MF.ajusteP[1]>MF.ajusteP[0] && MF.ajusteP[0]>0,
+  MF.ajusteP.join(' < '));
+
+const MFUI = await pg.evaluate(()=>{
+  irPara('prob');
+  const el=document.getElementById('prob-body');
+  const txt=el?el.textContent:'';
+  const barras=[...document.querySelectorAll('#p-prob .mf-l')];
+  const larguras=[...document.querySelectorAll('#p-prob .mf-bar b')]
+    .map(b=>parseFloat(b.style.width)||0);
+  return {n:barras.length,
+    titulo:/Formas possíveis/.test(txt),
+    nada:/Nada perceptível/.test(txt),
+    aviso:/não são probabilidades estatísticas/.test(txt),
+    percentagens:[...document.querySelectorAll('#p-prob .mf-p')]
+      .every(e=>/%$/.test(e.textContent.trim())),
+    larguras,
+    decrescente:larguras.length<2||larguras.every((v,i)=>i===0||larguras[i-1]>=v-0.01),
+    nenhumaAberta:barras.every(b=>!b.hasAttribute('open')),
+    todasAbrem:barras.every(b=>b.querySelector('.mf-por li')),
+    /* o gráfico inteiro cabe no ecrã sem abrir nada */
+    alturaFechada:(document.querySelector('#p-prob .mf-list')||{}).scrollHeight||0};
+});
+t('a aba mostra a secção “Formas possíveis”', MFUI.titulo);
+t('a barra de “nada perceptível” é visível no ecrã', MFUI.nada);
+t('o aviso permanente acompanha o gráfico', MFUI.aviso);
+t('as barras são desenhadas em largura decrescente', MFUI.n>1 && MFUI.decrescente,
+  MFUI.larguras.map(v=>v.toFixed(0)).join(' ≥ '));
+t('cada barra mostra a sua percentagem', MFUI.percentagens);
+t('as barras vêm fechadas, para o gráfico se ler como gráfico',
+  MFUI.nenhumaAberta, MFUI.alturaFechada+'px de altura');
+t('cada barra abre para a sua justificação', MFUI.todasAbrem);
+
 /* ============ 20 · regressão do que já existia ============ */
 console.log('\n### regressão');
 await pg.setViewportSize({width:VW,height:VH});
@@ -452,6 +556,16 @@ const HOJE = await pg.evaluate(()=>{
       .some(e=>e.textContent.trim().length>0)};
 });
 t('Hoje traz o resumo de convergência, sem duplicar a aba', HOJE.resumo);
+const HJF = await pg.evaluate(()=>{
+  irPara('hoje');
+  const li=[...document.querySelectorAll('.hj-pforma li')];
+  return {n:li.length,
+    nada:!!document.querySelector('.hj-pforma .hj-pnada'),
+    pcts:li.every(e=>/^\d+%$/.test((e.querySelector('em')||{}).textContent||''))};
+});
+t('Hoje mostra as formas mais plausíveis do dia', HJF.n>=2, HJF.n+' linhas');
+t('Hoje mostra a hipótese de base junto das formas', HJF.nada);
+t('cada forma em Hoje traz a sua percentagem', HJF.pcts);
 t('Hoje tem o atalho “Ver probabilidades”', HOJE.botao);
 t('a explicação do trânsito em Hoje deixou de sair vazia', HOJE.explicacao);
 

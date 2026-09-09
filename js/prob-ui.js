@@ -83,6 +83,50 @@ function probSinteseHTML(R){
     +'<p class="pb-nota">'+C.nota+' '+C.aviso+'</p>';
 }
 
+/* ---------- gráfico de manifestações possíveis ----------
+   Barras horizontais das FORMAS concretas, ordenadas por plausibilidade
+   relativa entre si — com a hipótese “nada perceptível” na mesma lista,
+   nunca como nota de rodapé. Cada barra abre para a sua justificação. */
+const MANIF_ICONE={casa:'◈', humor:'◍', pessoa:'☖', corpo:'◐', nada:'◌'};
+function manifBarrasHTML(R){
+  if(!R||R.semMapa)return '';
+  let M; try{ M=manifRanking(R,{limite:PROB_UI.manifLimite||9}); }
+  catch(e){ console.error('manifestações:',e);
+    return '<p class="pb-vazio">Não foi possível compor as formas possíveis.</p>'; }
+  if(!M.barras.length)return '';
+  const max=M.barras[0].share||1;
+  const linhas=M.barras.map((b,i)=>{
+    const cls='mf-'+b.tipo
+      +(b.tipo!=='nada'&&b.qualidadeForma==='p'?' mf-pres':'')
+      +(b.tipo!=='nada'&&b.qualidadeForma==='f'?' mf-fac':'');
+    const larg=Math.max(2,100*b.share/max);
+    const sub=b.tipo==='nada'
+      ? 'hipótese de base'
+      : (b.casa?('casa '+b.casa+' · '+b.tema):b.tema)
+        +(b.planetas.length?(' · '+b.planetas.map(p=>p.nome).join(', ')):'');
+    /* todas fechadas: o gráfico só se lê como gráfico se as barras
+       estiverem todas visíveis ao mesmo tempo. A justificação abre-se
+       barra a barra, quando o utilizador a pedir. */
+    return '<details class="mf-l '+cls+'">'
+      +'<summary>'
+        +'<span class="mf-t"><i>'+(MANIF_ICONE[b.tipo]||'·')+'</i>'+b.texto+'</span>'
+        +'<span class="mf-bar"><b style="width:'+larg.toFixed(1)+'%"></b></span>'
+        +'<span class="mf-p">'+b.share.toFixed(1)+'%</span>'
+      +'</summary>'
+      +'<p class="mf-sub">'+sub+'</p>'
+      +'<ul class="mf-por">'+b.porque.map(x=>'<li>'+x+'</li>').join('')+'</ul>'
+      +'</details>';
+  }).join('');
+  return '<div class="mf-wrap">'
+    +'<p class="pb-nota mf-av">'+M.aviso+'</p>'
+    +'<div class="mf-list" role="list">'+linhas+'</div>'
+    +'<p class="pb-nota">'+M.nota+'</p>'
+    +'<p class="pb-nota"><b>Como a hipótese de base é calculada:</b> '
+      +M.formulaNada+'. Índice do dia '+M.indiceDia+' → esta hipótese pesa '
+      +(M.nada.share||0).toFixed(1)+'% da lista.</p>'
+    +'</div>';
+}
+
 /* ---------- gráfico temporal dos quatro temas mais ativados ---------- */
 function probGraficoHTML(serie){
   if(serie.length<2)return '';
@@ -254,6 +298,8 @@ function renderProb(){
     ? probSerie(d, PROB_UI.periodo, {retornos:PROB_UI.retornos}) : [R];
   el.innerHTML=probCabecalhoHTML()
     +'<section class="pb-s"><h4>Síntese do dia</h4>'+probSinteseHTML(R)+'</section>'
+    +'<section class="pb-s"><h4>Formas possíveis <i>plausibilidade relativa, '
+      +'não probabilidade</i></h4>'+manifBarrasHTML(R)+'</section>'
     +(serie.length>1
       ? '<section class="pb-s"><h4>Temas suscitados <i>quatro mais ativados</i></h4>'
         +probGraficoHTML(serie)

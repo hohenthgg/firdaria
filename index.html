@@ -2060,6 +2060,13 @@ body.is-mobile .sy-via p,body.is-mobile .nl-st>p{font-size:.86rem;line-height:1.
 .hj-vaz{margin:0;font-size:.78rem;color:var(--dim2);line-height:1.6}
 .hj-prob{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 .hj-pt3{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.hj-pforma{list-style:none;margin:10px 0 0;padding:0;display:flex;
+  flex-direction:column;gap:4px}
+.hj-pforma li{display:grid;grid-template-columns:38px 1fr;gap:8px;
+  align-items:baseline;font-size:.75rem;line-height:1.45;color:var(--tx)}
+.hj-pforma em{font-style:normal;font-family:var(--mono,monospace);font-size:.7rem;
+  color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
+.hj-pforma .hj-pnada{color:var(--dim)}
 .hj-pt3 li{display:grid;gap:2px}
 .hj-pt3 b{font-size:.86rem;color:var(--ivory2)}
 .hj-pt3 span{font-family:var(--mono);font-size:.6rem;color:var(--dim2)}
@@ -2117,6 +2124,39 @@ body.is-mobile .hj-2{grid-template-columns:1fr}
 .pb-c.q-pressionada{border-left:2px solid var(--red,#c96a6a)}
 .pb-c.q-mista{border-left:2px solid var(--gold)}
 .pb-graf{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px}
+/* ---- manifestações: barras horizontais de formas possíveis ---- */
+.mf-wrap{margin:0}
+.mf-av{margin:0 0 10px}
+.mf-list{display:flex;flex-direction:column;gap:5px}
+.mf-l{background:var(--bg2);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.mf-l>summary{list-style:none;cursor:pointer;display:grid;
+  grid-template-columns:1fr minmax(70px,26%) 46px;align-items:center;gap:10px;
+  padding:9px 11px;font-size:.76rem;line-height:1.45;color:var(--tx)}
+.mf-l>summary::-webkit-details-marker{display:none}
+.mf-l>summary:hover{background:rgba(255,255,255,.03)}
+.mf-l>summary:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.mf-t{display:flex;gap:8px;align-items:baseline;min-width:0}
+.mf-t i{font-style:normal;color:var(--dim2);font-size:.8rem;flex:none}
+.mf-bar{display:block;height:7px;border-radius:4px;background:rgba(255,255,255,.06);
+  overflow:hidden}
+.mf-bar b{display:block;height:100%;border-radius:4px;background:var(--acc);
+  transition:width .25s ease}
+.mf-p{font-family:var(--mono,monospace);font-size:.7rem;color:var(--dim);
+  text-align:right;font-variant-numeric:tabular-nums}
+.mf-fac>summary .mf-bar b{background:var(--acc)}
+.mf-pres>summary .mf-bar b{background:var(--accb)}
+.mf-humor>summary .mf-bar b,.mf-pessoa>summary .mf-bar b,
+.mf-corpo>summary .mf-bar b{background:linear-gradient(90deg,var(--acc),var(--accb))}
+.mf-nada>summary .mf-bar b{background:rgba(255,255,255,.22)}
+.mf-nada>summary{color:var(--dim)}
+.mf-sub{margin:0 11px 6px;font-size:.7rem;color:var(--dim2)}
+.mf-por{margin:0 11px 11px;padding-left:16px;font-size:.71rem;line-height:1.62;
+  color:var(--dim);display:flex;flex-direction:column;gap:3px}
+@media(max-width:560px){
+  .mf-l>summary{grid-template-columns:1fr 40px;grid-template-areas:'t p' 'b b';
+    row-gap:7px}
+  .mf-t{grid-area:t}.mf-p{grid-area:p}.mf-bar{grid-area:b}
+}
 .pb-svg{width:100%;height:auto;display:block}
 .pb-leg{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:12px}
 .pb-leg li{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--dim)}
@@ -2918,6 +2958,7 @@ body.is-mobile .rv2-sticky{position:static}
 <script src="js/senhores.js"></script>
 <script src="js/fuso.js"></script>
 <script src="js/probabilidades.js"></script>
+<script src="js/manifestacoes.js"></script>
 <script src="js/prob-ui.js"></script>
 <script src="js/hoje.js"></script>
 <script src="js/backup.js"></script>

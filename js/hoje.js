@@ -127,9 +127,26 @@ function hojeProbResumoHTML(){
   const top=R.temas.filter(t=>t.bruto>0).slice(0,3);
   if(!top.length)return '<p class="hj-vaz">Nenhum tema ativado hoje.</p>';
   const gl=(typeof PROB_QGLIFO!=='undefined')?PROB_QGLIFO:{};
+  /* as duas formas mais plausíveis, com a hipótese de base sempre à vista:
+     é a diferença entre saber QUE ASSUNTO está ativado e imaginar SOB QUE
+     FORMA ele poderia aparecer */
+  let formas='';
+  try{
+    if(typeof manifRanking==='function'){
+      const M=manifRanking(R,{limite:6});
+      const duas=M.barras.filter(b=>b.tipo!=='nada').slice(0,2);
+      const nada=M.nada;
+      if(duas.length)formas='<ul class="hj-pforma">'
+        +duas.map(b=>'<li><em>'+b.share.toFixed(0)+'%</em>'+b.texto+'</li>').join('')
+        +(nada?('<li class="hj-pnada"><em>'+nada.share.toFixed(0)+'%</em>'
+          +nada.texto+'</li>'):'')
+        +'</ul>';
+    }
+  }catch(e){ console.error('formas possíveis em Hoje:',e); }
   return '<div class="hj-prob">'
     +'<ul class="hj-pt3">'+top.map(t=>'<li><b>'+t.rotulo+'</b>'
       +'<span>casa '+t.casa+'</span><i>'+t.indice+'</i></li>').join('')+'</ul>'
+    +formas
     +'<div class="hj-pmeta">'
       +'<span>índice <b>'+R.indice+'</b></span>'
       +'<span>qualidade <b>'+(gl[R.qualidade.rotulo]||'')+' '+R.qualidade.rotulo+'</b></span>'
