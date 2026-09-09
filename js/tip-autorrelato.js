@@ -161,11 +161,44 @@ const AUTO_OPCOES=[
   {v:'depende', rotulo:'Depende da situação'},
   {v:'naosei', rotulo:'Não sei dizer'}
 ];
+/* ---------- as respostas são DE UMA PESSOA, não do app ----------
+   Antes tudo ficava numa chave global: trocar o mapa analisado mantinha
+   as respostas de quem foi consultado antes, e a comparação tipológica
+   passava a misturar duas pessoas. A chave passa a incluir a identidade
+   do mapa — instante de nascimento e grau do Ascendente, que é o que
+   distingue um mapa de outro sem depender do nome digitado. */
+function autoIdMapa(){
+  if(typeof NATAL==='undefined'||!NATAL||typeof BIRTH!=='number')return null;
+  const asc=Math.round(n360(NATAL.asc)*100);
+  return String(BIRTH)+'_'+asc;
+}
+function autoChave(){
+  const id=autoIdMapa();
+  return id?(AUTO_CHAVE+':'+id):AUTO_CHAVE;
+}
 function autoCarregar(){
-  try{ return JSON.parse(localStorage.getItem(AUTO_CHAVE)||'{}'); }catch(e){ return {}; }
+  const k=autoChave();
+  try{
+    const bruto=localStorage.getItem(k);
+    if(bruto)return JSON.parse(bruto);
+    /* migração única do formato antigo, que não separava por mapa.
+       As respostas herdadas ficam MARCADAS como tais, porque não há
+       como saber de quem eram — e isso é dito na interface. */
+    if(k!==AUTO_CHAVE){
+      const velho=localStorage.getItem(AUTO_CHAVE);
+      if(velho){
+        const o=JSON.parse(velho);
+        o.herdado={de:'versão anterior, sem separação por mapa', quando:Date.now()};
+        localStorage.setItem(k, JSON.stringify(o));
+        localStorage.removeItem(AUTO_CHAVE);
+        return o;
+      }
+    }
+  }catch(e){}
+  return {};
 }
 function autoGravar(o){
-  try{ localStorage.setItem(AUTO_CHAVE, JSON.stringify(o)); }catch(e){}
+  try{ localStorage.setItem(autoChave(), JSON.stringify(o)); }catch(e){}
 }
 function autoResponder(id,valor,contexto){
   const o=autoCarregar();
@@ -262,5 +295,13 @@ function autoConfronto(infMbti, infSoc){
         autoHipotese('mbti'), decl.mbti);
   monta('socionica', infSoc&&infSoc.principal?infSoc.principal.tipo:null,
         autoHipotese('socionica'), decl.socionica);
-  return {linhas, meta:AUTO_META};
+  const o2=autoCarregar();
+  return {linhas, meta:AUTO_META,
+    mapa:autoIdMapa(),
+    herdado:o2.herdado||null,
+    avisoHerdado:o2.herdado
+      ? 'Estas respostas foram herdadas da versão anterior do app, que guardava '
+        +'um único conjunto para todos os mapas. Não há como saber a quem '
+        +'pertenciam. Se não forem desta pessoa, convém respondê-las de novo.'
+      : null};
 }

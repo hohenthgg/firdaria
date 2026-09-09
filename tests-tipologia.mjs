@@ -191,6 +191,12 @@ const ALC = await pg.evaluate(()=>{
     põe('balanco.modo','cardinal'); põe('angularidade.significadores',0);
     [3,9,1,10].forEach(h=>{põe('casa'+h+'.regente','jupiter'); põe('casa'+h+'.ocupantes',[]);});
     põe('seita','diurno'); põe('dispositor.mercury','jupiter');
+    /* significadores de orientação, base da dimensão de valoração */
+    põe('orient.regenteAsc','jupiter'); põe('orient.elemRegenteAsc','fogo');
+    põe('orient.casaRegenteAsc',5); põe('orient.daimon','jupiter');
+    põe('orient.elemEspirito','fogo'); põe('orient.casaEspirito',5);
+    põe('orient.luminarSeita','sun'); põe('orient.casaLuminarSeita',5);
+    põe('orient.elemLuminarSeita','fogo');
     /* agora força os primeiros `quantos` sinais a ocorrer */
     const forcar=regra.sinais.slice(0,quantos);
     forcar.forEach(S=>{
@@ -220,7 +226,15 @@ const ALC = await pg.evaluate(()=>{
         ()=>põe('dispositor.mercury','saturn'),
         ()=>põe('casa9.regente','saturn'), ()=>põe('casa10.regente','mars'),
         ()=>põe('casa3.ocupantes',['venus']), ()=>põe('casa9.ocupantes',['jupiter']),
-        ()=>põe('casa1.ocupantes',['mars']), ()=>põe('casa10.ocupantes',['sun'])
+        ()=>põe('casa1.ocupantes',['mars']), ()=>põe('casa10.ocupantes',['sun']),
+        ()=>põe('orient.elemRegenteAsc','ar'), ()=>põe('orient.elemRegenteAsc','terra'),
+        ()=>põe('orient.elemRegenteAsc','água'), ()=>põe('orient.elemRegenteAsc','fogo'),
+        ()=>põe('orient.daimon','saturn'), ()=>põe('orient.daimon','venus'),
+        ()=>põe('orient.casaEspirito',9), ()=>põe('orient.casaEspirito',3),
+        ()=>põe('orient.casaEspirito',7), ()=>põe('orient.casaEspirito',11),
+        ()=>põe('orient.casaLuminarSeita',10), ()=>põe('orient.casaLuminarSeita',12),
+        ()=>põe('orient.elemLuminarSeita','terra'), ()=>põe('orient.elemLuminarSeita','ar'),
+        ()=>põe('orient.casaRegenteAsc',2), ()=>põe('orient.casaRegenteAsc',10)
       ].concat([['mercury','saturn'],['mercury','jupiter'],['moon','saturn'],
                 ['moon','venus'],['venus','saturn'],['sun','saturn'],['sun','jupiter']]
         .map(([a,c])=>()=>põe('asp.'+a+'-'+c,true)));
@@ -484,15 +498,16 @@ t('Eneagrama, DISC, Socoa e Guia continuam acessíveis', OUTROS);
 const BK=await pg.evaluate(()=>{
   /* o autorrelato entra no backup e volta pela restauração */
   autoResponder('q.ti-te','a');
+  const k=autoChave();                       // chave por mapa, não global
   const p=bkColeta();
-  const tinha=!!p.dados['agx_autorrelato'];
-  localStorage.removeItem('agx_autorrelato');
+  const tinha=!!p.dados[k];
+  localStorage.removeItem(k);
   bkRestaurar(JSON.stringify(p),false);
   const voltou=(autoCarregar().respostas||{})['q.ti-te'];
-  localStorage.removeItem('agx_autorrelato');
-  return {tinha, voltou:voltou&&voltou.valor==='a'};
+  localStorage.removeItem(k);
+  return {tinha, voltou:voltou&&voltou.valor==='a', chave:k};
 });
-t('o autorrelato entra no backup', BK.tinha);
+t('o autorrelato entra no backup', BK.tinha, BK.chave);
 t('a restauração devolve o autorrelato', BK.voltou);
 
 for(const [w,h,nome] of [[390,844,'telemóvel'],[820,1180,'tablet'],[1440,900,'desktop']]){

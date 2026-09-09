@@ -148,6 +148,33 @@ function ponteFatos(){
   const dispM=P.mercury?SIGN_RULER[signOf(P.mercury.lon)]:null;
   põe('dispositor.mercury', !!dispM, dispM,
     dispM?('Mercúrio disposto por '+PT_NAME[dispM]):null);
+  /* ---- significadores de ORIENTAÇÃO ----
+     Fatos distintos dos anteriores. Os de cima falam de faculdades que
+     OPERAM (dignidade, angularidade, contatos); estes falam do que a
+     vida PERSEGUE: o regente do Ascendente, o luminar da seita e o
+     regente do Lote do Espírito — que a tradição liga à intenção e à
+     iniciativa. É deles que a camada de VALORAÇÃO se alimenta, para não
+     usar a mesma evidência de capacidade para afirmar coisa diferente. */
+  const rAsc=NATAL.rulers?NATAL.rulers[1]:null;
+  põe('orient.regenteAsc', !!rAsc, rAsc, rAsc?('Ascendente regido por '+PT_NAME[rAsc]):null);
+  põe('orient.elemRegenteAsc', !!(rAsc&&P[rAsc]), rAsc&&P[rAsc]?SIGN_ELEM[signOf(P[rAsc].lon)]:null,
+    rAsc&&P[rAsc]?('regente do Ascendente em signo de '+SIGN_ELEM[signOf(P[rAsc].lon)]):null);
+  põe('orient.casaRegenteAsc', !!(rAsc&&P[rAsc]&&P[rAsc].h), rAsc&&P[rAsc]?P[rAsc].h:null,
+    rAsc&&P[rAsc]&&P[rAsc].h?('regente do Ascendente na casa '+P[rAsc].h):null);
+  let dm=null, espCasa=null, espElem=null;
+  try{
+    const E=(typeof loteEspirito==='function')?loteEspirito():null;
+    if(E&&!E.erro){ dm=E.regente; espCasa=E.casa; espElem=SIGN_ELEM[E.signo]; }
+  }catch(e){}
+  põe('orient.daimon', !!dm, dm, dm?('Lote do Espírito regido por '+PT_NAME[dm]):null);
+  põe('orient.elemEspirito', !!espElem, espElem, espElem?('Lote do Espírito em signo de '+espElem):null);
+  põe('orient.casaEspirito', !!espCasa, espCasa, espCasa?('Lote do Espírito na casa '+espCasa):null);
+  const luz=NATAL.sect==='diurno'?'sun':'moon';
+  põe('orient.luminarSeita', !!P[luz], luz, 'luminar da seita: '+PT_NAME[luz]);
+  põe('orient.casaLuminarSeita', !!(P[luz]&&P[luz].h), P[luz]?P[luz].h:null,
+    P[luz]&&P[luz].h?(PT_NAME[luz]+', luminar da seita, na casa '+P[luz].h):null);
+  põe('orient.elemLuminarSeita', !!P[luz], P[luz]?SIGN_ELEM[signOf(P[luz].lon)]:null,
+    P[luz]?(PT_NAME[luz]+', luminar da seita, em signo de '+SIGN_ELEM[signOf(P[luz].lon)]):null);
   F._aspectos=asp; F._temAsp=temAsp;
   return F;
 }
@@ -463,7 +490,7 @@ const REGRAS_MBTI=[
    resultados diferentes. */
 const REGRAS_SOC=[
   {id:'soc.Ne.potencial', versao:'2.0', sistema:'socionica', escola:SOC_FONTE.escola,
-   familia:'soc-intuicao', minimo:2,
+   familia:'soc-intuicao', minimo:2, dimensao:'capacidade',
    sinais:[
      {id:'merc-jupiter', texto:'Mercúrio em aspecto com Júpiter',
       exige:['asp.mercury-jupiter'], teste:F=>F['asp.mercury-jupiter'].valor},
@@ -483,7 +510,7 @@ const REGRAS_SOC=[
    distincao:'Não autoriza concluir criatividade nem otimismo.'},
 
   {id:'soc.Ni.tempo', versao:'2.0', sistema:'socionica', escola:SOC_FONTE.escola,
-   familia:'soc-intuicao', minimo:2,
+   familia:'soc-intuicao', minimo:2, dimensao:'capacidade',
    sinais:[
      {id:'merc-saturno', texto:'Mercúrio em aspecto com Saturno',
       exige:['asp.mercury-saturn'], teste:F=>F['asp.mercury-saturn'].valor},
@@ -507,7 +534,7 @@ const REGRAS_SOC=[
      +'condição não é lida como competência.'},
 
   {id:'soc.Se.forca', versao:'2.0', sistema:'socionica', escola:SOC_FONTE.escola,
-   familia:'soc-sensacao', minimo:2,
+   familia:'soc-sensacao', minimo:2, dimensao:'capacidade',
    sinais:[
      {id:'marte-angular', texto:'Marte em casa angular',
       exige:['casa.mars'], teste:F=>[1,4,7,10].indexOf(F['casa.mars'].valor)>=0},
@@ -527,7 +554,7 @@ const REGRAS_SOC=[
      +'dignidade de Marte não é lida como competência psicológica.'},
 
   {id:'soc.Si.conforto', versao:'2.0', sistema:'socionica', escola:SOC_FONTE.escola,
-   familia:'soc-sensacao', minimo:2,
+   familia:'soc-sensacao', minimo:2, dimensao:'capacidade',
    sinais:[
      {id:'venus-receptiva', texto:'Vênus em elemento receptivo (terra ou água)',
       exige:['elem.venus'], teste:F=>['terra','água'].indexOf(F['elem.venus'].valor)>=0},
@@ -548,7 +575,7 @@ const REGRAS_SOC=[
    distincao:'Não autoriza concluir preguiça, conservadorismo nem apego.'},
 
   {id:'soc.Ti.estrutura', versao:'2.0', sistema:'socionica', escola:SOC_FONTE.escola,
-   familia:'soc-logica', minimo:2,
+   familia:'soc-logica', minimo:2, dimensao:'capacidade',
    sinais:[
      {id:'merc-disposto-frio', texto:'Mercúrio disposto por Saturno ou por si mesmo',
       exige:['dispositor.mercury'],
@@ -574,7 +601,7 @@ const REGRAS_SOC=[
    distincao:'Não autoriza concluir inteligência analítica.'},
 
   {id:'soc.Te.fato', versao:'2.0', sistema:'socionica', escola:SOC_FONTE.escola,
-   familia:'soc-logica', minimo:2,
+   familia:'soc-logica', minimo:2, dimensao:'capacidade',
    sinais:[
      {id:'merc-oficio', texto:'Mercúrio nos lugares do ofício e do recurso (2ª, 6ª ou 10ª)',
       exige:['casa.mercury'], teste:F=>[6,10,2].indexOf(F['casa.mercury'].valor)>=0},
@@ -598,7 +625,7 @@ const REGRAS_SOC=[
    distincao:'Não autoriza concluir competência gerencial nem eficiência.'},
 
   {id:'soc.Fe.emocao', versao:'2.0', sistema:'socionica', escola:SOC_FONTE.escola,
-   familia:'soc-etica', minimo:2,
+   familia:'soc-etica', minimo:2, dimensao:'capacidade',
    sinais:[
      {id:'lua-expansiva', texto:'Lua em signo de fogo ou de ar',
       exige:['elem.moon'], teste:F=>['fogo','ar'].indexOf(F['elem.moon'].valor)>=0},
@@ -618,7 +645,7 @@ const REGRAS_SOC=[
      +'do aspecto emocional expresso, não do caráter.'},
 
   {id:'soc.Fi.relacao', versao:'2.0', sistema:'socionica', escola:SOC_FONTE.escola,
-   familia:'soc-etica', minimo:2,
+   familia:'soc-etica', minimo:2, dimensao:'capacidade',
    sinais:[
      {id:'venus-retentiva', texto:'Vênus em elemento retentivo (terra ou água)',
       exige:['elem.venus'], teste:F=>['terra','água'].indexOf(F['elem.venus'].valor)>=0},
@@ -637,7 +664,7 @@ const REGRAS_SOC=[
    distincao:'Não autoriza concluir bondade nem sensibilidade.'},
 
   {id:'soc.racional', versao:'2.0', sistema:'socionica', escola:SOC_FONTE.escola,
-   familia:'soc-racionalidade', minimo:2,
+   familia:'soc-racionalidade', minimo:2, dimensao:'capacidade',
    sinais:[
      {id:'cardinal-ou-fixo', texto:'predomínio cardinal ou fixo',
       exige:['balanco.modo'], teste:F=>['cardinal','fixo'].indexOf(F['balanco.modo'].valor)>=0},
@@ -658,7 +685,7 @@ const REGRAS_SOC=[
      +'sobre outra coisa.'},
 
   {id:'soc.irracional', versao:'2.0', sistema:'socionica', escola:SOC_FONTE.escola,
-   familia:'soc-racionalidade', minimo:2,
+   familia:'soc-racionalidade', minimo:2, dimensao:'capacidade',
    sinais:[
      {id:'mutavel', texto:'predomínio de signos mutáveis',
       exige:['balanco.modo'], teste:F=>F['balanco.modo'].valor==='mutável'},
@@ -673,7 +700,97 @@ const REGRAS_SOC=[
    fontesNatais:[FONTE_TRADICAO.ptolomeu, FONTE_TRADICAO.barbault],
    hipotese:'Favoreceria uma função BASE de percepção — um tipo irracional.',
    favorece:[['racionalidade:irracional',2]], contraria:[['racionalidade:racional',1]],
-   distincao:'Irracional não significa ilógico nem desatinado.'}
+   distincao:'Irracional não significa ilógico nem desatinado.'},
+
+  /* ---------- VALORAÇÃO ----------
+     Dimensão distinta da capacidade, e com evidência PRÓPRIA: não usa os
+     mesmos fatos das regras acima. Enquanto aquelas falam de faculdades
+     que operam (dignidade, angularidade, contatos), estas falam do que a
+     vida persegue — regente do Ascendente, luminar da seita e regente do
+     Lote do Espírito, que a tradição liga à intenção e à iniciativa.
+     A separação importa porque o Modelo A afirma coisas diferentes: as
+     posições 7 e 8 são FORTES e NÃO valoradas, e as 5 e 6 são FRACAS e
+     valoradas. Sem evidência de valoração, capacidade sozinha não
+     distingue o Ego do Id — e o app passa a dizer isso. */
+  {id:'soc.val.estrutura', versao:'1.0', sistema:'socionica', escola:SOC_FONTE.escola,
+   familia:'soc-val-logica', dimensao:'valoracao', minimo:2,
+   sinais:[
+     {id:'orient-ar-terra', texto:'regente do Ascendente em signo de ar ou de terra',
+      exige:['orient.elemRegenteAsc'],
+      teste:F=>['ar','terra'].indexOf(F['orient.elemRegenteAsc'].valor)>=0},
+     {id:'daimon-frio', texto:'Lote do Espírito regido por Saturno ou Mercúrio',
+      exige:['orient.daimon'],
+      teste:F=>['saturn','mercury'].indexOf(F['orient.daimon'].valor)>=0},
+     {id:'espirito-estudo', texto:'Lote do Espírito nas casas do saber e do método (3ª, 6ª, 9ª)',
+      exige:['orient.casaEspirito'],
+      teste:F=>[3,6,9].indexOf(F['orient.casaEspirito'].valor)>=0}],
+   leitura:'O regente do Ascendente em elemento que separa e ordena, com o Lote do '
+     +'Espírito administrado por um planeta frio, é lido como vida orientada para '
+     +'compreender e ordenar antes de agir.',
+   fontesNatais:[FONTE_TRADICAO.lilly, FONTE_TRADICAO.ptolomeu],
+   hipotese:'Sugeriria VALORAÇÃO dos aspectos lógicos da informação — a pessoa '
+     +'orienta-se por eles, o que é afirmação distinta de processá-los bem.',
+   favorece:[['Ti',1.5],['Te',1.5]], contraria:[['Fe',0.75],['Fi',0.75]],
+   distincao:'Não autoriza concluir competência lógica: valorar não é ser capaz.'},
+
+  {id:'soc.val.relacao', versao:'1.0', sistema:'socionica', escola:SOC_FONTE.escola,
+   familia:'soc-val-etica', dimensao:'valoracao', minimo:2,
+   sinais:[
+     {id:'orient-agua-fogo', texto:'regente do Ascendente em signo de água ou de fogo',
+      exige:['orient.elemRegenteAsc'],
+      teste:F=>['água','fogo'].indexOf(F['orient.elemRegenteAsc'].valor)>=0},
+     {id:'daimon-quente', texto:'Lote do Espírito regido por Vênus, Júpiter ou a Lua',
+      exige:['orient.daimon'],
+      teste:F=>['venus','jupiter','moon'].indexOf(F['orient.daimon'].valor)>=0},
+     {id:'espirito-convivio', texto:'Lote do Espírito nas casas do convívio (5ª, 7ª, 11ª)',
+      exige:['orient.casaEspirito'],
+      teste:F=>[5,7,11].indexOf(F['orient.casaEspirito'].valor)>=0}],
+   leitura:'O regente do Ascendente em elemento que liga, com o Lote do Espírito '
+     +'administrado por um benéfico e alojado nos lugares do convívio, é lido como '
+     +'vida orientada pelo vínculo e pelo apreço.',
+   fontesNatais:[FONTE_TRADICAO.barbault, FONTE_TRADICAO.olavo],
+   hipotese:'Sugeriria VALORAÇÃO dos aspectos éticos da informação.',
+   favorece:[['Fe',1.5],['Fi',1.5]], contraria:[['Ti',0.75],['Te',0.75]],
+   distincao:'Não autoriza concluir bondade nem habilidade social.'},
+
+  {id:'soc.val.concreto', versao:'1.0', sistema:'socionica', escola:SOC_FONTE.escola,
+   familia:'soc-val-percepcao', dimensao:'valoracao', minimo:2,
+   sinais:[
+     {id:'luz-angular', texto:'luminar da seita em casa angular',
+      exige:['orient.casaLuminarSeita'],
+      teste:F=>[1,4,7,10].indexOf(F['orient.casaLuminarSeita'].valor)>=0},
+     {id:'luz-terra-fogo', texto:'luminar da seita em signo de terra ou de fogo',
+      exige:['orient.elemLuminarSeita'],
+      teste:F=>['terra','fogo'].indexOf(F['orient.elemLuminarSeita'].valor)>=0},
+     {id:'orient-material', texto:'regente do Ascendente nas casas do corpo e do recurso (1ª, 2ª, 6ª, 10ª)',
+      exige:['orient.casaRegenteAsc'],
+      teste:F=>[1,2,6,10].indexOf(F['orient.casaRegenteAsc'].valor)>=0}],
+   leitura:'Luminar da seita estabelecido nos ângulos e regente do Ascendente nos '
+     +'lugares do corpo e do recurso são lidos como vida orientada para o que se '
+     +'toca e se sustenta.',
+   fontesNatais:[FONTE_TRADICAO.ptolomeu, FONTE_TRADICAO.olavo],
+   hipotese:'Sugeriria VALORAÇÃO dos aspectos sensoriais da informação.',
+   favorece:[['Se',1.5],['Si',1.5]], contraria:[['Ne',0.75],['Ni',0.75]],
+   distincao:'Não autoriza concluir materialismo nem falta de imaginação.'},
+
+  {id:'soc.val.possivel', versao:'1.0', sistema:'socionica', escola:SOC_FONTE.escola,
+   familia:'soc-val-percepcao', dimensao:'valoracao', minimo:2,
+   sinais:[
+     {id:'luz-cadente', texto:'luminar da seita em casa cadente',
+      exige:['orient.casaLuminarSeita'],
+      teste:F=>[3,6,9,12].indexOf(F['orient.casaLuminarSeita'].valor)>=0},
+     {id:'luz-ar-agua', texto:'luminar da seita em signo de ar ou de água',
+      exige:['orient.elemLuminarSeita'],
+      teste:F=>['ar','água'].indexOf(F['orient.elemLuminarSeita'].valor)>=0},
+     {id:'espirito-busca', texto:'Lote do Espírito nas casas da busca (9ª, 11ª, 12ª)',
+      exige:['orient.casaEspirito'],
+      teste:F=>[9,11,12].indexOf(F['orient.casaEspirito'].valor)>=0}],
+   leitura:'Luminar da seita afastado dos ângulos e Lote do Espírito nos lugares da '
+     +'busca são lidos como vida orientada para o que ainda não está dado.',
+   fontesNatais:[FONTE_TRADICAO.barbault, FONTE_TRADICAO.lilly],
+   hipotese:'Sugeriria VALORAÇÃO dos aspectos intuitivos da informação.',
+   favorece:[['Ne',1.5],['Ni',1.5]], contraria:[['Se',0.75],['Si',0.75]],
+   distincao:'Não autoriza concluir criatividade nem desapego do concreto.'}
 ];
 
 /* ============================================================
@@ -724,6 +841,7 @@ function ponteAplicar(regras, F){
     origens.forEach(id=>usados.add(id));
     testemunhos.push({
       regra:R.id, versao:R.versao, sistema:R.sistema, escola:R.escola,
+      dimensao:R.dimensao||null,
       familia:R.familia, ordemNaFamilia:ordem, atenuacao:atenua, reforco,
       minimo:R.minimo, sinaisOcorridos:ocorrem.map(a=>a.sinal.texto),
       sinaisAusentes:avaliados.filter(a=>a.estado==='ausente').map(a=>a.sinal.texto),

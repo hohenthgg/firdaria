@@ -56,32 +56,25 @@ const ENN={
 const ENN_INT={1:[7,4],2:[4,8],3:[6,9],4:[1,2],5:[8,7],6:[9,3],7:[5,1],8:[2,5],9:[3,6]};
 
 /* ---------------- montagem dos perfis ---------------- */
-const forcaLb=d=>d>=25?'forte':d>=12?'moderada':d>=5?'leve predominância':'equilibrada';
-function tipDicos(Y){
-  return [['Introversão × Extroversão',Y.dims.E,'E','I','Extroversão, Sociabilidade e Expressividade'],
-    ['Intuição × Sensação',Y.dims.N,'N','S','Abstração, Imaginação e Idealismo'],
-    ['Sentimento × Pensamento',Y.dims.F,'F','T','Emotividade, Sensibilidade e o inverso de Análise'],
-    ['Julgamento × Percepção',Y.dims.J,'J','P','Ordem, Planejamento e Disciplina']];
-}
+/* A auditoria das quatro dicotomias saiu daqui junto com a conversão que
+   as produzia: elas vinham de médias de eixos e não descreviam nada que o
+   app ainda calcule. O Eneagrama não depende delas — é um sistema de
+   MOTIVAÇÃO, e a sua derivação por eixos nunca passou por MBTI. */
 function tipCalcHTML(Y,sys){
-  const dic=tipDicos(Y).map(([nome,v,hi,lo,eixos])=>{
-    const lado=v>=50?hi:lo, d=Math.abs(v-50);
-    return '<div class="tpq-r"><span>'+nome+'</span><b>'+lado+' — '+forcaLb(d)
-      +'</b><p>eixos agregados: '+eixos+'. Posição '+v+'% para '+hi+'.</p></div>';
-  }).join('');
-  let extra='';
-  if(sys==='enn')extra='<div class="tpq-r"><span>Composição do tipo '+Y.enn+'</span><b>apoio '+Y.ennScore+'%</b>'
-    +'<p>Cada tipo soma dois grupos de eixos (ex.: tipo 5 = Concentração + Introversão; tipo 8 = Dominação + Autonomia). '
-    +'O tipo exibido é o de maior soma; a alternativa é o segundo colocado ('+Y.ennAlt+').</p></div>';
-  if(sys==='soc')extra='<div class="tpq-r"><span>Conversão para a sociônica</span><b>via dicotomias</b>'
-    +'<p>O código junguiano de quatro letras é convertido pela tabela clássica (ex.: INTj→LII, INTp→ILI). '
-    +'A racionalidade sociônica (j/p) segue a dicotomia Julgamento×Percepção estimada acima.</p></div>';
+  if(sys!=='enn')return '';
   return '<details class="tpq"><summary>Como este tipo foi estimado pelo mapa</summary>'
-    +'<p class="tpq-n">Estimativa derivada do padrão global dos 48 eixos — nunca de um signo ou planeta isolado. '
-    +'Não é diagnóstico psicométrico: é a tipologia que o padrão do mapa mais aproxima.</p>'
-    +dic+extra
-    +'<div class="tpq-r"><span>Eixos que mais sustentam</span><b>'+(Y.sust.join(' · ')||'—')+'</b></div>'
-    +(Y.diverg.length?('<div class="tpq-r"><span>Onde a evidência divide</span><b>'+Y.diverg.join('; ')+'</b></div>'):'')
+    +'<p class="tpq-n">Estimativa derivada do padrão global dos 48 eixos — nunca de '
+    +'um signo ou planeta isolado. Não é diagnóstico psicométrico.</p>'
+    +'<div class="tpq-r"><span>Composição do tipo '+Y.enn+'</span><b>apoio '+Y.ennScore+'%</b>'
+    +'<p>Cada tipo soma dois grupos de eixos (por exemplo, o tipo 5 = Concentração '
+    +'com Introversão; o tipo 8 = Dominação com Autonomia). O tipo exibido é o de '
+    +'maior soma, e a alternativa é o segundo colocado ('+Y.ennAlt+'). A soma serve '
+    +'para ORDENAR os nove tipos — não é probabilidade nem grau de certeza.</p></div>'
+    +'<div class="tpq-r"><span>Eixos que mais sustentam</span><b>'
+      +((Y.sust&&Y.sust.join(' · '))||'—')+'</b></div>'
+    +'<div class="tpq-r"><span>MBTI e Sociônica</span><b>não saem daqui</b>'
+    +'<p>São inferidos noutro lugar, por comparação de estruturas completas, na aba '
+    +'de tipologias. Não há conversão destes eixos para letras nem para sociotipo.</p></div>'
     +'</details>';
 }
 const tipSec=(k,txt)=>'<div class="tps"><span>'+k+'</span><p>'+txt+'</p></div>';

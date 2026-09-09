@@ -46,12 +46,15 @@ function inferirMBTI(F){
   const orientExt=get('orientacao:externa'), orientInt=get('orientacao:interna');
   const tratoJ=get('trato:julgamento'), tratoP=get('trato:percepcao');
 
-  const avaliacoes=MBTI_TIPOS.map(tipo=>{
+  /* a avaliação recebe os PESOS como parâmetro, para que a análise de
+     sensibilidade possa recalculá-la com outros valores — antes os pesos
+     eram lidos de uma constante e nada podia ser perturbado */
+  const avaliarCom=pesos=>MBTI_TIPOS.map(tipo=>{
     const E=MBTI_ESTRUTURAS[tipo];
     let apoio=0, contra=0;
     const porProcesso=[], contradicoes=[];
     ['dom','aux','tert','inf'].forEach(pos=>{
-      const proc=E[pos], w=INF_MBTI_PESO_POSICAO[pos], a=get(proc);
+      const proc=E[pos], w=pesos[pos], a=get(proc);
       if(a.apoio||a.contra){
         /* testemunho a favor do processo apoia a estrutura na medida
            em que a estrutura o coloca em posição desenvolvida */
@@ -83,6 +86,7 @@ function inferirMBTI(F){
       saldo:+(apoio-contra).toFixed(2), porProcesso, contradicoes};
   });
 
+  const avaliacoes=avaliarCom(INF_MBTI_PESO_POSICAO);
   avaliacoes.sort((a,b)=>b.saldo-a.saldo||b.apoio-a.apoio);
   const rank=avaliacoes.slice(0,3);
   const evidenciaTotal=res.testemunhos.length;
@@ -108,7 +112,7 @@ function inferirMBTI(F){
     terceira:rank[2]||null,
     margem, insuficiente, porqueInsuficiente,
     comparacoes:rank.length>1?compararMBTI(rank[0],rank[1],A):[],
-    sensibilidade:sensibilidadeMBTI(avaliacoes)
+    sensibilidade:sensibilidadeMBTI(avaliacoes, avaliarCom)
   };
 }
 
@@ -153,22 +157,54 @@ function compararMBTI(a,b,A){
   return out;
 }
 
-/* ---------- sensibilidade a pesos ----------
-   Se pequenas mudanças de peso trocam o primeiro colocado, a
-   ordenação é instável e o app diz isso, em vez de exibir a
-   troca como descoberta. */
-function sensibilidadeMBTI(avaliacoes){
-  if(avaliacoes.length<2)return {estavel:true, nota:'sem candidatos suficientes'};
-  const topo=avaliacoes[0], seg=avaliacoes[1];
-  const dif=topo.saldo-seg.saldo;
-  const escala=Math.max(1,Math.abs(topo.saldo));
-  const relativa=dif/escala;
-  const estavel=relativa>=0.15;
-  return {estavel, margem:+dif.toFixed(2), relativa:+relativa.toFixed(3),
+/* ---------- sensibilidade a pesos, de verdade ----------
+   A versão anterior comparava a distância entre o primeiro e o segundo
+   colocados e chamava isso de estabilidade. Isso é MARGEM: mede uma
+   folga na ordenação atual, não o efeito de mudar os pesos. Agora os
+   pesos são efetivamente perturbados e a ordenação é RECALCULADA em
+   cada variante; o que se relata é quantas variantes trocam o primeiro
+   colocado, e quais. As duas medidas são exibidas com nomes distintos. */
+const INF_MBTI_VARIANTES=[
+  {nome:'padrão',                dom:1.0, aux:0.7,  tert:0.15, inf:0.1},
+  {nome:'auxiliar mais pesada',  dom:1.0, aux:0.9,  tert:0.15, inf:0.1},
+  {nome:'auxiliar mais leve',    dom:1.0, aux:0.5,  tert:0.15, inf:0.1},
+  {nome:'dominante mais pesada', dom:1.3, aux:0.7,  tert:0.15, inf:0.1},
+  {nome:'dominante mais leve',   dom:0.8, aux:0.7,  tert:0.15, inf:0.1},
+  {nome:'inferiores ignoradas',  dom:1.0, aux:0.7,  tert:0,    inf:0},
+  {nome:'inferiores dobradas',   dom:1.0, aux:0.7,  tert:0.30, inf:0.2},
+  {nome:'pilha achatada',        dom:1.0, aux:1.0,  tert:0.5,  inf:0.5}
+];
+function sensibilidadeMBTI(avaliacoes, avaliarCom){
+  if(avaliacoes.length<2)return {estavel:true, margem:0,
+    nota:'sem candidatos suficientes para avaliar.'};
+  const topo=avaliacoes[0].tipo;
+  const margem=+(avaliacoes[0].saldo-avaliacoes[1].saldo).toFixed(2);
+  if(typeof avaliarCom!=='function')
+    return {estavel:null, margem, variantes:0,
+      nota:'MARGEM entre o primeiro e o segundo: '+margem.toFixed(2)
+        +'. A análise de sensibilidade não pôde ser executada nesta chamada.'};
+  const topos={};
+  INF_MBTI_VARIANTES.forEach(v=>{
+    const r=avaliarCom(v).sort((a,b)=>b.saldo-a.saldo||b.apoio-a.apoio);
+    const t=r[0]?r[0].tipo:'—';
+    (topos[t]=topos[t]||[]).push(v.nome);
+  });
+  const distintos=Object.keys(topos);
+  const trocam=INF_MBTI_VARIANTES.length-(topos[topo]?topos[topo].length:0);
+  const estavel=trocam===0;
+  return {
+    estavel, margem, variantes:INF_MBTI_VARIANTES.length, trocam,
+    topos: Object.entries(topos).map(([t,vs])=>({tipo:t, variantes:vs})),
     nota: estavel
-      ? 'A ordenação resiste a variações pequenas de peso: o primeiro colocado '
-        +'está '+(relativa*100).toFixed(0)+'% acima do segundo na escala do próprio saldo.'
-      : 'ORDENAÇÃO INSTÁVEL: uma variação pequena nos pesos trocaria o primeiro '
-        +'colocado ('+topo.tipo+') pelo segundo ('+seg.tipo+'). A diferença entre '
-        +'eles não deve ser lida como resultado.'};
+      ? 'ORDENAÇÃO ESTÁVEL: os pesos das quatro posições foram perturbados em '
+        +INF_MBTI_VARIANTES.length+' combinações (dominante e auxiliar mais pesadas '
+        +'e mais leves, posições inferiores zeradas, dobradas e achatadas) e '
+        +topo+' permanece em primeiro em todas. A margem para o segundo colocado '
+        +'é de '+margem.toFixed(2)+'.'
+      : 'ORDENAÇÃO INSTÁVEL: em '+trocam+' das '+INF_MBTI_VARIANTES.length
+        +' combinações de pesos o primeiro colocado muda ('
+        +distintos.join(', ')+'). A diferença entre esses candidatos não deve ser '
+        +'lida como resultado — depende de quanto se decide pesar cada posição, e '
+        +'esse peso é escolha do app, não medida.'
+  };
 }

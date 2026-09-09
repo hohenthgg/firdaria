@@ -33,3 +33,33 @@ Mapas e revoluções ficam **apenas no localStorage do navegador**; nada é envi
 - A leitura das RS interpreta os **dados informados** (não recalcula o mapa anual); RS sem cúspides perdem os itens que dependem delas.
 - O corpus *Planetas nas Casas* não contém Mercúrio: para Mercúrio vale a linha genérica do próprio motor.
 - Eletiva sem Ascendente local (sem coordenadas); avaliação por Lua, significador, trânsitos, Senhor do Ano e firdária, em UTC.
+
+## Testes
+
+O app é estático: abrir `index.html` basta. Os testes precisam de um servidor
+local e de um Chromium controlado por Playwright.
+
+```bash
+npm install                 # traz playwright-core (só para os testes)
+npm run serve &             # python3 -m http.server 8099
+npm test                    # as quatro suítes
+```
+
+Suítes individuais: `npm run test:astrologia`, `test:tipologia`,
+`test:probabilidades`, `test:preditivas`.
+
+Variáveis de ambiente aceitas: `BASE_URL`, `CHROME_PATH`, `VIEWPORT`,
+`MAPAS` / `MAPA_URL`. Se o Chromium não estiver no caminho padrão do
+ambiente, indique-o com `CHROME_PATH=/caminho/para/chrome`.
+
+## Sistema de termos
+
+`js/termos.js` trata os limites como SISTEMAS selecionáveis. A tábua
+**egípcia** é a que o projeto já usava e está completa. A tábua
+**ptolomaica** está declarada mas **não preenchida**: a imagem indicada
+como fonte de verdade não chegou, e reconstruí-la de memória foi
+expressamente vedado. Para completar, basta preencher
+`TERM_SYSTEMS.ptolemaic.limites` no mesmo formato da egípcia e marcar
+`transcrito: true`; `termosValidar('ptolemaic')` confere soma de 30° por
+signo, ordem crescente e ausência de Sol e Lua, e a suíte de testes
+passa a exigir a comparação entre as duas tábuas.

@@ -19,9 +19,20 @@ function hojeCiclosHTML(S){
     ['k2','Subfirdária',(PT_GLYPH[S.sk||S.f.majorKey]||'✦')+'︎',PT_NAME[S.sk||S.f.majorKey]||'—',
       W&&W.sub.fim?('até '+fdate(W.sub.fim)):'—',
       S.sk?('Traz '+casasTag(S.rulesSk)+' como assunto imediato.'):'A fase repete o regente do ciclo.'],
-    ['k3','Profecção',(PT_GLYPH[S.lord]||'✦')+'︎','Casa '+S.profHouse+' · '+PT_NAME[S.lord],
+    /* o SIGNO ativado vem escrito no rótulo: é ele que define o Senhor do
+       Ano, e sem nomeá-lo a casa 12 parece contradizer a cúspide natal */
+    ['k3','Profecção',(PT_GLYPH[S.lord]||'✦')+'︎',
+      'Casa '+S.profHouse+' · '+(S.p&&S.p.sign?S.p.sign:'')+' · '+PT_NAME[S.lord],
       W?per(W.prof.ini,W.prof.fim):'—',
-      'O ano trata de '+casaTag(S.profHouse)+', sob '+PT_NAME[S.lord]+'.'],
+      'O ano trata de '+casaTag(S.profHouse)+', sob '+PT_NAME[S.lord]+'.'
+      +(S.p&&S.p.divergeCuspide
+        ? ('<span class="hj-alt">Contado por signos inteiros, o '+S.profHouse
+           +'º lugar a partir do Ascendente é <b>'+S.p.sign+'</b> — por isso o '
+           +'Senhor do Ano é '+PT_NAME[S.p.lordKey]+'. A cúspide Placidus dessa '
+           +'casa cai em '+S.p.cuspSignNm+', que daria '+PT_NAME[S.p.lordCuspide]
+           +': critério alternativo, mostrado ao lado e nunca somado nem '
+           +'substituído a este.</span>')
+        : '')],
     S.rev
       ? ['k4','Revolução '+S.rev.label,sgOf(S.rev.ascLon),S.rev.ascSignNm,
          per(S.rev.start,S.rev.end),
@@ -60,7 +71,12 @@ function hojeTransitosHTML(d){
     '<li class="'+(h.cls||'')+'">'
     +'<span class="hj-tg">'+(PT_GLYPH[h.tKey]||'')+'︎</span>'
     +'<span class="hj-tt"><b>'+PT_NAME[h.tKey]+' '+h.gl+' '+(h.np?h.np.nm:'')+'</b>'
-    +'<em>'+(h.rel&&h.rel.txt?h.rel.txt:'')+'</em>'
+    /* scoreHit devolve {score, tier, factors} — nunca houve um `txt`, e
+       por isso esta linha saía sempre vazia. A explicação é montada dos
+       fatores reais, que são os mesmos que compõem a pontuação. */
+    +'<em>'+((h.rel&&h.rel.tier)?(h.rel.tier
+        +(h.rel.factors&&h.rel.factors.length
+          ? ' · '+h.rel.factors.map(f=>f[1]).join(' · ') : '')):'')+'</em>'
     +janela(h)+'</span>'
     +'<span class="hj-to">'+h.orb.toFixed(1)+'°</span></li>').join('')+'</ul>';
 }
@@ -101,11 +117,52 @@ function hojeProximosHTML(d,S){
     +'<span class="hj-pq">'+dias(x.t)+'</span></li>').join('')+'</ul>';
 }
 
+/* resumo curto da aba Probabilidades — três temas, índice, qualidade e
+   um atalho. Nada é recalculado aqui: chama o mesmo motor. */
+function hojeProbResumoHTML(){
+  if(typeof dailyActivation!=='function')return '';
+  let R=null;
+  try{ R=dailyActivation(hojeLocal(),{}); }catch(e){ return ''; }
+  if(!R||R.semMapa)return '';
+  const top=R.temas.filter(t=>t.bruto>0).slice(0,3);
+  if(!top.length)return '<p class="hj-vaz">Nenhum tema ativado hoje.</p>';
+  const gl=(typeof PROB_QGLIFO!=='undefined')?PROB_QGLIFO:{};
+  /* as duas formas mais plausíveis, com a hipótese de base sempre à vista:
+     é a diferença entre saber QUE ASSUNTO está ativado e imaginar SOB QUE
+     FORMA ele poderia aparecer */
+  let formas='';
+  try{
+    if(typeof manifRanking==='function'){
+      const M=manifRanking(R,{limite:6});
+      const duas=M.barras.filter(b=>b.tipo!=='nada').slice(0,2);
+      const nada=M.nada;
+      if(duas.length)formas='<ul class="hj-pforma">'
+        +duas.map(b=>'<li><em>'+b.share.toFixed(0)+'%</em>'+b.texto+'</li>').join('')
+        +(nada?('<li class="hj-pnada"><em>'+nada.share.toFixed(0)+'%</em>'
+          +nada.texto+'</li>'):'')
+        +'</ul>';
+    }
+  }catch(e){ console.error('formas possíveis em Hoje:',e); }
+  return '<div class="hj-prob">'
+    +'<ul class="hj-pt3">'+top.map(t=>'<li><b>'+t.rotulo+'</b>'
+      +'<span>casa '+t.casa+'</span><i>'+t.indice+'</i></li>').join('')+'</ul>'
+    +formas
+    +'<div class="hj-pmeta">'
+      +'<span>índice <b>'+R.indice+'</b></span>'
+      +'<span>qualidade <b>'+(gl[R.qualidade.rotulo]||'')+' '+R.qualidade.rotulo+'</b></span>'
+      +'<span>confiança <b>'+R.confianca.rotulo+'</b></span>'
+      +'<button class="hj-a" data-goto-tab="prob">Ver probabilidades</button>'
+    +'</div>'
+    +'<p class="hj-pav">'+PROB_AVISO+'</p></div>';
+}
 function renderHoje(){
   const el=$('hoje-body'); if(!el)return;
   if(typeof NATAL==='undefined'||!NATAL){el.innerHTML=emptyState();return;}
   const d=new Date(), S=(typeof tempoState==='function')?tempoState(d):null;
-  const idade=(typeof ageAt==='function')?Math.floor(ageAt(d)):null;
+  /* idade CIVIL — a mesma que decide a profecção. Com anos médios, o
+     cabeçalho podia dizer 22 enquanto o card mostrava a casa dos 23. */
+  const idade=(typeof idadeCivil==='function')?idadeCivil(d)
+            : (typeof ageAt==='function'?Math.floor(ageAt(d)):null);
   el.innerHTML=
      '<div class="hj-top"><div><span class="hj-k">hoje</span>'
       +'<h3>'+fdate(d)+'</h3>'
@@ -119,6 +176,9 @@ function renderHoje(){
     +'<section class="hj-s"><h4>Quem conduz o seu mapa '
       +'<i>senhores natais — não mudam com a data</i></h4>'
       +((typeof senhoresHTML==='function')?senhoresHTML(d):'')+'</section>'
+    +'<section class="hj-s"><h4>Convergência de hoje '
+      +'<i>resumo — a leitura completa fica na aba Probabilidades</i></h4>'
+      +hojeProbResumoHTML()+'</section>'
     +'<section class="hj-s"><h4>Ciclos vigentes</h4>'+hojeCiclosHTML(S)+'</section>'
     +'<div class="hj-2">'
       +'<section class="hj-s"><h4>Principais trânsitos de hoje '

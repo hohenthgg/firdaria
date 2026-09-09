@@ -12,17 +12,18 @@ function sgOf(lon){return sgGlyph(signOf(lon));}
 
 /* ---------- janelas de cada técnica (só datas, sem recalcular nada) ---------- */
 function tlWindows(S){
-  const f=S.f, aIni=Math.floor(S.age);
+  const f=S.f;
   const yr=a=>new Date(BIRTH+a*365.2425*DAY);
-  /* a profecção vira no aniversário: ancoramos no mês e no dia reais do
-     nascimento em vez de somar anos médios, que deslocavam a virada. */
-  const nasc=new Date(BIRTH);
-  const aniv=n=>{const d=new Date(Date.UTC(nasc.getUTCFullYear()+n,nasc.getUTCMonth(),
-    nasc.getUTCDate(),nasc.getUTCHours(),nasc.getUTCMinutes()));return d;};
+  /* A janela da profecção vem de anoProfectado(), em core.js — a mesma
+     fonte que decide o signo profectado. Antes havia aqui uma segunda
+     implementação da virada de aniversário, que podia discordar da
+     primeira: o índice da idade vinha de anos médios e as datas, do
+     calendário. Uma técnica, uma fonte. */
+  const P=(typeof anoProfectado==='function')?anoProfectado(S.d||new Date()):null;
   return {
     fird:{ini:yr(f.from||0), fim:yr((f.from||0)+(f.len||0))},
     sub:{ini:f.subStart?new Date(f.subStart):null, fim:f.subEnd?new Date(f.subEnd):null},
-    prof:{ini:aniv(aIni), fim:aniv(aIni+1)},
+    prof:P?{ini:P.ini, fim:P.fim}:{ini:null, fim:null},
     rev:S.rev?{ini:S.rev.start, fim:S.rev.end}:null
   };
 }
