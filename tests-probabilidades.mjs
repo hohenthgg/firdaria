@@ -159,6 +159,7 @@ t('a tábua egípcia está declarada como pendente, e não preenchida de memóri
 t('o app nunca serve um sistema sem tábua',
   TS.transcritos.indexOf(TS.emUso)>=0, 'transcritos: '+TS.transcritos.join(', '));
 
+
 /* ============ mapa carregado ============ */
 console.log('\n### com mapa e fuso definidos');
 await pg.click('#nav button[data-p="dados"]');
@@ -266,6 +267,31 @@ t('passagens repetidas por retrogradação são preservadas',
   VAR.repetidos>=0, VAR.repetidos+' contatos com passagem repetida');
 t('há picos fora do meio-dia — a varredura não é de meio-dia',
   VAR.foraDoMeioDia>0, VAR.foraDoMeioDia+' de '+VAR.n);
+
+/* nenhum rótulo de tábua escrito à mão: o card do Oikodespotes dizia
+   “tábua egípcia” mesmo depois de o sistema mudar */
+const ROT = await pg.evaluate(()=>{
+  const nomes=Object.values(TERM_SYSTEMS).map(x=>x.nome.toLowerCase());
+  const emUso=termosEstado().nome.toLowerCase();
+  const outros=nomes.filter(n=>n!==emUso);
+  const alvos=['hoje-body','natal-body','perfil-body','prob-body'];
+  const achados=[];
+  alvos.forEach(id=>{
+    let t=''; try{ irPara(id.replace('-body','')); 
+      const el=document.getElementById(id); t=el?el.textContent.toLowerCase():''; }
+    catch(e){ return; }
+    outros.forEach(n=>{
+      /* o seletor e os avisos PODEM nomear o sistema pendente: só conta
+         quando o nome de outra tábua acompanha a palavra “termo” num
+         rótulo de valor, como “corregente por termo — tábua X” */
+      const re=new RegExp('corregente por termo[^.]{0,40}'+n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+      if(re.test(t))achados.push(id+' → '+n);
+    });
+  });
+  return achados;
+});
+t('nenhuma tela nomeia uma tábua de termos que não é a que está em uso',
+  ROT.length===0, ROT.join(' | ')||'nenhum rótulo fixo encontrado');
 
 /* ============ 7 · ingresso em termo ============ */
 const ING = await pg.evaluate(()=>{
