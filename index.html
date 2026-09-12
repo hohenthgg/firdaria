@@ -1769,10 +1769,11 @@ body.is-mobile .sy-cxs{grid-template-columns:1fr}
 ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.18);background-clip:content-box}
 body.sheet-open{overflow:hidden}
 /* ============ aba tipologias + saúde ============ */
-.tp-tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
-.tp-tabs::-webkit-scrollbar{display:none}
+.tp-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 12px}
 .tp-tab{flex:0 0 auto;background:var(--bg2);border:1px solid var(--line);border-radius:99px;
   color:var(--dim);font-family:inherit;font-size:.82rem;padding:8px 16px;cursor:pointer;transition:.15s}
+.tp-tab:hover{border-color:var(--line2);color:var(--tx)}
+.tp-tab:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .tp-tab.on{background:var(--accs);border-color:transparent;color:var(--acc);font-weight:550}
 .tps{margin:22px 0}
 .tps>h3{margin-top:0}
@@ -1787,7 +1788,8 @@ body.sheet-open{overflow:hidden}
 .tpe-h em{font-style:normal;font-size:.84rem;color:var(--dim)}
 .tpg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
 
-.tp-sep{flex:0 0 auto;width:1px;align-self:stretch;margin:4px 4px;background:var(--line2)}
+.tp-sep{flex:0 0 100%;height:0;margin:3px 0;border-top:1px solid var(--line);
+  opacity:.6}
 /* ---- camada tipológica: hipóteses exploratórias ---- */
 .tip-aviso{margin:0 0 14px;padding:10px 13px;border:1px dashed var(--line2);border-radius:12px;
   font-size:.78rem;line-height:1.55;color:var(--dim2)}
@@ -1992,6 +1994,21 @@ textarea:focus-visible,summary:focus-visible,details:focus-visible,[tabindex]:fo
 /* alvos de toque com área mínima confortável no telemóvel */
 body.is-mobile button,body.is-mobile summary,body.is-mobile .nchip,
 body.is-mobile .tp-tab,body.is-mobile .sy-chip,body.is-mobile .gu-b{min-height:40px}
+@media(max-width:719px){
+  .tp-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    /* a sombra à direita só aparece enquanto houver conteúdo por rolar */
+    background:linear-gradient(90deg,var(--bg) 30%,rgba(0,0,0,0)) left/28px 100% no-repeat,
+               linear-gradient(-90deg,var(--bg) 30%,rgba(0,0,0,0)) right/28px 100% no-repeat,
+               radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.45),transparent) left/12px 100% no-repeat,
+               radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.45),transparent) right/12px 100% no-repeat;
+    background-attachment:local,local,scroll,scroll}
+  .tp-tabs::-webkit-scrollbar{display:none}
+  /* a última ficha deixa de ficar colada à borda */
+  .tp-tabs>.tp-tab:last-child{margin-right:10px}
+  .tp-sep{flex:0 0 auto;width:1px;height:auto;align-self:stretch;
+    margin:4px 4px;border-top:none;background:var(--line2)}
+}
 body.is-mobile input,body.is-mobile select,body.is-mobile textarea{font-size:16px!important}
 /* corpo de texto um pouco maior e mais arejado no telemóvel */
 body.is-mobile .np-txt p,body.is-mobile .gu-p,body.is-mobile .tp-p,

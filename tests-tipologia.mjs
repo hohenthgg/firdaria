@@ -41,6 +41,7 @@ function t(nome, cond, detalhe){
 const b = await chromium.launch({ executablePath: CHROME, args:['--no-sandbox'] });
 const pg = await b.newPage({ viewport:{ width:VW, height:VH } });
 const errs=[];
+let TP_ESPERADAS=0;
 pg.on('pageerror', e=>errs.push('PAGEERROR: '+e.message));
 pg.on('console', m=>{ if(m.type()==='error' && !/ERR_CONNECTION|404|Failed to load/.test(m.text()))
   errs.push('CONSOLE: '+m.text()); });
@@ -510,6 +511,9 @@ const BK=await pg.evaluate(()=>{
 t('o autorrelato entra no backup', BK.tinha, BK.chave);
 t('a restauração devolve o autorrelato', BK.voltou);
 
+TP_ESPERADAS=await pg.evaluate(()=>TP_TABS.length);
+t('a aba Tipologias declara as suas seções', TP_ESPERADAS>=10, TP_ESPERADAS+' seções');
+
 for(const [w,h,nome] of [[390,844,'telemóvel'],[820,1180,'tablet'],[1440,900,'desktop']]){
   await pg.setViewportSize({width:w,height:h});
   await pg.waitForTimeout(400);
@@ -520,6 +524,70 @@ for(const [w,h,nome] of [[390,844,'telemóvel'],[820,1180,'tablet'],[1440,900,'d
         .map(e=>e.getBoundingClientRect().right))};
   });
   t('sem rolagem horizontal em '+nome+' ('+w+'px)', over.h<=1, 'excesso '+over.h+'px');
+}
+
+/* ============ a barra de abas não corta nenhuma seção ============
+   A barra era um scroller com a barra de rolagem escondida: em ecrã
+   largo, com rato, as últimas abas ficavam fora da caixa sem qualquer
+   indício de que se podia rolar — pareciam simplesmente cortadas. */
+console.log('\n### barra de abas de Tipologias');
+for(const [w,h,nome,rolarPermitido] of [
+    [390,844,'telemóvel',true], [560,900,'telemóvel largo',true],
+    [720,1000,'tablet estreito',false], [820,1180,'tablet',false],
+    [1100,900,'laptop',false], [1440,900,'desktop',false]]){
+  await pg.setViewportSize({width:w,height:h});
+  await pg.evaluate(()=>irPara('tipos'));
+  await pg.waitForTimeout(350);
+  const B=await pg.evaluate(()=>{
+    const bar=document.getElementById('tp-tabs');
+    if(!bar)return null;
+    const cb=bar.getBoundingClientRect();
+    const tabs=[...bar.querySelectorAll('.tp-tab')];
+    const foraDaCaixa=tabs.filter(t=>{
+      const r=t.getBoundingClientRect();
+      return r.right>cb.right+0.5 || r.left<cb.left-0.5;
+    }).map(t=>t.textContent.trim());
+    return {n:tabs.length,
+      rolavel:bar.scrollWidth-bar.clientWidth>1,
+      foraDaCaixa,
+      linhas:new Set(tabs.map(t=>Math.round(t.getBoundingClientRect().top))).size};
+  });
+  t('a barra tem todas as seções em '+nome+' ('+w+'px)',
+    B && B.n===TP_ESPERADAS, B?(B.n+' de '+TP_ESPERADAS):'barra ausente');
+  if(rolarPermitido){
+    /* no telemóvel a barra rola — o que não pode é ter aba fora da caixa
+       SEM ser rolável, porque aí ficaria mesmo inalcançável */
+    t('em '+nome+' a barra rola quando não cabe',
+      B && (!B.foraDaCaixa.length || B.rolavel),
+      B?('fora da caixa: '+(B.foraDaCaixa.length||'nenhuma')
+        +' · rolável: '+B.rolavel):'—');
+  }else{
+    t('em '+nome+' nenhuma aba fica cortada, e nada depende de rolagem',
+      B && !B.foraDaCaixa.length && !B.rolavel,
+      B?((B.foraDaCaixa.length?('cortadas: '+B.foraDaCaixa.join(', ')):'nenhuma cortada')
+        +' · '+B.linhas+' linha(s)'):'—');
+  }
+}
+/* a última aba é mesmo clicável e troca a seção, em ecrã estreito e largo */
+for(const [w,h,nome] of [[390,844,'telemóvel'],[1440,900,'desktop']]){
+  await pg.setViewportSize({width:w,height:h});
+  await pg.evaluate(()=>irPara('tipos'));
+  await pg.waitForTimeout(350);
+  const C=await pg.evaluate(async()=>{
+    const bar=document.getElementById('tp-tabs');
+    const alvo=[...bar.querySelectorAll('.tp-tab')].pop();
+    const rotulo=alvo.textContent.trim();
+    alvo.scrollIntoView({block:'nearest',inline:'nearest'});
+    alvo.click();
+    await new Promise(r=>setTimeout(r,350));
+    /* renderTipos() reconstrói a barra: reconsultar o DOM */
+    const nova=[...document.getElementById('tp-tabs').querySelectorAll('.tp-tab')].pop();
+    const body=document.getElementById('tp-body');
+    return {rotulo, ativa:nova.classList.contains('on'),
+      conteudo:(body.textContent||'').trim().length};
+  });
+  t('a última aba ("'+C.rotulo+'") abre em '+nome,
+    C.ativa && C.conteudo>200, C.conteudo+' chars');
 }
 
 console.log('\n'+ok+' asserções · '+fail+' falhas');
