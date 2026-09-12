@@ -60,7 +60,9 @@ const REGRAS_OIKO=[
     +'estão em lugares de mesma dignidade angular.',
   'O Ascendente é o recurso final, quando nenhum luminar está em lugar aphético.',
   'O Oikodespotes é o REGENTE DOMICILIAR do signo em que cai o predominador.',
-  'O regente do termo do grau do predominador é registrado como corregente, pela tábua egípcia.',
+  'O regente do termo do grau do predominador é registrado como corregente, '
+  +'pelo sistema de termos em uso (por omissão, a tábua ptolomaica transcrita '
+  +'da imagem “Table of Essential Dignities”).',
   'A condição do Oikodespotes é relatada, não usada para trocá-lo: aversão ao predominador, '
     +'combustão e cadência são declaradas como ressalvas explícitas.'
 ];
@@ -277,7 +279,11 @@ function senhorCardHTML(x){
     linhas.push(['Por que este planeta','regente domiciliar de '+d.signoNm
       +', o signo do predominador']);
     if(d.corregenteTermoNm)
-      linhas.push(['Corregente por termo', d.corregenteTermoNm+' — tábua egípcia']);
+      /* o nome da tábua vem do sistema em uso, e não de um rótulo fixo:
+         estava escrito “tábua egípcia” mesmo depois de o sistema mudar */
+      linhas.push(['Corregente por termo', d.corregenteTermoNm
+        +((typeof termosEstado==='function')
+          ? (' — '+termosEstado().nome.toLowerCase()) : '')]);
     if(d.ressalvas&&d.ressalvas.length)
       linhas.push(['Ressalvas', d.ressalvas.join(' · ')+' — declaradas, não usadas para trocar o senhor']);
   }
