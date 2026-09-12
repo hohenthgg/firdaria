@@ -49,52 +49,100 @@ t('o aviso de que não são probabilidades estatísticas está presente',
 
 /* ============ 1–3 · os sistemas de termos ============ */
 console.log('\n### sistemas de termos');
+
+/* A tábua da imagem “Table of Essential Dignities”, escrita aqui à parte.
+   Isto NÃO é verificação independente da imagem — os números são os
+   mesmos que foram transcritos — é uma TRAVA DE REGRESSÃO: se alguém
+   mexer num limite em termos.js, este teste diz exatamente qual.
+   As duas células que estavam ilegíveis na imagem (os dois últimos
+   termos de Gêmeos e de Virgem) foram confirmadas pelo utilizador. */
+const TABUA_IMAGEM=[
+  ['Áries',       [[6,'jupiter'],[14,'venus'],[21,'mercury'],[26,'mars'],[30,'saturn']]],
+  ['Touro',       [[8,'venus'],[15,'mercury'],[22,'jupiter'],[26,'saturn'],[30,'mars']]],
+  ['Gêmeos',      [[7,'mercury'],[14,'jupiter'],[21,'venus'],[25,'saturn'],[30,'mars']]],
+  ['Câncer',      [[6,'mars'],[13,'jupiter'],[20,'mercury'],[27,'venus'],[30,'saturn']]],
+  ['Leão',        [[6,'saturn'],[13,'mercury'],[19,'venus'],[25,'jupiter'],[30,'mars']]],
+  ['Virgem',      [[7,'mercury'],[13,'venus'],[18,'jupiter'],[24,'saturn'],[30,'mars']]],
+  ['Libra',       [[6,'saturn'],[11,'venus'],[19,'jupiter'],[24,'mercury'],[30,'mars']]],
+  ['Escorpião',   [[6,'mars'],[14,'jupiter'],[21,'venus'],[27,'mercury'],[30,'saturn']]],
+  ['Sagitário',   [[8,'jupiter'],[14,'venus'],[19,'mercury'],[25,'saturn'],[30,'mars']]],
+  ['Capricórnio', [[6,'venus'],[12,'mercury'],[19,'jupiter'],[25,'mars'],[30,'saturn']]],
+  ['Aquário',     [[6,'saturn'],[12,'mercury'],[20,'venus'],[25,'jupiter'],[30,'mars']]],
+  ['Peixes',      [[8,'venus'],[14,'jupiter'],[20,'mercury'],[26,'mars'],[30,'saturn']]]
+];
+
 const TS = await pg.evaluate(()=>{
   const val={}; Object.keys(TERM_SYSTEMS).forEach(id=>{val[id]=termosValidar(id);});
-  /* soma de 30° por signo, recontada aqui a partir dos limites */
-  const somas={};
+  const somas={}, luminares={};
   Object.entries(TERM_SYSTEMS).forEach(([id,S])=>{
-    if(!S.limites){somas[id]=null;return;}
-    somas[id]=S.limites.map(sig=>{
-      let a=0,tot=0; sig.forEach(([f])=>{tot+=f-a;a=f;}); return +tot.toFixed(6);});
-  });
-  /* Sol e Lua não administram termos */
-  const luminares={};
-  Object.entries(TERM_SYSTEMS).forEach(([id,S])=>{
+    somas[id]=S.limites?S.limites.map(sig=>{
+      let a=0,tot=0; sig.forEach(([f])=>{tot+=f-a;a=f;}); return +tot.toFixed(6);}):null;
     luminares[id]=S.limites
-      ? S.limites.some(sig=>sig.some(([,l])=>l==='sun'||l==='moon')) : null;});
+      ? S.limites.some(sig=>sig.some(([,l])=>l==='sun'||l==='moon')) : null;
+  });
+  const uso=termosSistemaAtual();
   /* [início, fim): o grau do limite pertence ao termo seguinte */
-  const eg=TERM_SYSTEMS.egyptian.limites;
-  const primeiroFim=eg[0][0][0];
-  const antes=termSegment(primeiroFim-1e-6,'egyptian');
-  const exato=termSegment(primeiroFim,'egyptian');
+  const primeiroFim=TERM_SYSTEMS[uso].limites[0][0][0];
+  const antes=termSegment(primeiroFim-1e-6,uso);
+  const exato=termSegment(primeiroFim,uso);
   /* 0°, 29°59′59″ e a fronteira de signo */
-  const zero=termSegment(0,'egyptian');
-  const fim=termSegment(29.999722,'egyptian');           // 29°59′59″
-  const prox=termSegment(30,'egyptian');
-  const ultimo=termSegment(359.999722,'egyptian');
-  /* nenhum segmento atravessa o signo */
+  const zero=termSegment(0,uso), fim=termSegment(29.999722,uso);
+  const prox=termSegment(30,uso), ultimo=termSegment(359.999722,uso);
   let fora=0;
-  for(let sg=0;sg<12;sg++)termosDoSigno(sg,'egyptian').forEach(x=>{
+  for(let sg=0;sg<12;sg++)termosDoSigno(sg,uso).forEach(x=>{
     if(x.start<0||x.end>30)fora++;});
-  /* forma do retorno */
-  const forma=termSegment(45,'egyptian');
+  const forma=termSegment(45,uso);
   const campos=['system','sign','start','end','lord','degreeWithinSign']
     .every(c=>forma[c]!==undefined);
-  return {val, somas, luminares,
+  /* a tábua em uso, tal como o app a serve */
+  const servida=[]; for(let sg=0;sg<12;sg++)
+    servida.push(termosDoSigno(sg,uso).map(x=>[x.end,x.lord]));
+  /* divergência contra a tábua histórica, que o projeto rotulava de egípcia */
+  const contraAntiga=[];
+  if(typeof TERMS!=='undefined')for(let sg=0;sg<12;sg++)
+    for(let i=0;i<5;i++){
+      const a=TERMS[sg][i], b=servida[sg][i];
+      if(a[0]!==b[0]||a[1]!==b[1])
+        contraAntiga.push(SIGNS[sg]+' seg'+(i+1)+': antes '+a[0]+' '+a[1]
+          +' · imagem '+b[0]+' '+b[1]);
+    }
+  /* Virgem 18°–30°: a célula que a imagem corrigiu */
+  const virgem=[termLord(150+20,uso), termLord(150+27,uso)];
+  return {val, somas, luminares, emUso:uso, servida, contraAntiga, virgem,
     antes:antes.lord, exato:exato.lord, mudou:antes.lord!==exato.lord,
     zeroSign:zero.sign, fimSign:fim.sign, proxSign:prox.sign, ultimoSign:ultimo.sign,
-    fora, campos,
-    ptTranscrito:TERM_SYSTEMS.ptolemaic.transcrito,
-    emUso:termosSistemaAtual(),
-    estado:termosEstado()};
+    fora, campos, estado:termosEstado(),
+    transcritos:Object.values(TERM_SYSTEMS).filter(x=>x.transcrito&&x.limites).map(x=>x.id),
+    pendentes:Object.values(TERM_SYSTEMS).filter(x=>!x.transcrito||!x.limites).map(x=>x.id)};
 });
-t('a tábua egípcia valida (ordem, limites e senhores)', TS.val.egyptian.ok,
-  TS.val.egyptian.erros.join(' | '));
-t('os cinco segmentos de cada signo somam 30° — egípcios',
-  TS.somas.egyptian&&TS.somas.egyptian.every(x=>x===30),
-  TS.somas.egyptian?('somas: '+[...new Set(TS.somas.egyptian)].join(', ')):'—');
-t('Sol e Lua não administram termos', TS.luminares.egyptian===false);
+
+t('o sistema em uso é o ptolomaico da imagem, como o projeto pede',
+  TS.emUso==='ptolemaic', 'em uso: '+TS.emUso);
+t('a tábua ptolomaica valida (ordem, limites e senhores)', TS.val.ptolemaic.ok,
+  (TS.val.ptolemaic.erros||[]).join(' | '));
+t('os cinco segmentos de cada signo somam 30°',
+  TS.somas.ptolemaic&&TS.somas.ptolemaic.every(x=>x===30),
+  TS.somas.ptolemaic?('somas: '+[...new Set(TS.somas.ptolemaic)].join(', ')):'—');
+t('Sol e Lua não administram termos', TS.luminares.ptolemaic===false);
+
+/* os 60 limites, um a um, contra a tábua da imagem */
+let batem=0; const erradas=[];
+TABUA_IMAGEM.forEach(([nome,sig],sg)=>sig.forEach(([fim,lord],i)=>{
+  const s=TS.servida[sg][i];
+  if(s&&s[0]===fim&&s[1]===lord)batem++;
+  else erradas.push(nome+' seg'+(i+1)+': esperado '+fim+' '+lord
+    +' · servido '+(s?(s[0]+' '+s[1]):'—'));
+}));
+t('os 60 limites servidos pelo app são os da imagem', batem===60 && !erradas.length,
+  batem+'/60'+(erradas.length?(' · '+erradas.join(' | ')):''));
+
+t('Virgem 18°–24° é de Saturno e 24°–30° de Marte, como a imagem',
+  TS.virgem[0]==='saturn' && TS.virgem[1]==='mars',
+  '20° Virgem → '+TS.virgem[0]+' · 27° Virgem → '+TS.virgem[1]);
+t('a tábua antiga divergia da imagem em exatamente dois segmentos, ambos em Virgem',
+  TS.contraAntiga.length===2 && TS.contraAntiga.every(x=>/^Virgem/.test(x)),
+  TS.contraAntiga.join(' | ')||'nenhuma divergência');
+
 t('o grau exato do limite pertence ao termo SEGUINTE — [início, fim)',
   TS.mudou, TS.antes+' → '+TS.exato);
 t('0° e 29°59′59″ resolvem dentro do próprio signo',
@@ -102,34 +150,14 @@ t('0° e 29°59′59″ resolvem dentro do próprio signo',
 t('nenhum termo atravessa para o signo seguinte',
   TS.proxSign===1 && TS.ultimoSign===11 && TS.fora===0);
 t('termSegment devolve system, sign, start, end, lord e degreeWithinSign', TS.campos);
-/* a variante ptolomaica: enquanto não transcrita, o app declara e NÃO
-   cai nela em silêncio */
-if(TS.ptTranscrito){
-  t('a tábua ptolomaica valida (ordem, limites e senhores)', TS.val.ptolemaic.ok,
-    TS.val.ptolemaic.erros.join(' | '));
-  t('os cinco segmentos de cada signo somam 30° — ptolomaicos',
-    TS.somas.ptolemaic&&TS.somas.ptolemaic.every(x=>x===30));
-  t('Sol e Lua não administram termos — ptolomaicos', TS.luminares.ptolemaic===false);
-  const CMP = await pg.evaluate(()=>{
-    let dif=0;
-    for(let sg=0;sg<12;sg++){
-      const a=termosDoSigno(sg,'egyptian'), b=termosDoSigno(sg,'ptolemaic');
-      for(let i=0;i<5;i++) if(a[i].end!==b[i].end||a[i].lord!==b[i].lord)dif++;
-    }
-    return dif;
-  });
-  t('egípcio e ptolomaico são tábuas distintas', CMP>0, CMP+' segmentos diferem');
-  t('o sistema em uso é o ptolomaico, como o projeto pede',
-    TS.emUso==='ptolemaic', 'em uso: '+TS.emUso);
-} else {
-  t('a tábua ptolomaica está declarada como PENDENTE, e não preenchida de memória',
-    TS.val.ptolemaic.transcrito===false && !!TS.estado.pendente,
-    'motivo registrado no código e exibido na interface');
-  t('sem a tábua ptolomaica o app recua para a egípcia e DECLARA o recuo',
-    TS.emUso==='egyptian' && TS.estado.recuou===true);
-  console.log('       (a comparação egípcio × ptolomaico e o padrão ptolomaico');
-  console.log('        só podem ser conferidos depois da transcrição da imagem)');
-}
+
+/* a variante egípcia: o rótulo foi retirado depois de se verificar que a
+   tábua assim chamada era, de facto, a ptolomaica */
+t('a tábua egípcia está declarada como pendente, e não preenchida de memória',
+  TS.val.egyptian.transcrito===false && TS.pendentes.indexOf('egyptian')>=0,
+  'motivo registrado no código e exibido na interface');
+t('o app nunca serve um sistema sem tábua',
+  TS.transcritos.indexOf(TS.emUso)>=0, 'transcritos: '+TS.transcritos.join(', '));
 
 /* ============ mapa carregado ============ */
 console.log('\n### com mapa e fuso definidos');
@@ -339,19 +367,22 @@ t('sem Revolução Solar nenhum testemunho vem dessa fonte', SEMRS.semFonteRS===
 
 /* ============ 17 · backup antigo sem configuração de termos ============ */
 const BK = await pg.evaluate(()=>{
-  termosDefinirSistema('egyptian');
+  /* um sistema que se pode SERVIR — escolher um sem tábua é recusado */
+  const recusou=termosDefinirSistema('egyptian')===false;
+  termosDefinirSistema('ptolemaic');
   fusoDefinir('America/Sao_Paulo');
   const antigo=JSON.stringify({app:'AstroGraph', versao:1,
     dados:{'agx_teste_bkantigo':'x'}});
   const r=bkRestaurar(antigo,false);
-  const manteve=termosSistemaAtual()==='egyptian' && fusoDoMapa()==='America/Sao_Paulo';
+  const manteve=termosSistemaAtual()==='ptolemaic' && fusoDoMapa()==='America/Sao_Paulo';
   localStorage.removeItem('agx_teste_bkantigo');
   /* e o backup novo leva as duas chaves */
   const p=bkColeta();
-  return {versaoLida:r.versao, faltando:r.faltando, nota:r.nota, manteve,
+  return {versaoLida:r.versao, faltando:r.faltando, nota:r.nota, manteve, recusou,
     levaTermos:!!p.dados['agx_sistema_termos'], levaFuso:!!p.dados['agx_fuso'],
     versaoAtual:p.versao};
 });
+t('escolher um sistema sem tábua é recusado, não guardado em silêncio', BK.recusou);
 t('um backup antigo (versão 1) continua importável', BK.versaoLida===1);
 t('restaurar backup antigo não apaga o sistema de termos nem o fuso', BK.manteve,
   (BK.nota||'').slice(0,80));

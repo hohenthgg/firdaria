@@ -52,8 +52,7 @@ function probCabecalhoHTML(){
     +'</div>'
     +'<p class="pb-aviso">'+PROB_AVISO+'</p>'
     +(F.aviso?('<p class="pb-alerta">'+F.aviso+'</p>'):'')
-    +(T&&T.recuou&&T.pendente
-      ?('<p class="pb-alerta">Em uso: <b>'+T.nome+'</b>. '+T.pendente.porQue+'</p>'):'')
+    +(T&&T.aviso?('<p class="pb-alerta">'+T.aviso+'</p>'):'')
     +(T?('<p class="pb-nota">Sistema de termos em uso: <b>'+T.nome
         +'</b>. '+T.nota+'</p>'):'');
 }
