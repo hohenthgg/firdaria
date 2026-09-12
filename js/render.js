@@ -771,10 +771,11 @@ function cfgTermosHTML(){
         +'>'+x.nome+'</option>').join('')
       +(T.pendente?('<option disabled>'+T.pendente.nome+' — pendente</option>'):'')
       +'</select><i>em uso: '+T.nome+'</i></div>'
+    +(T.aviso?('<p class="note alerta">'+T.aviso+'</p>'):'')
     +(T.pendente?('<p class="note">'+T.pendente.porQue+'</p>'):'')
     +'<p class="note">'+T.nota+'</p>'
     +'<div class="cfg-r"><span>Comparar sistemas</span>'
-      +'<button class="btn" id="cfg-termos-cmp">Ver egípcio × ptolomaico</button>'
+      +'<button class="btn" id="cfg-termos-cmp">Ver imagem × tábua anterior</button>'
       +'<i></i></div>'
     +'<div id="cfg-termos-tab"></div>'
     +(F?('<div class="cfg-r"><span>Fuso do mapa</span>'
@@ -803,19 +804,35 @@ function cfgLigarTermos(el){
 /* comparação lado a lado dos dois sistemas, signo a signo */
 function cfgTermosComparaHTML(){
   if(typeof TERM_SYSTEMS==='undefined')return '';
-  const eg=TERM_SYSTEMS.egyptian, pt=TERM_SYSTEMS.ptolemaic;
-  const fmt=(sis,i)=>{
-    if(!sis||!sis.limites)return '<em>não transcrito</em>';
+  const pt=TERM_SYSTEMS.ptolemaic;
+  const antiga=(typeof TERMS!=='undefined')?TERMS:null;
+  const D=(typeof TERMO_DIVERGENCIA_ANTIGA!=='undefined')?TERMO_DIVERGENCIA_ANTIGA:null;
+  const fmt=(lim,i)=>{
+    if(!lim)return '<em>não transcrito</em>';
     let a=0;
-    return sis.limites[i].map(([f,l])=>{const r=a+'–'+f+' '+(PT_GLYPH[l]||l);a=f;return r;}).join(' · ');
+    return lim[i].map(([f,l])=>{const r=a+'–'+f+' '+(PT_GLYPH[l]||l);a=f;return r;}).join(' · ');
   };
+  /* compara a transcrição da imagem com a tábua que o projeto usava antes.
+     É esta a comparação que informa: mostra onde a leitura muda, e é o
+     registo da única divergência encontrada nos 60 limites. */
+  const difere=i=>{
+    if(!antiga||!pt.limites)return false;
+    return JSON.stringify(antiga[i])!==JSON.stringify(pt.limites[i]);
+  };
+  const linhas=SIGNS.map((nm,i)=>'<tr'+(difere(i)?' class="cmp-dif"':'')+'>'
+    +'<th scope="row">'+nm+(difere(i)?' <b>≠</b>':'')+'</th>'
+    +'<td>'+fmt(pt.limites,i)+'</td><td>'+fmt(antiga,i)+'</td></tr>').join('');
+  const n=SIGNS.filter((x,i)=>difere(i)).length;
   return '<div class="cfg-cmp"><table class="pb-tab"><thead><tr>'
-    +'<th scope="col">Signo</th><th scope="col">'+eg.nome+'</th>'
-    +'<th scope="col">'+pt.nome+'</th></tr></thead><tbody>'
-    +SIGNS.map((nm,i)=>'<tr><th scope="row">'+nm+'</th><td>'+fmt(eg,i)+'</td>'
-      +'<td>'+fmt(pt,i)+'</td></tr>').join('')
-    +'</tbody></table>'
-    +(pt.limites?'':'<p class="note">'+pt.porQue+'</p>')+'</div>';
+    +'<th scope="col">Signo</th>'
+    +'<th scope="col">Imagem (em uso)</th>'
+    +'<th scope="col">Tábua anterior</th></tr></thead><tbody>'
+    +linhas+'</tbody></table>'
+    +'<p class="note">Comparação entre a transcrição da imagem “Table of '
+    +'Essential Dignities”, que é o que o app usa, e a tábua que estava no '
+    +'projeto antes — rotulada de egípcia sem o ser. '
+    +(n?('Divergem em '+n+' signo(s), marcado(s) com ≠. '+(D?D.nota:''))
+       :'Coincidem em todos os signos.')+'</p></div>';
 }
 function renderConfig(){
   const el=$('config-body'); if(!el)return;

@@ -54,12 +54,28 @@ ambiente, indique-o com `CHROME_PATH=/caminho/para/chrome`.
 
 ## Sistema de termos
 
-`js/termos.js` trata os limites como SISTEMAS selecionáveis. A tábua
-**egípcia** é a que o projeto já usava e está completa. A tábua
-**ptolomaica** está declarada mas **não preenchida**: a imagem indicada
-como fonte de verdade não chegou, e reconstruí-la de memória foi
-expressamente vedado. Para completar, basta preencher
-`TERM_SYSTEMS.ptolemaic.limites` no mesmo formato da egípcia e marcar
-`transcrito: true`; `termosValidar('ptolemaic')` confere soma de 30° por
-signo, ordem crescente e ausência de Sol e Lua, e a suíte de testes
-passa a exigir a comparação entre as duas tábuas.
+`js/termos.js` trata os limites como SISTEMAS selecionáveis. A tábua em
+uso é a **ptolomaica**, transcrita célula a célula da imagem
+*“Table of Essential Dignities”* indicada como fonte de verdade deste
+projeto. Duas células estavam ilegíveis na resolução recebida — os dois
+últimos termos de Gêmeos e de Virgem, onde ♂ e ♄ não se distinguiam — e
+foram confirmadas antes de escritas.
+
+**A tábua que o projeto chamava de “egípcia” não era egípcia.** O
+`TERMS` de `tables.js` tem Áries `♃6 ♀14 ☿21 ♂26 ♄30`; o egípcio é
+`♃6 ♀12 ☿20 ♂25 ♄30`, e diverge em onze dos doze signos. Era, de facto,
+a própria tábua ptolomaica — com um erro: em Virgem tinha ♂ de 18° a 24°
+e ♄ de 24° a 30°, quando a imagem dá ♄ e depois ♂. Quem tivesse um
+planeta entre 18° e 30° de Virgem via o senhor de termo errado. `TERMS`
+fica em `tables.js` apenas como registo do que havia antes; nenhum
+código a lê.
+
+O rótulo “egípcio” foi **retirado** em vez de servir limites ptolomaicos
+sob o nome de outra escola: o slot fica declarado e vazio, e volta assim
+que uma tábua egípcia conferida for transcrita em
+`TERM_SYSTEMS.egyptian.limites`. Quem tivesse essa opção guardada passa a
+ver o ptolomaico, **com aviso na tela** — a troca nunca é silenciosa.
+
+`termosValidar(id)` confere soma de 30° por signo, ordem crescente e
+ausência de Sol e Lua. A suíte tranca os 60 limites um a um contra a
+tábua da imagem, e regista a divergência encontrada em Virgem.

@@ -14,6 +14,20 @@ const SIGN_RULER=['mars','venus','mercury','moon','sun','mercury','venus','mars'
 const EXALT={sun:0,moon:1,mercury:5,venus:11,mars:9,jupiter:3,saturn:6};       // signo de exaltação
 const FALL ={sun:6,moon:7,mercury:11,venus:5,mars:3,jupiter:9,saturn:0};       // queda
 /* termos (tábua usada no projeto — limites superiores e senhores) */
+/* ---------- TERMS — tábua histórica, RÓTULO CORRIGIDO ----------
+   Esta tábua esteve durante todo o projeto descrita como “os termos
+   egípcios”. Não é. Ao conferi-la contra a imagem “Table of Essential
+   Dignities” verificou-se que são os limites PTOLOMAICOS: Áries aqui é
+   ♃6 ♀14 ☿21 ♂26 ♄30, e o egípcio é ♃6 ♀12 ☿20 ♂25 ♄30 — diverge em
+   onze dos doze signos.
+   Coincide com a imagem em 59 dos 60 limites. O sexagésimo, Virgem,
+   está ERRADO aqui: tem ♂ 18–24 e ♄ 24–30, quando a imagem dá ♄ 18–24
+   e ♂ 24–30.
+   Nenhum código lê esta constante — os termos passam todos por
+   termLord/termSegment, em js/termos.js, que servem a transcrição da
+   imagem. Fica preservada apenas como registo do que havia antes, e
+   para que a divergência possa ser conferida. NÃO usar em leitura
+   nova. */
 const TERMS=[
  [[6,'jupiter'],[14,'venus'],[21,'mercury'],[26,'mars'],[30,'saturn']],   // Áries
  [[8,'venus'],[15,'mercury'],[22,'jupiter'],[26,'saturn'],[30,'mars']],   // Touro

@@ -46,7 +46,9 @@ const OIKO_FONTE={
     +'a seita passa a servir de desempate.',
   casas:'lugares por signos inteiros a partir do Ascendente — não Placidus. '
     +'A elegibilidade aphética é de tradição helenística e conta lugares, não cúspides de quadrante.',
-  termos:'tábua egípcia de termos (TERMS, em tables.js)'
+  termos:'tábua ptolomaica de termos, transcrita da imagem “Table of '
+    +'Essential Dignities” (TERM_SYSTEMS.ptolemaic, em termos.js). A tábua '
+    +'anterior estava rotulada de egípcia sem o ser'
 };
 const REGRAS_OIKO=[
   'Candidatos a predominador: os dois luminares e, em último recurso, o Ascendente.',
