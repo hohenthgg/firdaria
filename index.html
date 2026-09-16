@@ -1775,6 +1775,7 @@ body.sheet-open{overflow:hidden}
 .tp-tab:hover{border-color:var(--line2);color:var(--tx)}
 .tp-tab:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .tp-tab.on{background:var(--accs);border-color:transparent;color:var(--acc);font-weight:550}
+.tp-tab .tp-ct{display:none}
 .tps{margin:22px 0}
 .tps>h3{margin-top:0}
 .tpx{padding:10px 0;border-top:1px solid var(--line)}
@@ -1995,19 +1996,18 @@ textarea:focus-visible,summary:focus-visible,details:focus-visible,[tabindex]:fo
 body.is-mobile button,body.is-mobile summary,body.is-mobile .nchip,
 body.is-mobile .tp-tab,body.is-mobile .sy-chip,body.is-mobile .gu-b{min-height:40px}
 @media(max-width:719px){
-  .tp-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
-    -webkit-overflow-scrolling:touch;
-    /* a sombra à direita só aparece enquanto houver conteúdo por rolar */
-    background:linear-gradient(90deg,var(--bg) 30%,rgba(0,0,0,0)) left/28px 100% no-repeat,
-               linear-gradient(-90deg,var(--bg) 30%,rgba(0,0,0,0)) right/28px 100% no-repeat,
-               radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.45),transparent) left/12px 100% no-repeat,
-               radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.45),transparent) right/12px 100% no-repeat;
-    background-attachment:local,local,scroll,scroll}
-  .tp-tabs::-webkit-scrollbar{display:none}
-  /* a última ficha deixa de ficar colada à borda */
-  .tp-tabs>.tp-tab:last-child{margin-right:10px}
-  .tp-sep{flex:0 0 auto;width:1px;height:auto;align-self:stretch;
-    margin:4px 4px;border-top:none;background:var(--line2)}
+  /* No telemóvel a barra TAMBÉM quebra: rolar escondia metade das seções
+     atrás de um gesto que nada anunciava. Para as quatro filas caberem
+     sem empurrar o conteúdo para fora da vista, as fichas ficam mais
+     compactas na horizontal — a altura de toque continua nos 40px
+     garantidos em body.is-mobile, que é acessibilidade e não se mexe. */
+  .tp-tabs{gap:5px;padding:2px 0 10px}
+  .tp-tab{font-size:.76rem;padding:7px 12px;line-height:1.25}
+  /* só uma das duas versões existe no DOM visível, portanto o leitor de
+     ecrã anuncia uma só — display:none tira-a da árvore de acessibilidade */
+  .tp-tab .tp-lg{display:none}
+  .tp-tab .tp-ct{display:inline}
+  .tp-sep{margin:2px 0}
 }
 body.is-mobile input,body.is-mobile select,body.is-mobile textarea{font-size:16px!important}
 /* corpo de texto um pouco maior e mais arejado no telemóvel */

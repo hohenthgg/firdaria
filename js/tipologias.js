@@ -147,6 +147,18 @@ function tpSOCOA(){
    acessíveis, na segunda faixa, sem perder nada do que havia. */
 const TP_TABS=(typeof TIP_SECOES!=='undefined'?TIP_SECOES.map(x=>[x[0],x[1]]):[])
   .concat([['enn','Eneagrama'],['disc','DISC'],['socoa','Socoa'],['guia','Guia']]);
+/* Rótulo curto para telemóvel. O nome completo continua a ser o do
+   desktop e o do cabeçalho de cada seção — aqui só se encurta a FICHA,
+   porque “Comparação entre sistemas” sozinha ocupava uma fila inteira
+   num ecrã de 390px e empurrava o conteúdo para fora da vista. A troca
+   é por CSS: as duas versões são emitidas e a largura decide qual se
+   mostra, de modo que o leitor de ecrã lê sempre uma só. */
+const TP_CURTO={
+  funcoes:'Funções',
+  comparacao:'Comparação',
+  refinar:'Refinar',
+  fontes:'Fontes'
+};
 const TP_PRINCIPAIS=(typeof TIP_SECOES!=='undefined'?TIP_SECOES.length:0);
 function tpRender(id){
   if(typeof TIP_SECOES!=='undefined'){
@@ -161,7 +173,10 @@ function renderTipos(){
   if(!TP_TABS.some(x=>x[0]===TP_TAB))TP_TAB=TP_TABS[0][0];
   bar.innerHTML=TP_TABS.map(([id,lab],i)=>
     (i===TP_PRINCIPAIS&&TP_PRINCIPAIS?'<span class="tp-sep" aria-hidden="true"></span>':'')
-    +'<button class="tp-tab'+(TP_TAB===id?' on':'')+'" data-tptab="'+id+'">'+lab+'</button>').join('');
+    +'<button class="tp-tab'+(TP_TAB===id?' on':'')+'" data-tptab="'+id+'">'
+      +'<span class="tp-lg">'+lab+'</span>'
+      +'<span class="tp-ct">'+(TP_CURTO[id]||lab)+'</span>'
+    +'</button>').join('');
   try{
     body.innerHTML=tpRender(TP_TAB);
   }catch(e){console.error('tipologias',e);body.innerHTML='<p class="note">não foi possível montar esta seção.</p>';}
