@@ -531,10 +531,16 @@ for(const [w,h,nome] of [[390,844,'telemóvel'],[820,1180,'tablet'],[1440,900,'d
    largo, com rato, as últimas abas ficavam fora da caixa sem qualquer
    indício de que se podia rolar — pareciam simplesmente cortadas. */
 console.log('\n### barra de abas de Tipologias');
-for(const [w,h,nome,rolarPermitido] of [
-    [390,844,'telemóvel',true], [560,900,'telemóvel largo',true],
-    [720,1000,'tablet estreito',false], [820,1180,'tablet',false],
-    [1100,900,'laptop',false], [1440,900,'desktop',false]]){
+/* O invariante agora é o mesmo em TODA largura: a barra quebra, nenhuma
+   aba fica fora da caixa e nada depende de rolagem. Antes o telemóvel
+   era exceção — rolava — e isso escondia metade das seções atrás de um
+   gesto que nada anunciava. */
+for(const [w,h,nome,filasMax] of [
+    [320,568,'iPhone SE',3], [360,740,'Android comum',3],
+    [390,844,'telemóvel',3], [430,932,'telemóvel grande',3],
+    [560,900,'telemóvel largo',3],
+    [720,1000,'tablet estreito',3], [820,1180,'tablet',3],
+    [1100,900,'laptop',3], [1440,900,'desktop',2]]){
   await pg.setViewportSize({width:w,height:h});
   await pg.evaluate(()=>irPara('tipos'));
   await pg.waitForTimeout(350);
@@ -546,28 +552,66 @@ for(const [w,h,nome,rolarPermitido] of [
     const foraDaCaixa=tabs.filter(t=>{
       const r=t.getBoundingClientRect();
       return r.right>cb.right+0.5 || r.left<cb.left-0.5;
-    }).map(t=>t.textContent.trim());
+    }).map(t=>t.innerText.trim());
     return {n:tabs.length,
       rolavel:bar.scrollWidth-bar.clientWidth>1,
       foraDaCaixa,
+      alturaBarra:Math.round(cb.height),
+      /* a menor altura de ficha: o alvo de toque não pode encolher */
+      toqueMin:Math.min(...tabs.map(t=>Math.round(t.getBoundingClientRect().height))),
+      paginaRola:document.documentElement.scrollWidth-document.documentElement.clientWidth,
       linhas:new Set(tabs.map(t=>Math.round(t.getBoundingClientRect().top))).size};
   });
   t('a barra tem todas as seções em '+nome+' ('+w+'px)',
     B && B.n===TP_ESPERADAS, B?(B.n+' de '+TP_ESPERADAS):'barra ausente');
-  if(rolarPermitido){
-    /* no telemóvel a barra rola — o que não pode é ter aba fora da caixa
-       SEM ser rolável, porque aí ficaria mesmo inalcançável */
-    t('em '+nome+' a barra rola quando não cabe',
-      B && (!B.foraDaCaixa.length || B.rolavel),
-      B?('fora da caixa: '+(B.foraDaCaixa.length||'nenhuma')
-        +' · rolável: '+B.rolavel):'—');
-  }else{
-    t('em '+nome+' nenhuma aba fica cortada, e nada depende de rolagem',
-      B && !B.foraDaCaixa.length && !B.rolavel,
-      B?((B.foraDaCaixa.length?('cortadas: '+B.foraDaCaixa.join(', ')):'nenhuma cortada')
-        +' · '+B.linhas+' linha(s)'):'—');
-  }
+  t('em '+nome+' nenhuma aba fica cortada, e nada depende de rolagem',
+    B && !B.foraDaCaixa.length && !B.rolavel && B.paginaRola<=1,
+    B?((B.foraDaCaixa.length?('cortadas: '+B.foraDaCaixa.join(', ')):'nenhuma cortada')
+      +' · '+B.linhas+' fila(s) · '+B.alturaBarra+'px'):'—');
+  t('em '+nome+' a barra não passa de '+filasMax+' filas',
+    B && B.linhas<=filasMax, B?(B.linhas+' fila(s)'):'—');
+  if(w<720)
+    t('em '+nome+' o alvo de toque continua nos 40px',
+      B && B.toqueMin>=40, B?(B.toqueMin+'px'):'—');
 }
+
+/* rótulo curto no telemóvel, nome completo no desktop — e uma só
+   versão na árvore de acessibilidade de cada vez */
+const ROT=await pg.evaluate(async()=>{
+  const ler=()=>[...document.querySelectorAll('#tp-tabs .tp-tab')]
+    .map(t=>t.innerText.trim());
+  const marcacao=()=>[...document.querySelectorAll('#tp-tabs .tp-tab')]
+    .map(t=>({lg:!!t.querySelector('.tp-lg'), ct:!!t.querySelector('.tp-ct')}));
+  return {marcacao:marcacao()};
+});
+t('cada ficha traz as duas versões do rótulo na marcação',
+  ROT.marcacao.every(x=>x.lg&&x.ct));
+
+await pg.setViewportSize({width:390,height:844});
+await pg.evaluate(()=>irPara('tipos')); await pg.waitForTimeout(350);
+const CURTO=await pg.evaluate(()=>({
+  visiveis:[...document.querySelectorAll('#tp-tabs .tp-tab')].map(t=>t.innerText.trim()),
+  /* innerText só devolve o que está VISÍVEL: se as duas versões
+     aparecessem, o rótulo viria duplicado */
+  duplicado:[...document.querySelectorAll('#tp-tabs .tp-tab')]
+    .some(t=>/Comparação\s*Comparação|Funções\s*Funções/.test(t.innerText))
+}));
+await pg.setViewportSize({width:1440,height:900});
+await pg.evaluate(()=>irPara('tipos')); await pg.waitForTimeout(350);
+const LONGO=await pg.evaluate(()=>
+  [...document.querySelectorAll('#tp-tabs .tp-tab')].map(t=>t.innerText.trim()));
+t('no telemóvel a ficha mostra o rótulo curto',
+  CURTO.visiveis.includes('Comparação') && CURTO.visiveis.includes('Funções'),
+  CURTO.visiveis.join(' · '));
+t('no desktop a ficha mostra o nome completo',
+  LONGO.includes('Comparação entre sistemas') && LONGO.includes('Funções e elementos'),
+  LONGO.join(' · '));
+t('nunca se veem as duas versões ao mesmo tempo', !CURTO.duplicado);
+t('as seções sem rótulo curto ficam iguais nas duas larguras',
+  CURTO.visiveis[0]===LONGO[0] && CURTO.visiveis[2]===LONGO[2]
+  && CURTO.visiveis.slice(6).join()===LONGO.slice(6).join(),
+  'Visão geral · Hipóteses · Eneagrama · DISC · Socoa · Guia');
+
 /* a última aba é mesmo clicável e troca a seção, em ecrã estreito e largo */
 for(const [w,h,nome] of [[390,844,'telemóvel'],[1440,900,'desktop']]){
   await pg.setViewportSize({width:w,height:h});
@@ -576,7 +620,7 @@ for(const [w,h,nome] of [[390,844,'telemóvel'],[1440,900,'desktop']]){
   const C=await pg.evaluate(async()=>{
     const bar=document.getElementById('tp-tabs');
     const alvo=[...bar.querySelectorAll('.tp-tab')].pop();
-    const rotulo=alvo.textContent.trim();
+    const rotulo=alvo.innerText.trim();
     alvo.scrollIntoView({block:'nearest',inline:'nearest'});
     alvo.click();
     await new Promise(r=>setTimeout(r,350));
