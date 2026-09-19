@@ -43,19 +43,19 @@ const TERMS=[
  [[8,'venus'],[14,'jupiter'],[20,'mercury'],[26,'mars'],[30,'saturn']]];  // Peixes
 /* casas: significações tradicionais */
 
-const HOUSE_SHORT={1:'o corpo e a vida',2:'o dinheiro',3:'estudos, irmãos e a palavra',4:'a casa e o pai',5:'filhos, prazeres e criações',6:'doenças e trabalho',7:'cônjuge, sócios e contendas',8:'morte, medos e dívidas',9:'doutrina e longas viagens',10:'o ofício e as honras',11:'amigos e apoios',12:'inimigos ocultos e exílios'};
+const HOUSE_SHORT={1:'o corpo e a vida',2:'o dinheiro',3:'estudos, irmãos e a palavra',4:'a casa e o pai',5:'filhos, prazeres e criações',6:'doenças e trabalho',7:'cônjuge, sócios e contendas',8:'morte, medos e dívidas',9:'doutrina e longas viagens',10:'o ofício, as honras e a mãe',11:'amigos e apoios',12:'inimigos ocultos e exílios'};
 /* temas literais de cada casa — claros, sem determinismo */
 const HOUSE_THEME={
  1:'o próprio nativo: corpo, vitalidade, identidade e modo de se apresentar',
  2:'dinheiro e recursos próprios',
  3:'irmãos, estudos, comunicação e trajetos curtos',
- 4:'casa, família de origem, pai e raízes',
+ 4:'casa, família de origem, raízes e o pai',
  5:'filhos, romance, prazeres e criações',
  6:'saúde, rotina de trabalho e subordinados',
  7:'relacionamentos, sociedades, contratos e adversários declarados',
  8:'perdas, medos, dívidas, recursos de terceiros e crises',
  9:'religião, filosofia, estudos superiores e o estrangeiro',
- 10:'carreira, reputação, autoridade e vocação',
+ 10:'carreira, reputação, autoridade, vocação e a mãe',
  11:'amigos, grupos, apoios e projetos',
  12:'isolamento, bastidores, hospitais e assuntos ocultos'};
 /* rótulos curtos (para títulos de promessa) */
