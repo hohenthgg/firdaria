@@ -198,6 +198,33 @@ function renderRetro(dateStr,evtTxt){
 /* ================= REVOLUÇÕES — roda zodiacal do retorno ================= */
 let RS_KIND='solar', RS_CURSOR=null, RS_CMP=false;
 function rsCursor(){return RS_CURSOR||new Date();}
+/* RS_CURSOR é `let` de escopo de script: nem os testes nem a consola
+   conseguiam mover o ano. rsGoto aceita um ano (número) ou uma data. */
+function rsGoto(quando){
+  if(quando==null){RS_CURSOR=null;}
+  else if(typeof quando==='number'&&quando>1000&&quando<4000){
+    /* "ano 2019" = a revolução que COMEÇA em 2019, e não a que estava a
+       correr em 1 de janeiro. Ancorar no aniversário evita cair na
+       revolução anterior quando o mês escolhido é anterior ao
+       nascimento: no mapa de teste, 1 de julho de 2019 ainda pertence à
+       revolução de 2018. Dois dias depois do aniversário põe o cursor
+       seguramente dentro da revolução certa. */
+    const nasc=new Date(BIRTH);
+    RS_CURSOR=new Date(Date.UTC(quando,nasc.getUTCMonth(),nasc.getUTCDate())+2*DAY);
+  }
+  else{
+    const d=(quando instanceof Date)?quando:new Date(quando);
+    if(isNaN(+d))return false;
+    RS_CURSOR=d;
+  }
+  try{ renderRS(); }catch(e){ console.error('rsGoto',e); }
+  return true;
+}
+if(typeof window!=='undefined'){
+  window.rsGoto=rsGoto;
+  Object.defineProperty(window,'RS_CURSOR',{
+    get:()=>RS_CURSOR, set:v=>{RS_CURSOR=v;}, configurable:true});
+}
 function rsStep(dir){
   const K=REV_BY_ID[RS_KIND]; if(!K)return;
   const R=revolutionFor(RS_KIND,rsCursor()); if(!R)return;
@@ -416,12 +443,32 @@ function renderRS(){
     'A '+ordinal(R.ascNatalHouse)+' natal trata de '+HOUSE_THEME[R.ascNatalHouse]+'.',
     'O Ascendente define como o período se apresenta: em '+R.ascSignNm+', regido por '+PT_NAME[R.ascRuler]+'.',
     escopo+'a ativação tende a passar por '+temas([R.ascNatalHouse,S&&S.profHouse])+'.');
-  if(rulerNat)cards+=cardEl((PT_GLYPH[R.ascRuler]||'')+'︎','Regente do Ascendente',
-    PT_NAME[R.ascRuler]+' · casa '+rulerNat.h+' natal',
-    PT_NAME[R.ascRuler]+' rege a '+(ruledHouses(R.ascRuler).map(h=>h+'ª').join(' e a ')||'—')
-      +' e está na casa '+rulerNat.h+' ('+(rulerNat.dig||'—')+').',
-    'Administra o retorno'+(R.ascRulerRevHouse?(' a partir da casa '+R.ascRulerRevHouse+' do próprio retorno'):'')+'.',
-    escopo+'ele conduz '+temas(ruledHouses(R.ascRuler).concat([rulerNat.h]))+'.');
+  /* Duas posições do regente do Asc da RS, rotuladas: onde ele está no
+     NATAL (contexto de vida inteira) e onde cai NESTA REVOLUÇÃO sobre as
+     casas natais (o que vale para o ano). Quando divergem, manda a da
+     revolução — e o cartão diz isso, em vez de anunciar só a natal. */
+  if(rulerNat){
+    const casaAno=R.ascRulerRevNatalHouse||rulerNat.h;
+    const sobre=(()=>{
+      if(R.ascRulerRevLon==null)return '';
+      const perto=['sun','moon','mercury','venus','mars','jupiter','saturn']
+        .map(k=>NATAL.pts[k]?{k,orb:Math.abs(adiff(R.ascRulerRevLon,NATAL.pts[k].lon))}:null)
+        .filter(x=>x&&x.orb<=3&&x.k!==R.ascRuler).sort((x,y)=>x.orb-y.orb)[0];
+      return perto?(', sobre '+(PV_FEM&&PV_FEM[perto.k]?'a ':'o ')+PT_NAME[perto.k]
+        +' natal ('+fmtOrb(perto.orb)+')'):'';
+    })();
+    cards+=cardEl((PT_GLYPH[R.ascRuler]||'')+'︎','Regente do Ascendente',
+      PT_NAME[R.ascRuler]+' · casa '+casaAno+' natal nesta revolução',
+      PT_NAME[R.ascRuler]+' rege a '+(ruledHouses(R.ascRuler).map(h=>h+'ª').join(' e a ')||'—')
+        +'. No natal está na '+ordinal(rulerNat.h)+' ('+(rulerNat.dig||'—')+')'
+        +(R.ascRulerDivergente
+          ? ('; <b>nesta revolução cai na '+ordinal(casaAno)+' natal</b>'+sobre
+             +' — para o ano manda a posição da revolução, a natal é contexto.')
+          : (sobre?('; nesta revolução mantém-se na '+ordinal(casaAno)+' natal'+sobre+'.')
+                  :'; nesta revolução mantém-se na mesma casa natal.')),
+      'Administra o retorno'+(R.ascRulerRevHouse?(' a partir da casa '+R.ascRulerRevHouse+' do próprio retorno'):'')+'.',
+      escopo+'ele conduz '+temas(ruledHouses(R.ascRuler).concat([casaAno]))+'.');
+  }
   const pp=NATAL.pts[R.planetKey];
   if(pp)cards+=cardEl((PT_GLYPH[R.planetKey]||'')+'︎','Planeta do retorno',PT_NAME[R.planetKey]+' · '+K.label,
     PT_NAME[R.planetKey]+' rege a '+(ruledHouses(R.planetKey).map(h=>h+'ª').join(' e a ')||'—')
