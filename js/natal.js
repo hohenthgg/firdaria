@@ -85,12 +85,42 @@ function natalNucleo(k){
 }
 
 /* ---------- nível 1 · as três frases do painel ---------- */
+/* ---------- regência ----------
+   Cinco dos sete planetas tradicionais têm DOIS domicílios, e portanto
+   costumam reger duas casas: Vênus rege Touro e Libra, Mercúrio Gêmeos
+   e Virgem, Marte Áries e Escorpião, Júpiter Sagitário e Peixes,
+   Saturno Capricórnio e Aquário. Só o Sol (Leão) e a Lua (Câncer) têm
+   um domicílio, e por isso regem uma casa só.
+   O número não é fixo em dois: as casas vêm das cúspides Placidus, e um
+   signo interceptado pode deixar um planeta a reger uma casa apenas, ou
+   três. Por isso nada aqui presume a quantidade — lê-se o que houver.
+   Os dois assuntos ficam NOMEADOS SEPARADAMENTE, cada tema colado à sua
+   casa. Fundi-los numa lista só, como antes, escondia justamente a
+   dualidade: lia-se “dinheiro e relacionamentos” sem saber que o
+   primeiro é a 2ª e o segundo a 7ª. */
 function natalRege(N){
-  if(!N.rege.length)return {t:'Não rege casa alguma',d:'Atua apenas pela casa que ocupa e pelos aspectos que faz.'};
-  const mat=lista(N.rege.map(h=>HOUSE_TAG[h]));
-  return {t:'Rege '+lista(N.rege.map(h=>'a '+h+'ª')),
-    d:cap1(lista(N.rege.map(h=>HOUSE_THEME[h].split(':').pop().trim())))+' '
-      +(plural(N.rege,mat)?'tornam-se':'torna-se')+' a matéria concreta administrada por '+PT_NAME[N.k]+'.'};
+  if(!N.rege.length)return {t:'Não rege casa alguma',
+    d:'Atua apenas pela casa que ocupa e pelos aspectos que faz.',
+    dPlano:'Atua apenas pela casa que ocupa e pelos aspectos que faz.',
+    rotulo:'sem regência', casas:[]};
+  const tema=h=>HOUSE_THEME[h].split(':').pop().trim();
+  const casas=N.rege.map(h=>({casa:h, tema:tema(h), tag:HOUSE_TAG[h]}));
+  const varias=casas.length>1;
+  /* cada casa com o seu próprio assunto, em vez de uma lista corrida */
+  const porCasa=casas.map(c=>'<b>'+c.casa+'ª</b> — '+c.tema).join(' · ');
+  return {
+    t:'Rege '+lista(casas.map(c=>'a '+c.casa+'ª')),
+    rotulo:'rege a '+casas.map(c=>c.casa+'ª').join(' e a '),
+    casas,
+    d:porCasa+'. '+(varias?'Ambas as matérias são':'Esta matéria é')
+      +' administrada'+(varias?'s':'')+' por '+PT_NAME[N.k]
+      +(varias?', que responde pelas duas ao mesmo tempo.':'.'),
+    /* variante sem marcação, para quem precise de texto corrido
+       (a síntese de reserva capitaliza a primeira letra, e não pode
+       receber uma etiqueta <b> nessa posição) */
+    dPlano:cap1(lista(casas.map(c=>c.tema)))+' '
+      +(varias?'tornam-se':'torna-se')+' a matéria concreta administrada por '
+      +PT_NAME[N.k]+'.'};
 }
 function natalCasa(N){
   const F=(typeof OL_FUSAO!=='undefined')?OL_FUSAO[N.casa]:null;
@@ -252,14 +282,14 @@ function natalCadeiaHTML(N){
     +'<div class="nl-hd"><span class="nl-ic">'+ico+'</span><b>'+rot+'</b></div>'
     +'<p>'+txt+'</p></div>';
   const seta='<div class="nl-ar" aria-hidden="true">→</div>';
-  const res=N.camadas?N.camadas.sintese:(cap1(R.d)+' '+C.d);
+  const res=N.camadas?N.camadas.sintese:((R.dPlano||R.d)+' '+C.d);
   return '<section class="nl-chain">'
     +'<div class="nl-chain-h"><h3>A lógica de '+PT_NAME[k]+' no seu mapa</h3>'
       +'<span class="nl-meta">'+SIGNS[N.s]+' · casa '+N.casa+(N.retro?' · ℞':'')
       +' · condição <i class="npan-c '+N.cond.nivel+'">'+N.cond.nivel+'</i></span></div>'
     +'<div class="nl-row">'
       +passo('c1','<i class="nl-g">'+(PT_GLYPH[k]||'')+'︎</i>',PT_NAME[k],fn)+seta
-      +passo('c2',NL_ICO.rege,(N.rege.length?('rege a '+N.rege[0]+'ª'):'sem regência'),R.d)+seta
+      +passo('c2',NL_ICO.rege,R.rotulo,R.d)+seta
       +passo('c3',NL_ICO.casa,'está na '+N.casa+'ª',C.d)+seta
       +passo('c4','<i class="nl-g">'+sgGlyph(N.s)+'</i>','em '+SIGNS[N.s],S.d)+seta
       +passo('c5',NL_ICO.res,'resultado',res)

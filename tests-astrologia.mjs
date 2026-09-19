@@ -576,6 +576,65 @@ t('a restauração não escreve chaves de fora do app', BK.intruso===null);
 t('o conjunto de mapas distingue signo profectado de cúspide Placidus',
   divergenciaTotal>0, divergenciaTotal+' idades divergentes no total — sem isso o teste da profecção não provaria nada');
 
+/* ============ a cadeia natal declara TODAS as casas regidas ============
+   Cinco dos sete planetas têm dois domicílios e regem normalmente duas
+   casas. O rótulo da cadeia mostrava só N.rege[0] — dizia "rege a 2ª"
+   enquanto o texto debaixo já descrevia a 2ª e a 7ª. */
+console.log('\n### regência dupla na cadeia natal');
+const DUP = await pg.evaluate(async()=>{
+  irPara('natal');
+  await new Promise(r=>setTimeout(r,500));
+  const chaves=[...document.querySelectorAll('[data-nx]')].map(x=>x.dataset.nx);
+  const out=[];
+  for(const k of chaves){
+    /* renderNatalTab() reconstrói os chips a cada clique: reconsultar,
+       senão clica-se num nó já destacado do DOM e lê-se sempre o mesmo */
+    document.querySelector('[data-nx="'+k+'"]').click();
+    await new Promise(r=>setTimeout(r,200));
+    const st=document.querySelector('.nl-row .nl-st.c2');
+    out.push({k, nome:PT_NAME[k],
+      regidas:ruledHouses(k),
+      rotulo:st?st.querySelector('b').textContent.trim():'',
+      corpo:st?st.querySelector('p').textContent:''});
+  }
+  return out;
+});
+/* o rótulo tem de nomear TODAS as casas que o motor diz que o planeta rege */
+const faltando=DUP.filter(x=>x.regidas.some(h=>!new RegExp('\\b'+h+'ª').test(x.rotulo)));
+t('o rótulo da cadeia nomeia todas as casas regidas, não só a primeira',
+  faltando.length===0,
+  faltando.length?faltando.map(x=>x.nome+': rege '+x.regidas.join(',')
+    +' mas diz "'+x.rotulo+'"').join(' | ')
+  :DUP.map(x=>x.nome+' → '+x.rotulo.replace('rege a ','')).join(' · '));
+
+/* Sol e Lua têm UM domicílio: uma casa só. Os outros cinco têm dois, e
+   com cúspides Placidus regem duas — salvo signo interceptado, caso em
+   que o número muda e o teste não o pode presumir. */
+const lum=DUP.filter(x=>x.k==='sun'||x.k==='moon');
+t('Sol e Lua regem uma casa cada — um domicílio cada',
+  lum.length===2 && lum.every(x=>x.regidas.length===1),
+  lum.map(x=>x.nome+': '+x.regidas.join(',')).join(' · '));
+const outros=DUP.filter(x=>x.k!=='sun'&&x.k!=='moon');
+t('os outros cinco planetas regem duas casas neste mapa',
+  outros.length===5 && outros.every(x=>x.regidas.length===2),
+  outros.map(x=>x.nome+': '+x.regidas.join(' e ')).join(' · '));
+
+/* cada casa aparece com o SEU tema, e não numa lista fundida em que não
+   se sabe qual assunto pertence a qual casa */
+const semTema=outros.filter(x=>
+  !x.regidas.every(h=>new RegExp(h+'ª\\s*—').test(x.corpo)));
+t('cada casa regida vem com o seu próprio tema, separadamente',
+  semTema.length===0,
+  semTema.length?semTema.map(x=>x.nome).join(', ')
+  :'formato "Nª — tema · Mª — tema"');
+
+/* o conjunto das casas regidas cobre as doze exatamente uma vez: é o
+   que prova que nenhuma regência se perdeu pelo caminho */
+const todas=DUP.flatMap(x=>x.regidas).sort((a,b)=>a-b);
+t('as doze casas estão cobertas, cada uma por um só regente',
+  todas.length===12 && todas.every((h,i)=>h===i+1),
+  todas.join(','));
+
 console.log('\n'+ok+' asserções · '+fail+' falhas');
 if(falhas.length) console.log('falhas:\n - '+falhas.join('\n - '));
 console.log('ERROS DE PÁGINA: '+(errs.length?('\n'+errs.join('\n')):'(nenhum)'));
