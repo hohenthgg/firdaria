@@ -677,9 +677,15 @@ const PV_EVT={
  4:{s:'Mudança de residência ou da base familiar',t:'Tensão doméstica ou mudança de base',
     ds:'Casa nova, reforma ou reorganização concreta da vida doméstica e familiar.',
     dt:'A base doméstica tende a ser mexida — mudança, obra ou renegociação familiar.'},
- 5:{s:'Romance, filho ou criação ganhando corpo',t:'Prova nos afetos, filhos ou criações',
+ /* O TOM NÃO TROCA O ASSUNTO. A versão tensa dizia "Prova nos afetos",
+    que é outro acontecimento — e não o mesmo acontecimento em condições
+    difíceis. Um filho nascido aos 19 anos é 5ª casa tensa: é um filho,
+    em condições difíceis, e não uma prova amorosa. */
+ 5:{s:'Romance, filho ou criação ganhando corpo',
+    t:'Romance, filho ou criação — em condições difíceis',
     ds:'Início de romance, filhos ou uma criação importante saindo do papel.',
-    dt:'Romance, filhos ou uma criação importante tendem a passar por teste e ajuste.'},
+    dt:'Romance, filho ou criação importante chegando por caminho difícil, '
+      +'com custo, pressa ou fora do tempo planeado.'},
  6:{s:'Novo regime de trabalho e rotina',t:'Rotina e corpo exigindo ajuste',
     ds:'Mudança concreta no dia a dia de trabalho, na equipe ou nos hábitos de saúde.',
     dt:'Carga de trabalho e cuidado com o corpo tendem a impor limites novos.'},
@@ -1009,10 +1015,41 @@ const PV_ASSIN=[
  {c:3, s:'Inicia curso, publicação ou novo circuito de comunicação', t:'Prazos e papéis concentram o esforço',
   ds:'Estudo, escrita, contrato de comunicação ou rotina nova de trajetos.',
   dt:'Documentos, irmãos e deslocamentos tendem a exigir atenção contínua.'},
+ /* assinatura de 5ª pelo REGENTE, e não só por quem ocupa a casa: o
+    motor só tinha entradas por casa ocupada, e um contato contra o
+    regente da 5ª não encontrava vocabulário próprio */
+ {c:5, extra:C=>C.pls.indexOf(NATAL.rulers[5])>=0,
+  s:'Filho, gravidez ou criação ganhando corpo',
+  t:'Filho, gravidez ou criação — chegando por caminho difícil',
+  ds:'Nascimento, gravidez ou uma criação importante saindo do papel.',
+  dt:'Filho ou criação importante chegando com custo, pressa ou fora do tempo planeado — '
+    +'o assunto é o mesmo, muda a condição em que aparece.'},
  {c:5, pls:['venus','moon','jupiter','sun'],
-  s:'Romance, gravidez ou obra criativa saindo do papel', t:'Prova nos afetos, filhos ou criações',
+  s:'Romance, gravidez ou obra criativa saindo do papel',
+  t:'Romance, filho ou criação — em condições difíceis',
   ds:'Romance novo, filhos ou uma criação importante ganhando corpo.',
-  dt:'Romance, filhos ou criação tendem a passar por teste.'},
+  dt:'Romance, filho ou criação chegando por caminho difícil, com custo ou fora de hora.'},
+ /* assinaturas por REGENTE nas outras casas de pessoa — mesma lacuna */
+ {c:4, extra:C=>C.pls.indexOf(NATAL.rulers[4])>=0,
+  s:'A casa ou um dos pais entra em primeiro plano',
+  t:'A casa ou um dos pais entra em primeiro plano, sob tensão',
+  ds:'Mudança concreta na base doméstica, ou um dos pais tomando o centro do período.',
+  dt:'Base doméstica ou um dos pais concentrando a pressão do período.'},
+ {c:10, extra:C=>C.pls.indexOf(NATAL.rulers[10])>=0,
+  s:'A posição pública, ou a mãe, entra em primeiro plano',
+  t:'A posição pública, ou a mãe, entra em primeiro plano sob cobrança',
+  ds:'Movimento de carreira e reputação, ou a mãe tomando o centro do período.',
+  dt:'Carreira ou a mãe concentrando a cobrança do período.'},
+ {c:7, extra:C=>C.pls.indexOf(NATAL.rulers[7])>=0,
+  s:'O parceiro ou sócio entra em primeiro plano',
+  t:'O parceiro ou sócio entra em primeiro plano, em atrito',
+  ds:'Vínculo a dois ganhando forma nova, por iniciativa própria ou do outro.',
+  dt:'Vínculo a dois exigindo renegociação, por atrito declarado.'},
+ {c:3, extra:C=>C.pls.indexOf(NATAL.rulers[3])>=0,
+  s:'Irmãos, estudos ou a palavra entram em primeiro plano',
+  t:'Irmãos, estudos ou a palavra entram em primeiro plano, sob pressão',
+  ds:'Irmão, curso, escrita ou trajeto curto tomando o centro do período.',
+  dt:'Irmão, prazo ou documento concentrando a pressão do período.'},
  {c:1, s:'Redefine visivelmente a própria direção pessoal', t:'Redefinição pessoal sob pressão',
   ds:'Mudança visível de postura, de corpo ou de rumo pessoal.',
   dt:'O modo de conduzir a própria vida tende a ser revisto sob pressão.'},
@@ -1357,8 +1394,140 @@ function pvFeedHTML(vis,idade,agora){
 function pvCordaHTML(vis,idade,agora){
   return pvReguaHTML(vis,idade)+pvFeedHTML(vis,idade,agora);
 }
+/* ============================================================
+   NÍVEL SIMPLES — o que aconteceu, quando, e por quê em português
+
+   Três linhas, no máximo. A primeira diz o acontecimento e a janela; a
+   segunda diz o motivo sem uma só palavra de ofício; a terceira nomeia
+   a pessoa e, quando o campo é ambíguo, as alternativas por ordem.
+
+   O motivo NÃO é construído a partir da mecânica do contato — é daí
+   que vinham "progredida" e "dirigido". Constrói-se do que o motor já
+   decidiu: quem foi tocado, o que esse planeta administra, e que
+   camadas do tempo concordam. Assim o vocabulário técnico não tem por
+   onde entrar.
+   ============================================================ */
+/* a fase entra como tempo do processo, não como adjetivo solto */
+const PV_FASE_SIMPLES={
+  abertura:'é a entrada do assunto',
+  'tensão':'é o momento de aperto dentro de um processo já em curso',
+  reabertura:'o assunto reabre em termos novos',
+  desenvolvimento:'o assunto avança um degrau',
+  'maturação':'é o ponto mais forte do processo',
+  'consolidação':'o que veio antes tende a firmar-se',
+  'ativação única':'é a única passagem forte deste assunto no período'
+};
+function pvPessoaDoCampo(ev){
+  if(typeof pessoaDaCasa!=='function')return null;
+  const P=pessoaDaCasa(ev.campo);
+  if(!P)return null;
+  /* quem, pelos planetas que o contato toca — com o desempate à vista */
+  const pls=ev.C.principal.env.pls||[];
+  const casas=(ev.votacao&&ev.votacao.ordem||[]).map(o=>o.casa);
+  const tocado=pls.map(pl=>typeof pessoaDoContato==='function'
+    ? pessoaDoContato(pl,{pls,casas}) : null).filter(Boolean)
+    .find(r=>r.principal&&r.principal.casa===ev.campo);
+  return {casa:P, tocado};
+}
+function pvLinhaAcontecimento(ev){
+  const quando=ev.faixa?(pvMesAno(ev.dIni)+' a '+pvMesAno(ev.dFim)):pvJanelaTxt(ev);
+  return cap1(ev.titulo)+' — '+quando+'.';
+}
+function pvLinhaPorque(ev){
+  const P=ev.C.principal.env.papeis;
+  const alvo=P.significador.pl;
+  const nomes=[];
+  if(alvo&&PT_NAME[alvo])nomes.push(PT_NAME[alvo]);
+  const rege=(P.significador.rege||[]);
+  let frase;
+  if(alvo&&rege.length){
+    frase='No seu mapa, '+PT_NAME[alvo]+' responde por '
+      +rege.map(h=>casaTag(h)).join(' e por ')
+      +', e é esse ponto que está em jogo agora';
+  }else if(ev.campo){
+    frase='O período mexe com '+casaTag(ev.campo);
+  }else{
+    frase='O período concentra-se num só assunto';
+  }
+  /* concordância das camadas lentas, sem as nomear tecnicamente */
+  const conf=(ev.C.principal.conf||[]).filter(c=>c.via==='planeta').length;
+  if(conf>=2)frase+=', e os ciclos longos do ano apontam para o mesmo lado';
+  else if(conf===1)frase+=', com um dos ciclos longos do ano a apontar para o mesmo lado';
+  return frase+'.';
+}
+/* "um filho", "o pai", "um irmão" — a forma com que a pessoa entra
+   numa frase. O plural das figuras ("os filhos", "os irmãos") serve
+   para a tábua, não para dizer quem aparece num período. */
+const PV_PESSOA_UM={pai:'o pai', mae:'a mãe', irmaos:'um irmão',
+  filhos:'um filho', conjuge:'o parceiro'};
+function pvPessoaFrase(f){ return PV_PESSOA_UM[f]||(f?PESSOA_ROTULO[f]:''); }
+
+function pvLinhaQuemEAlternativa(ev){
+  const bits=[];
+  const Q=pvPessoaDoCampo(ev);
+  if(Q&&Q.tocado){
+    const p=Q.tocado;
+    bits.push(p.empatado&&p.segunda
+      ? ('pode envolver '+pvPessoaFrase(p.principal.figura)
+         +' — ou '+pvPessoaFrase(p.segunda.figura))
+      : ('tende a envolver '+pvPessoaFrase(p.principal.figura)));
+  }else if(Q&&Q.casa){
+    bits.push('a figura em causa é '+pvPessoaFrase(Q.casa.figura));
+  }
+  if(ev.ambiguo&&ev.campoAlt){
+    bits.push('mais provável: '+casaTag(ev.campo)
+      +'; também possível: '+casaTag(ev.campoAlt));
+  }
+  if(ev.fase&&PV_FASE_SIMPLES[ev.fase])
+    bits.push(PV_FASE_SIMPLES[ev.fase]);
+  /* cada pedaço é uma frase: entra com maiúscula e acaba com ponto */
+  return bits.length?bits.map(x=>cap1(x)+'.').join(' '):'';
+}
+/* as três linhas, já prontas */
+function pvSimples(ev){
+  return {
+    acontecimento:pvLinhaAcontecimento(ev),
+    porque:pvLinhaPorque(ev),
+    quem:pvLinhaQuemEAlternativa(ev)
+  };
+}
+function pvSimplesHTML(ev){
+  const S=pvSimples(ev);
+  return '<p class="pvs-l1">'+S.acontecimento+'</p>'
+    +'<p class="pvs-l2">'+S.porque+'</p>'
+    +(S.quem?('<p class="pvs-l3">'+S.quem+'</p>'):'');
+}
+
+/* a votação de campo, aberta, no nível técnico: de onde veio cada
+   ponto, e por que a segunda casa ficou (ou não) como alternativa */
+function pvVotacaoHTML(ev){
+  const V=ev.votacao; if(!V||!V.ordem||!V.ordem.length)return '';
+  const barra=V.ordem.slice(0,5).map(o=>{
+    const pc=Math.round(100*o.peso/V.ordem[0].peso);
+    return '<div class="pvv-l'+(o.casa===V.campo?' on':'')
+      +(o.casa===V.alternativa?' alt':'')+'">'
+      +'<span>'+ordinal(o.casa)+'</span>'
+      +'<i><b style="width:'+pc+'%"></b></i>'
+      +'<u>'+o.peso.toFixed(2)+'</u></div>';
+  }).join('');
+  const linhas=V.linhas.slice(0,10).map(l=>'<li>'+ordinal(l.casa)+' +'+l.peso
+    +' — '+l.porque+(l.origem?(' <em>('+l.origem+')</em>'):'')+'</li>').join('');
+  return '<div class="pvv"><span class="pvv-k">votação do campo</span>'
+    +'<div class="pvv-b">'+barra+'</div>'
+    +'<p class="pvv-n">'+(V.ambiguo
+      ? ('A segunda casa alcança '+Math.round(V.razao*100)+'% da primeira — acima do '
+        +'limiar de '+Math.round(V.limiar*100)+'%, por isso o evento é declarado AMBÍGUO '
+        +'e as duas são nomeadas, nesta ordem.')
+      : ('A segunda casa fica em '+Math.round(V.razao*100)+'% da primeira, abaixo do '
+        +'limiar de '+Math.round(V.limiar*100)+'%: campo único.'))
+    +' '+V.factos+' factos distintos, de '+V.linhasBrutas+' testemunhos — '
+    +'o mesmo facto conta uma vez.</p>'
+    +'<ul class="pvv-u">'+linhas+'</ul></div>';
+}
+
 function pvEventoHTML(ev,agora,passado){
   const aberto=PV_OPEN===ev.id;
+  const tec=(typeof modoTecnico==='function')?modoTecnico():true;
   const P=ev.C.principal;
   const st=pvEstado({data:ev.dPico},agora);
   const tierLb={principal:'evento principal',desdobramento:'desdobramento provável',sinal:'sinal'}[ev.tier];
@@ -1369,21 +1538,26 @@ function pvEventoHTML(ev,agora,passado){
     +'<span class="pvb-m">'+pvMesCurto(ev.dPico)+'</span>'
     +'<span class="pvb-dot'+(ev.faixa?' fx':'')+'"></span>'
     +'<div class="pvb-c">'
-    +'<div class="pvb-t"><b>'+ev.titulo+'</b>'+valBadge+'<em>'+tierLb+'</em>'
-      +(ev.fase?('<u class="pvb-f">'+ev.fase+'</u>'):'')+'</div>'
+    +'<div class="pvb-t"><b>'+ev.titulo+'</b>'+valBadge
+      +(tec?('<em>'+tierLb+'</em>'):'')
+      +(tec&&ev.fase?('<u class="pvb-f">'+ev.fase+'</u>'):'')+'</div>'
     +'<div class="pvb-w">'+(ev.faixa
         ? (pvMesAno(ev.dIni)+' → '+pvMesAno(ev.dFim))
         : pvJanelaTxt(ev))+'</div>'
-    +'<div class="pvb-sub">'+pvSubtec(ev)+'</div>'
-    +'<button class="pv-exp" data-pvev="'+ev.id+'">'+ev.nEvid+' evidência'+(ev.nEvid>1?'s':'')
-      +' astrológica'+(ev.nEvid>1?'s':'')+(aberto?' ↑':' ↓')+'</button>';
+    +(tec?('<div class="pvb-sub">'+pvSubtec(ev)+'</div>'):'')
+    +(tec?'':'<div class="pvb-simp">'+pvSimplesHTML(ev)+'</div>')
+    +'<button class="pv-exp" data-pvev="'+ev.id+'">'
+      +(tec?(ev.nEvid+' evidência'+(ev.nEvid>1?'s':'')+' astrológica'+(ev.nEvid>1?'s':''))
+           :'por que este período')
+      +(aberto?' ↑':' ↓')+'</button>';
   if(aberto){
     h+='<div class="pvb-x">'
       +'<p class="pvb-d">'+ev.desc+'</p>'
-      +(ev.fase?('<p class="pvb-d fase"><b>Fase da promessa — '+ev.fase+'.</b> '
+      +(tec&&ev.fase?('<p class="pvb-d fase"><b>Fase da promessa — '+ev.fase+'.</b> '
         +(PV_FASE_TXT[ev.fase]||'')+'</p>'):'')
       +pvBarraJanela(ev)
-      +pvCadeiaHTML(ev);
+      +(tec?pvCadeiaHTML(ev):'')
+      +(tec?pvVotacaoHTML(ev):'');
     if(passado){
       const opt=(v,lb,cls)=>'<button class="pv-vb'+(val===v?' on':'')+' '+cls
         +'" data-pvval="'+vk+':'+v+'">'+lb+'</button>';
@@ -1392,7 +1566,7 @@ function pvEventoHTML(ev,agora,passado){
         +'</div>';
     }
     h+='<div class="pvc-b">'
-      +'<button class="pv-lnk" data-pvcalc="'+ev.id+'">Ver cálculo técnico</button>'
+      +(tec?('<button class="pv-lnk" data-pvcalc="'+ev.id+'">Ver cálculo técnico</button>'):'')
       +(P.promessa?('<button class="pv-lnk" data-pvprom="'+P.promessa.pr.id+'">Ver promessa e trajetória</button>'):'')
       +'</div>'
       +(PV_CALC===ev.id?pvCalcHTML(P):'')
@@ -1433,9 +1607,14 @@ function renderPreditivas(){
   const met=PV_MET[PV_METODO].curto+' · '+PV_KEYS[PV_KEY].lab
     +' · '+({ambas:'diretas e conversas',direta:'só diretas',conversa:'só conversas'}[PV_SENT])
     +' · progressões 1 dia = 1 ano · ±'+PV_MARG+' meses · lat '+(Math.round(F.phi*100)/100)+'°';
+  const tec=(typeof modoTecnico==='function')?modoTecnico():true;
   let h=(F.inferida?'<p class="pv-warn">Latitude do nascimento ausente: inferida do Asc/MC, com menor confiabilidade. Informe o local na aba Dados.</p>':'')
-    +'<p class="pv-met">'+met+'</p>'
-    +'<p class="pv-int">Reconstrução do nascimento ao horizonte, apenas pelas técnicas — nada vem de eventos cadastrados. Nos acontecimentos passados dá para marcar se aconteceram, para testar o modelo.</p>';
+    +'<div class="pv-niv">'+((typeof nivelToggleHTML==='function')?nivelToggleHTML():'')+'</div>'
+    +(tec?('<p class="pv-met">'+met+'</p>'):'')
+    +'<p class="pv-int">'+(tec
+      ? 'Reconstrução do nascimento ao horizonte, apenas pelas técnicas — nada vem de eventos cadastrados. Nos acontecimentos passados dá para marcar se aconteceram, para testar o modelo.'
+      : 'Reconstrução do nascimento até adiante, a partir do mapa. Cada período traz o acontecimento provável, a janela e o motivo. Ligue o modo técnico para ver os cálculos por trás.')
+    +'</p>';
   const prox=vis.filter(x=>x.pico>=idade-0.08&&x.pico<=idade+1.55);
   h+='<div class="pv-sin"><div class="pv-sin-k">próximos 18 meses</div>'
     +(prox.length?prox.map(x=>'<a class="pv-sin-i" href="#" data-pvgo="'+x.id+'">'
@@ -1449,7 +1628,8 @@ function renderPreditivas(){
       +' sina'+(sinais.length>1?'is':'l')+' secundário'+(sinais.length>1?'s':'')
       +' — ativações sem convergência para previsão literal</summary>'
       +sinais.map(x=>'<div class="pvb-si"><b>'+pvMesCurto(x.dPico)+' '+x.dPico.getUTCFullYear()+'</b>'
-        +'<span>'+pvTitulo(x.C.principal)+'</span><em>'+cap1(casaTag(x.campo))+'</em></div>').join('')
+        +'<span>'+(tec?pvTitulo(x.C.principal):cap1(casaTag(x.campo)))+'</span>'
+        +'<em>'+(tec?cap1(casaTag(x.campo)):'sinal fraco')+'</em></div>').join('')
       +'</details>';
   }
   el.innerHTML=h;

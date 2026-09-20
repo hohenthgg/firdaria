@@ -207,6 +207,11 @@ function bindDados(){
   };
 }
 function boot(){
+  /* o interruptor de nível é global: uma escuta só, no documento, e a
+     classe no <body> para o estilo. O padrão é desligado. */
+  try{ if(typeof nivelAplicarClasse==='function')nivelAplicarClasse();
+       if(typeof nivelLigarEventos==='function')nivelLigarEventos(); }
+  catch(e){console.error(e);}
   try{bindView();}catch(e){console.error(e);}
   try{bindImport();}catch(e){console.error(e);}
   try{bindDados();}catch(e){console.error(e);}
