@@ -535,7 +535,9 @@ function pvClusters(itens,janelaAnos){
     out.push({grupo, dom, casasTop, forca,
       nivel:grupo.map(g=>g.nivel).sort((x,y)=>peso[y]-peso[x])[0],
       ini:grupo[0].anos, fim:grupo[grupo.length-1].anos,
-      principal:grupo.slice().sort((x,y)=>peso[y.nivel]-peso[x.nivel]||x._dist-y._dist)[0]});
+      principal:grupo.slice().sort((x,y)=>
+        pvPrioridadeContato(x)-pvPrioridadeContato(y)
+        ||peso[y.nivel]-peso[x.nivel]||x._dist-y._dist)[0]});
   });
   out.sort((a,b)=>b.forca-a.forca);
   return out;
@@ -745,11 +747,30 @@ const PV_PESO={
   alvoOcupa:2, alvoRegeDomicilio:3, alvoRegeTermo:1.5,
   promOcupa:1, promRege:1.5,
   eixo:3, loteOcupa:2, loteRegente:1,
+  /* a lunação sobre o Sol acrescenta isto à casa que o Sol rege */
+  lunacaoRegida:2,
   bonusProfeccao:2, bonusFirdaria:1
 };
-/* ambiguidade: quando a segunda casa chega a esta fração da primeira,
-   o evento é declarado ambíguo e o texto nomeia as duas, nesta ordem */
-const PV_AMBIGUO=0.70;
+/* ---------- ambiguidade ----------
+   A 0,70 saíam ambíguos 67% dos eventos: nomear duas casas em dois
+   terços das leituras não protege ninguém, dilui. Ambiguidade tem de
+   ser a exceção que evita um erro, não o modo de falar.
+
+   Duas condições CUMULATIVAS para declarar a alternativa:
+     · a segunda casa alcança 85% da primeira;
+     · e tem pelo menos um voto por REGÊNCIA ou por EIXO — uma casa que
+       só aparece por ocupação ou pelo promissor é eco, não assunto.
+   Fica a exceção anterior: a casa que o alvo REGE entra como
+   alternativa mesmo abaixo do limiar quando a vencedora é a que ele
+   OCUPA (o conflito é dentro do mesmo significador). */
+let PV_AMBIGUO=0.85;
+/* vias que qualificam uma casa como assunto, e não como eco */
+/* piso da exceção de regência: a casa regida precisa de apoio REAL, e
+   não de um voto simbólico. Sem piso a exceção disparava em 13 de 30
+   eventos e passava a ser a principal fonte de ambiguidade — o inverso
+   do que se queria. */
+let PV_EXCECAO_PISO=0.60;
+const PV_VIAS_FORTES=/rege a |regente d|eixo da |lunação progredida/;
 
 /* regente do termo do Asc e do MC — dignidade menor, por isso 1,5 e não
    3. A face NÃO entra: é dignidade fraca demais para mover o assunto. */
@@ -814,6 +835,60 @@ function pvLunacaoSobreSol(it){
     &&it.classe==='aspecto'&&(it.A===0||it.A===180));
 }
 
+/* ============================================================
+   PRIORIDADE DO CONTATO PRINCIPAL — por NATUREZA, antes de tudo
+
+   O principal de um aglomerado era escolhido por nível de relevância e
+   depois por proximidade da data. Em outubro de 2019, no mapa de teste,
+   isso elegeu um INGRESSO DE SIGNO ("Lua progredida entra em Aquário")
+   como principal, e deixou a lunação progredida sobre o Sol natal como
+   satélite — justamente o contato que devia mandar. O campo saiu certo
+   por 0,13 ponto, o que é o mesmo que sair por acaso.
+
+   A ordem abaixo é de natureza, não de força: o que um contato É pesa
+   antes de quão perto está ou de quantos testemunhos reuniu.
+
+     0  lunação progredida sobre o Sol (☌/☍)
+     1  contato com ângulo natal (Asc/MC/Dsc/IC)
+     2  contato com luminar, ou com o regente do Ascendente
+     3  contato com o regente da casa profectada do ano
+     4  demais aspectos
+     5  ingressos de signo e cruzamentos de cúspide — SEMPRE por último
+
+   Um ingresso nunca é principal havendo aspecto no mesmo aglomerado.
+   Um ingresso marca uma mudança de fundo, de meses ou anos; um aspecto
+   marca um momento. Tomar o primeiro pelo segundo é o que produzia
+   janelas de vinte e três anos apresentadas como acontecimento.
+   ============================================================ */
+/* um ingresso é o cruzamento de um limiar — signo ou cúspide */
+function pvEhIngresso(it){
+  return !!(it&&it.tipo==='prog'&&(it.classe==='signo'||it.classe==='casa'));
+}
+/* meia-janela do ingresso, em meses */
+const PV_ING_PROG=3, PV_ING_DIR=6;
+
+function pvPrioridadeContato(it){
+  if(pvLunacaoSobreSol(it))return 0;
+  const ingresso=(it.tipo==='prog'&&(it.classe==='signo'||it.classe==='casa'));
+  if(ingresso)return 5;
+  const P=it.env?it.env.papeis:pvPapeis(it);
+  const alvoPl=P.significador.pl, promPl=P.promissor.pl;
+  const eixo=(it.tipo==='dir'&&it.sig&&it.sig.ang)||(it.alvo&&PV_ANG[it.alvo])
+    ||(it.mover&&PV_MOV_CASA[it.mover]);
+  if(eixo)return 1;
+  const luminar=['sun','moon'];
+  const regAsc=(typeof NATAL!=='undefined'&&NATAL&&NATAL.rulers)?NATAL.rulers[1]:null;
+  if([alvoPl,promPl].some(k=>k&&(luminar.indexOf(k)>=0||k===regAsc)))return 2;
+  try{
+    const S=tempoState(it.data);
+    if(S&&S.profHouse){
+      const regProf=NATAL.rulers[S.profHouse];
+      if([alvoPl,promPl].indexOf(regProf)>=0)return 3;
+    }
+  }catch(e){}
+  return 4;
+}
+
 /* A votação de UM contato. Devolve {votos, linhas} — linhas são a
    justificação, para o modo técnico poder mostrar de onde veio cada
    ponto em vez de pedir confiança. */
@@ -854,6 +929,13 @@ function pvVotosDoContato(it){
   if(!lunacao)(P.promissor.rege||[]).forEach(h=>
     add(h,PV_PESO.promRege,
       (promPl?PT_NAME[promPl]:P.promissor.nome)+' rege a '+ordinal(h)));
+  /* bónus da lunação na casa que o Sol REGE: sem ele o resultado certo
+     ficava a 0,13 ponto do errado, e qualquer ajuste de peso o revertia.
+     O bónus só toca a casa regida por domicílio — a ocupada já entrou
+     com o seu peso normal. */
+  if(lunacao)(P.significador.rege||[]).forEach(h=>
+    add(h,PV_PESO.lunacaoRegida,
+      'lunação progredida sobre o Sol natal, que rege a '+ordinal(h)));
   if(lunacao)linhas.push({casa:null,peso:0,
     porque:'lunação progredida sobre o Sol natal: o assunto vem das casas do '
       +'Sol (ocupa a '+ordinal(P.significador.casa||0)+', rege a '
@@ -949,8 +1031,13 @@ function pvVotacaoCampo(C){
     .filter(o=>o.peso>0)
     .sort((a,b)=>b.peso-a.peso||a.casa-b.casa);
   const primeiro=ordem[0]||null, segundo=ordem[1]||null;
+  /* uma casa só qualifica como alternativa se tiver voto de regência ou
+     de eixo — não basta ter somado ocupações e votos do promissor */
+  const temViaForte=h=>Object.values(porFacto)
+    .some(l=>l.casa===h&&PV_VIAS_FORTES.test(l.porque));
   let ambiguo=!!(primeiro&&segundo&&primeiro.peso>0
-    &&segundo.peso>=PV_AMBIGUO*primeiro.peso);
+    &&segundo.peso>=PV_AMBIGUO*primeiro.peso
+    &&temViaForte(segundo.casa));
   let alternativa=ambiguo?segundo.casa:null;
   let porRegencia=false;
 
@@ -972,17 +1059,27 @@ function pvVotacaoCampo(C){
   if(primeiro&&Pp&&Pp.significador){
     const ocupa=Pp.significador.casa, rege=Pp.significador.rege||[];
     if(ocupa&&primeiro.casa===ocupa&&rege.length){
-      const regidaComApoio=ordem.find(o=>rege.indexOf(o.casa)>=0&&o.peso>0
+      const regidaComApoio=ordem.find(o=>rege.indexOf(o.casa)>=0
+        &&o.peso>=PV_EXCECAO_PISO*primeiro.peso
         &&o.casa!==primeiro.casa);
       if(regidaComApoio&&alternativa!==regidaComApoio.casa){
-        alternativa=regidaComApoio.casa; ambiguo=true; porRegencia=true;
+        alternativa=regidaComApoio.casa; ambiguo=true;
       }
     }
   }
+  /* `porRegencia` significa: a casa vencedora OU a alternativa vieram de
+     REGÊNCIA. Estava a marcar só o caso especial da ocupação-versus-
+     regência, e por isso outubro de 2019 saía com porRegencia:false
+     embora o voto vencedor fosse "Sol rege a 5ª por domicílio" — o
+     modo técnico descrevia o caso errado. */
+  const porRegenciaDe=h=>h!=null&&Object.values(porFacto)
+    .some(l=>l.casa===h&&/rege a |regente d/.test(l.porque));
+  porRegencia=porRegenciaDe(primeiro?primeiro.casa:null)||porRegenciaDe(alternativa);
+  const vencedoraPorRegencia=porRegenciaDe(primeiro?primeiro.casa:null);
   return {
     campo:primeiro?primeiro.casa:null,
     alternativa,
-    ambiguo, porRegencia, ordem,
+    ambiguo, porRegencia, vencedoraPorRegencia, ordem,
     razao:(primeiro&&segundo&&primeiro.peso)?+(segundo.peso/primeiro.peso).toFixed(2):0,
     linhas:Object.values(porFacto).sort((a,b)=>b.peso-a.peso),
     linhasBrutas:linhas.length, factos:Object.keys(porFacto).length,
@@ -1240,10 +1337,27 @@ function pvEventos(){
     const marg=C.principal.tipo==='dir'?PV_MARG/12:1/12;
     let dIni=new Date(BIRTH+(C.principal.anos-marg)*365.2425*DAY);
     let dFim=new Date(BIRTH+(C.principal.anos+marg)*365.2425*DAY);
-    let faixa=false;
-    if(C.principal.tipo==='prog'&&C.principal.classe==='casa'){
-      const j=pvJanelaCasa(C.principal.mover,C.principal.casaNova,C.principal.anos);
-      dIni=j.ini; dFim=j.fim; faixa=true;
+    let faixa=false, permanencia=null;
+    /* ---------- ingressos: janela do CRUZAMENTO, não da permanência ----
+       A janela de um ingresso era a permanência inteira na casa — 277
+       meses num caso do mapa de teste — e o nível simples apresentava
+       isso como a duração do acontecimento: "muda o regime de trabalho,
+       de junho de 2027 a julho de 2050".
+       Um ingresso é um LIMIAR: acontece quando se cruza. A permanência
+       existe, é informação boa, mas é outra coisa — fica guardada à
+       parte e só aparece no modo técnico. */
+    const ehIngresso=pvEhIngresso(C.principal);
+    if(ehIngresso){
+      const meia=(C.principal.tipo==='dir'?PV_ING_DIR:PV_ING_PROG)/12;
+      dIni=new Date(BIRTH+(C.principal.anos-meia)*365.2425*DAY);
+      dFim=new Date(BIRTH+(C.principal.anos+meia)*365.2425*DAY);
+      faixa=false;
+      if(C.principal.classe==='casa'){
+        try{
+          const j=pvJanelaCasa(C.principal.mover,C.principal.casaNova,C.principal.anos);
+          permanencia={ini:j.ini, fim:j.fim, casa:C.principal.casaNova};
+        }catch(e){}
+      }
     }
     // assinatura composta primeiro; vocabulário por casa como reserva;
     // e a fase da vida manda: infância fala pelo ambiente, juventude
@@ -1258,6 +1372,7 @@ function pvEventos(){
     const nEvid=C.grupo.length+C.principal.conf.length;
     return {id:'pvev-'+ix, C, tier, campo, cls, titulo, desc, temDir, temProg, faixa, nEvid,
       votacao:V, campoAlt:V.alternativa, ambiguo:V.ambiguo,
+      ingresso:ehIngresso, permanencia,
       promId:C.principal.promessa?C.principal.promessa.pr.id:null,
       assinada:!!A,
       ini:C.ini, fim:C.fim, pico:C.principal.anos,
@@ -1468,31 +1583,123 @@ function pvPessoaDoCampo(ev){
     .find(r=>r.principal&&r.principal.casa===ev.campo);
   return {casa:P, tocado};
 }
+/* põe em minúscula a inicial de um rótulo para o encaixar no meio de
+   uma frase, preservando nomes próprios já maiúsculos no interior */
+function pvMinuscula(t){
+  if(!t)return '';
+  return t.charAt(0).toLowerCase()+t.slice(1);
+}
 function pvLinhaAcontecimento(ev){
+  /* um ingresso não tem "de X a Y": tem um começo. Escrever a
+     permanência como se fosse a duração do acontecimento produzia
+     "muda o regime de trabalho, de junho de 2027 a julho de 2050". */
+  if(ev.ingresso)
+    return 'A partir de '+pvMesAno(ev.dPico)+', '
+      +pvMinuscula(ev.titulo)+' — é uma mudança de fundo, que se instala '
+      +'aos poucos, e não um acontecimento com data.';
   const quando=ev.faixa?(pvMesAno(ev.dIni)+' a '+pvMesAno(ev.dFim)):pvJanelaTxt(ev);
   return cap1(ev.titulo)+' — '+quando+'.';
 }
+/* ============================================================
+   O PORQUÊ, EM QUATRO MOLDES POR SITUAÇÃO
+
+   A versão anterior tinha um molde só, e por isso a mesma frase — "…e é
+   esse ponto que está em jogo agora, com um dos ciclos longos do ano a
+   apontar para o mesmo lado" — saía em 30 dos 40 primeiros eventos. Uma
+   leitura que repete o mesmo período não é lida: é saltada.
+
+   Os moldes variam a SINTAXE, e não só as palavras: uns começam pela
+   pessoa, outros pelo assunto, outros pelo tempo. A escolha é por hash
+   determinístico do id do evento — a mesma leitura sai igual em cada
+   recarga, que é o que separa variedade de aleatoriedade.
+   ============================================================ */
+function pvHash(txt){
+  let h=2166136261;
+  for(let i=0;i<(txt||'').length;i++){h^=txt.charCodeAt(i);h=Math.imul(h,16777619);}
+  return Math.abs(h);
+}
+const pvEscolhe=(lista,semente)=>lista[pvHash(semente)%lista.length];
+
+/* ---------- a confirmação pelos ciclos longos ----------
+   Era sempre "um dos ciclos longos do ano". Passa a nomear QUAL ciclo,
+   em português comum, e só quando existe. */
+/* "regido por Lua" não é português. A Lua e o Sol pedem artigo; os
+   outros cinco, não. */
+const PV_POR={'Lua':'pela Lua','Sol':'pelo Sol'};
+const pvPor=pl=>PV_POR[pl]||('por '+pl);
+const PV_CICLO_NOME={
+  'profecção':pl=>'o ano corre '+pvPor(pl)+', que também toca isto',
+  'firdária':pl=>'o período longo regido '+pvPor(pl)+' aponta o mesmo assunto',
+  'revolução':pl=>'o mapa do aniversário deste ano é regido '+pvPor(pl),
+  'trânsito':pl=>(PV_POR[pl]?('a '+pl.toLowerCase()):pl)+' passa agora pelo mesmo ponto'
+};
+function pvClausulaCiclo(ev){
+  const conf=(ev.C.principal.conf||[]).filter(c=>c.via==='planeta');
+  if(!conf.length)return '';
+  const c=conf[0];
+  /* o nome do planeta vem no texto da confirmação; extrai-se em vez de
+     recalcular, para não divergir do que o modo técnico mostra */
+  const m=(c.txt||'').match(/(Sol|Lua|Mercúrio|Vênus|Marte|Júpiter|Saturno)/);
+  const pl=m?m[1]:null;
+  const f=PV_CICLO_NOME[c.k];
+  if(!f||!pl)return '';
+  return f(pl);
+}
+
 function pvLinhaPorque(ev){
   const P=ev.C.principal.env.papeis;
   const alvo=P.significador.pl;
-  const nomes=[];
-  if(alvo&&PT_NAME[alvo])nomes.push(PT_NAME[alvo]);
+  const nomeAlvo=alvo?PT_NAME[alvo]:null;
   const rege=(P.significador.rege||[]);
+  const assunto=ev.campo?casaTag(ev.campo):null;
+  const quando=pvMesAno(ev.dPico);
+  const semente=ev.id+'|'+(alvo||'')+'|'+ev.campo;
+  const pessoa=(()=>{
+    try{ const Q=pvPessoaDoCampo(ev);
+      return (Q&&Q.casa)?pvPessoaFrase(Q.casa.figura):null; }catch(e){ return null; }
+  })();
+
   let frase;
-  if(alvo&&rege.length){
-    frase='No seu mapa, '+PT_NAME[alvo]+' responde por '
-      +rege.map(h=>casaTag(h)).join(' e por ')
-      +', e é esse ponto que está em jogo agora';
-  }else if(ev.campo){
-    frase='O período mexe com '+casaTag(ev.campo);
+  if(pvEhIngresso(ev.C.principal)){
+    frase=pvEscolhe([
+      'É uma passagem de fase: o mapa muda de casa e o assunto entra devagar, sem data marcada',
+      'Nada acontece num dia aqui — o que muda é o pano de fundo, e muda por anos',
+      assunto?('A partir daqui '+assunto+' passa a ser o terreno onde as coisas correm')
+             :'A partir daqui o terreno muda',
+      'É o tipo de mudança que só se reconhece olhando para trás'
+    ],semente);
+  }else if(nomeAlvo&&rege.length){
+    /* "responde POR x e POR y" repete a preposição; "administra x e y"
+       não a leva. Duas junções, para o molde não produzir
+       "administra estudos e POR bastidores". */
+    const casasPor=rege.map(h=>casaTag(h)).join(' e por ');
+    const casasE=rege.map(h=>casaTag(h)).join(' e ');
+    frase=pvEscolhe([
+      nomeAlvo+' é quem responde por '+casasPor+' no seu mapa, e é ele que está a ser tocado',
+      assunto?(cap1(assunto)+', porque o planeta que responde por isso — '+nomeAlvo
+               +' — é o ponto atingido agora'):(nomeAlvo+' é o ponto atingido agora'),
+      cap1(quando)+' é quando '+nomeAlvo+', que administra '+casasE+', recebe o contato',
+      pessoa?(cap1(pessoa)+' entra nisto porque '+nomeAlvo+' — que responde por '
+              +casasPor+' — é o ponto tocado')
+            :('O contato cai sobre '+nomeAlvo+', que administra '+casasE)
+    ],semente);
+  }else if(assunto){
+    frase=pvEscolhe([
+      'O período mexe com '+assunto,
+      cap1(assunto)+' é o terreno deste período',
+      cap1(quando)+' concentra-se em '+assunto,
+      'O que está em jogo aqui é '+assunto
+    ],semente);
   }else{
-    frase='O período concentra-se num só assunto';
+    frase=pvEscolhe([
+      'O período concentra-se num só assunto',
+      'Há um único fio a puxar aqui',
+      cap1(quando)+' traz um assunto isolado',
+      'O mapa aponta para um ponto só'
+    ],semente);
   }
-  /* concordância das camadas lentas, sem as nomear tecnicamente */
-  const conf=(ev.C.principal.conf||[]).filter(c=>c.via==='planeta').length;
-  if(conf>=2)frase+=', e os ciclos longos do ano apontam para o mesmo lado';
-  else if(conf===1)frase+=', com um dos ciclos longos do ano a apontar para o mesmo lado';
-  return frase+'.';
+  const ciclo=pvClausulaCiclo(ev);
+  return frase+(ciclo?('; '+ciclo):'')+'.';
 }
 /* "um filho", "o pai", "um irmão" — a forma com que a pessoa entra
    numa frase. O plural das figuras ("os filhos", "os irmãos") serve
@@ -1524,6 +1731,18 @@ function pvLinhaQuemEAlternativa(ev){
 }
 /* as três linhas, já prontas */
 function pvSimples(ev){
+  /* um SINAL é uma ativação sem convergência para previsão literal.
+     Herdar o molde de três linhas dos eventos principais dava-lhe um
+     peso que ele não tem — e repetia o assunto duas vezes. Uma linha,
+     sem pessoa e sem alternativa. */
+  if(ev.tier==='sinal')
+    /* um sinal que é INGRESSO continua a ser um limiar: "por volta de"
+       sugere um momento, e um ingresso não tem momento. As duas regras
+       convivem — uma linha só, com a data dita como começo. */
+    return {acontecimento:'Sinal de '+pvMinuscula(casaTag(ev.campo))
+              +(ev.ingresso?', a partir de ':', por volta de ')
+              +pvMesAno(ev.dPico)+'.',
+            porque:'', quem:'', sinal:true};
   return {
     acontecimento:pvLinhaAcontecimento(ev),
     porque:pvLinhaPorque(ev),
@@ -1533,7 +1752,7 @@ function pvSimples(ev){
 function pvSimplesHTML(ev){
   const S=pvSimples(ev);
   return '<p class="pvs-l1">'+S.acontecimento+'</p>'
-    +'<p class="pvs-l2">'+S.porque+'</p>'
+    +(S.porque?('<p class="pvs-l2">'+S.porque+'</p>'):'')
     +(S.quem?('<p class="pvs-l3">'+S.quem+'</p>'):'');
 }
 
@@ -1553,21 +1772,43 @@ function pvVotacaoHTML(ev){
     +' — '+l.porque+(l.origem?(' <em>('+l.origem+')</em>'):'')+'</li>').join('');
   return '<div class="pvv"><span class="pvv-k">votação do campo</span>'
     +'<div class="pvv-b">'+barra+'</div>'
-    +'<p class="pvv-n">'+(V.ambiguo
-      ? (V.porRegencia
-        ? ('A casa vencedora é a que o alvo OCUPA, e o mesmo alvo REGE a '
+    +'<p class="pvv-n">'+(()=>{
+      const pc=Math.round(V.razao*100), lim=Math.round(V.limiar*100);
+      if(!V.ambiguo)
+        return 'A segunda casa fica em '+pc+'% da primeira'
+          +(pc>=lim?', mas não tem voto de regência nem de eixo — só ocupação e '
+            +'promissor, que é eco e não assunto'
+                   :', abaixo do limiar de '+lim+'%')
+          +': campo único.';
+      /* a nota tem de descrever o caso REAL, e não sempre o mesmo */
+      if(pc<lim)
+        return 'A casa vencedora é a que o alvo OCUPA, e o mesmo alvo REGE a '
           +ordinal(V.alternativa)+': a casa regida entra como alternativa mesmo abaixo '
-          +'do limiar de '+Math.round(V.limiar*100)+'%. Ocupação e regência são coisas '
-          +'distintas, e a regência de um significador não desaparece diante da sua '
-          +'própria posição.')
-        : ('A segunda casa alcança '+Math.round(V.razao*100)+'% da primeira — acima do '
-          +'limiar de '+Math.round(V.limiar*100)+'%, por isso o evento é declarado AMBÍGUO '
-          +'e as duas são nomeadas, nesta ordem.'))
-      : ('A segunda casa fica em '+Math.round(V.razao*100)+'% da primeira, abaixo do '
-        +'limiar de '+Math.round(V.limiar*100)+'%: campo único.'))
+          +'do limiar de '+lim+'%. Ocupação e regência são coisas distintas, e a '
+          +'regência de um significador não desaparece diante da sua própria posição.';
+      return 'A segunda casa alcança '+pc+'% da primeira — acima do limiar de '+lim
+        +'% — e tem voto de regência ou de eixo. Por isso o evento é declarado AMBÍGUO '
+        +'e as duas são nomeadas, nesta ordem.'
+        +(V.vencedoraPorRegencia?' A casa vencedora veio de regência.':'');
+    })()
     +' '+V.factos+' factos distintos, de '+V.linhasBrutas+' testemunhos — '
     +'o mesmo facto conta uma vez.</p>'
-    +'<ul class="pvv-u">'+linhas+'</ul></div>';
+    +'<ul class="pvv-u">'+linhas+'</ul>'
+    +pvPessoaTecnicaHTML(ev)+'</div>';
+}
+/* quem é a figura da casa vencedora, com as pretensões à vista — e, se
+   os pesos estiverem invertidos, a inversão declarada em vez de
+   escondida atrás da ordenação */
+function pvPessoaTecnicaHTML(ev){
+  if(typeof pessoaDaCasa!=='function')return '';
+  const P=pessoaDaCasa(ev.campo); if(!P)return '';
+  const cands=(P.candidatos||[]).slice(0,4).map(c=>
+    '<li>'+c.nome+' — '+c.origens.join(' / ')+' <em>('+c.peso
+    +(c.primario?', pretensão forte':'')+')</em></li>').join('');
+  return '<div class="pvv-pes"><span class="pvv-k">quem, na '+ordinal(P.casa)+'</span>'
+    +'<ul class="pvv-u">'+cands+'</ul>'
+    +(P.inversao?('<p class="pvv-n">'+P.inversao.nota+'</p>'):'')
+    +'</div>';
 }
 
 function pvEventoHTML(ev,agora,passado){
@@ -1575,7 +1816,11 @@ function pvEventoHTML(ev,agora,passado){
   const tec=(typeof modoTecnico==='function')?modoTecnico():true;
   const P=ev.C.principal;
   const st=pvEstado({data:ev.dPico},agora);
-  const tierLb={principal:'evento principal',desdobramento:'desdobramento provável',sinal:'sinal'}[ev.tier];
+  /* um ingresso é limiar de fase, não acontecimento: pelo §1 só chega a
+     principal quando não há aspecto nenhum no aglomerado, e nesse caso
+     o que se está a ler é uma mudança de fundo */
+  const tierLb=ev.ingresso?'tendência de fundo'
+    :{principal:'evento principal',desdobramento:'desdobramento provável',sinal:'sinal'}[ev.tier];
   const vk=pvValKey(ev), val=PV_VAL[vk];
   const valBadge = passado&&val!==undefined
     ? '<i class="pv-vm v'+(val===1?'1':val===0?'0':'5')+'">'+(val===1?'✓':val===0?'×':'~')+'</i>' : '';
@@ -1586,9 +1831,13 @@ function pvEventoHTML(ev,agora,passado){
     +'<div class="pvb-t"><b>'+ev.titulo+'</b>'+valBadge
       +(tec?('<em>'+tierLb+'</em>'):'')
       +(tec&&ev.fase?('<u class="pvb-f">'+ev.fase+'</u>'):'')+'</div>'
-    +'<div class="pvb-w">'+(ev.faixa
-        ? (pvMesAno(ev.dIni)+' → '+pvMesAno(ev.dFim))
+    +'<div class="pvb-w">'+(ev.ingresso
+        ? ('a partir de '+pvMesAno(ev.dPico))
+        : ev.faixa ? (pvMesAno(ev.dIni)+' → '+pvMesAno(ev.dFim))
         : pvJanelaTxt(ev))+'</div>'
+    +(tec&&ev.permanencia
+        ? ('<div class="pvb-perm">fica na '+ordinal(ev.permanencia.casa)
+           +' até '+pvMesAno(ev.permanencia.fim)+'</div>'):'')
     +(tec?('<div class="pvb-sub">'+pvSubtec(ev)+'</div>'):'')
     +(tec?'':'<div class="pvb-simp">'+pvSimplesHTML(ev)+'</div>')
     +'<button class="pv-exp" data-pvev="'+ev.id+'">'

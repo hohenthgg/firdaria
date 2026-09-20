@@ -306,6 +306,125 @@ const R2=await pg.evaluate(async()=>{
  ok('Saturno também é declarado como as duas figuras',
    sat&&/pai/.test(sat.frase)&&/mãe/.test(sat.frase), sat?sat.frase:'—');
 
+ /* ============================================================
+    CICLO 2 — prioridade do principal, calibração, janelas e moldes
+    ============================================================ */
+
+ /* ---------- §1 a lunação manda ---------- */
+ const o19=evs.find(e=>e.pico>=19.0&&e.pico<=19.6);
+ ok('outubro de 2019: o contato principal é a lunação progredida sobre o Sol',
+   !!o19&&pvLunacaoSobreSol(o19.C.principal),
+   o19?pvTitulo(o19.C.principal).replace(/<[^>]+>/g,''):'—');
+ ok('outubro de 2019: a 5ª ganha com folga (razão ≤ 0,80)',
+   !!o19&&o19.campo===5&&o19.votacao.razao<=0.80,
+   o19?('campo '+o19.campo+' · razão '+o19.votacao.razao+' · '
+     +o19.votacao.ordem.slice(0,2).map(x=>x.casa+':'+x.peso).join(' ')):'—');
+ /* a prioridade é por NATUREZA, e um ingresso nunca vence um aspecto */
+ const ingressoIndevido=evs.filter(e=>
+   pvEhIngresso(e.C.principal)&&e.C.grupo.some(g=>!pvEhIngresso(g)));
+ ok('nenhum ingresso é principal havendo aspecto no mesmo aglomerado',
+   ingressoIndevido.length===0,
+   ingressoIndevido.length?ingressoIndevido.map(e=>
+     new Date(e.dPico).toISOString().slice(0,7)).join(' '):'—');
+ ok('a ordem de prioridade põe a lunação à frente do ingresso',
+   pvPrioridadeContato(o19.C.principal)===0);
+
+ /* ---------- §2 calibração da ambiguidade ---------- */
+ const t30=evs.slice(0,30);
+ const nAmb=t30.filter(e=>e.ambiguo).length;
+ const pct=Math.round(100*nAmb/t30.length);
+ ok('a taxa de ambiguidade nos 30 primeiros eventos fica entre 25% e 40%',
+   pct>=25&&pct<=40, nAmb+'/'+t30.length+' = '+pct+'%');
+ ok('o limiar está em 0,85 e a exceção de regência tem piso',
+   PV_AMBIGUO===0.85&&PV_EXCECAO_PISO>0,
+   'limiar '+PV_AMBIGUO+' · piso da exceção '+PV_EXCECAO_PISO);
+ /* toda alternativa tem de ter voto de regência ou de eixo */
+ const fracas=t30.filter(e=>{
+   if(!e.ambiguo||!e.campoAlt)return false;
+   return !e.votacao.linhas.some(l=>l.casa===e.campoAlt
+     &&/rege a |regente d|eixo da |lunação progredida/.test(l.porque));
+ });
+ ok('nenhuma alternativa vem só de ocupação ou do promissor',
+   fracas.length===0,
+   fracas.length?fracas.map(e=>new Date(e.dPico).toISOString().slice(0,7)
+     +':'+e.campoAlt).join(' '):'todas com regência ou eixo');
+ ok('porRegencia é verdadeiro quando o voto vencedor veio de regência',
+   !!o19&&o19.votacao.porRegencia===true
+   &&o19.votacao.vencedoraPorRegencia===true,
+   o19?('porRegencia '+o19.votacao.porRegencia
+     +' · vencedora por regência '+o19.votacao.vencedoraPorRegencia):'—');
+ /* e o flag tem de ser FALSO quando nenhuma das duas veio de regência */
+ const semReg=evs.find(e=>!e.votacao.porRegencia);
+ ok('porRegencia é falso quando nem vencedora nem alternativa vêm de regência',
+   !!semReg, semReg?(new Date(semReg.dPico).toISOString().slice(0,7)):'(nenhum caso)');
+
+ /* ---------- §3 janelas ---------- */
+ const meses=e=>(e.dFim-e.dIni)/(30.44*86400000);
+ const longas=evs.filter(e=>meses(e)>18);
+ ok('nenhum evento tem janela superior a 18 meses',
+   longas.length===0,
+   longas.length?longas.slice(0,3).map(e=>new Date(e.dPico).toISOString().slice(0,7)
+     +':'+Math.round(meses(e))+'m').join(' ')
+   :('máxima '+Math.max.apply(null,evs.map(meses)).toFixed(1)+' meses'));
+ const ings=evs.filter(e=>e.ingresso);
+ ok('há ingressos no mapa de teste, e todos dizem "a partir de"',
+   ings.length>0&&ings.every(e=>/a partir de/i.test(pvSimples(e).acontecimento)),
+   ings.length+' ingressos');
+ /* o que não pode aparecer é uma JANELA de duas datas — "março de 2027
+    a julho de 2050" ou "junho–agosto de 2027". O padrão largo que tinha
+    escrito aqui apanhava também "Sinal de X, A partir DE maio de 2015",
+    e falhava por causa do próprio teste. */
+ const MES='(janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)';
+ const JANELA=new RegExp(MES+'( de \\d{4})?\\s*(a|–|—|-)\\s*'+MES+' de \\d{4}','i');
+ ok('nenhum ingresso escreve a janela como duas datas',
+   ings.every(e=>!JANELA.test(pvSimples(e).acontecimento)),
+   'padrão conferido: "mês [de ano] a mês de ano"');
+ /* e o padrão apanha mesmo uma janela de duas datas, quando existe */
+ ok('o padrão de janela reconhece uma faixa real',
+   JANELA.test('setembro–novembro de 2019')&&JANELA.test('junho de 2027 a julho de 2050'));
+ ok('a permanência na casa fica guardada à parte, não na janela',
+   ings.filter(e=>e.C.principal.classe==='casa')
+     .every(e=>e.permanencia&&e.permanencia.fim>e.dFim),
+   ings.filter(e=>e.permanencia).length+' com permanência registada');
+ /* a moldura de "tendência de fundo" é para ingressos que são EVENTOS;
+    os de nível sinal já saem rotulados como sinal, numa linha só */
+ const ingEv=ings.filter(e=>e.tier!=='sinal');
+ ok('o ingresso-evento é rotulado como tendência de fundo, não acontecimento',
+   ingEv.length>0&&ingEv.every(e=>/mudança de fundo/i.test(pvSimples(e).acontecimento)),
+   ingEv.length+' ingressos-evento, '+(ings.length-ingEv.length)+' de nível sinal');
+
+ /* ---------- §4 moldes ---------- */
+ const p40=evs.slice(0,40).map(e=>pvSimples(e).porque).filter(Boolean);
+ const cont={}; p40.forEach(x=>cont[x]=(cont[x]||0)+1);
+ const maxRep=Math.max.apply(null,Object.values(cont));
+ ok('nenhuma linha "porque" se repete mais de 3 vezes em 40 eventos',
+   maxRep<=3, 'máximo '+maxRep+' repetições · '+Object.keys(cont).length
+     +' frases distintas em '+p40.length);
+ ok('a frase genérica "ciclos longos" desapareceu',
+   p40.every(x=>!/ciclos longos/.test(x)));
+ ok('o ciclo confirmador é nomeado quando existe',
+   p40.some(x=>/o ano corre |período longo regido |mapa do aniversário/.test(x)));
+ /* determinismo: a mesma leitura tem de sair igual ao recalcular */
+ PV_EVT_CACHE=null;
+ const p40b=pvEventos().slice(0,40).map(e=>pvSimples(e).porque).filter(Boolean);
+ ok('os moldes são deterministas — recalcular devolve o mesmo texto',
+   p40.join('|')===p40b.join('|'));
+
+ /* ---------- §5 as duas pequenas ---------- */
+ const inv=pessoaDaCasa(4);
+ ok('a inversão de peso no ranking do pai é declarada, não escondida',
+   !!(inv&&inv.inversao&&/pesa mais/.test(inv.inversao.nota)
+     &&/pretensão forte/.test(inv.inversao.nota)),
+   inv&&inv.inversao?inv.inversao.nota.slice(0,90):'(sem inversão)');
+ ok('Saturno continua à frente no ranking do pai, apesar do peso menor',
+   inv&&inv.candidatos[0].pl==='saturn',
+   inv?inv.candidatos.slice(0,2).map(c=>c.nome+':'+c.peso).join(' '):'—');
+ const sinais=evs.filter(e=>e.tier==='sinal');
+ ok('os sinais saem em uma linha só, sem quem e sem alternativa',
+   sinais.length>0&&sinais.every(e=>{const S=pvSimples(e);
+     return S.sinal===true&&!S.porque&&!S.quem&&/^Sinal de /.test(S.acontecimento);}),
+   sinais.length?pvSimples(sinais[0]).acontecimento:'(sem sinais)');
+
  /* ---------- §6.6 o toggle ---------- */
  modoTecnicoDefinir(false);
  ok('o modo técnico nasce desligado e pode ser desligado', modoTecnico()===false);

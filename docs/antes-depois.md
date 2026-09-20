@@ -213,3 +213,112 @@ Contato principal: *Marte progredido em sextil ao Saturno natal*
 > A situação dos responsáveis perante o mundo muda — outubro–dezembro de 2005.
 > No seu mapa, Saturno responde por carreira e por amigos e grupos, e é esse ponto que está em jogo agora.
 > A figura em causa é a mãe. Mais provável: carreira; também possível: amigos e grupos. O assunto avança um degrau.
+
+---
+
+# Calibração da ambiguidade (ciclo 2)
+
+Medido nos **30 primeiros eventos** do mapa de teste.
+
+| regime | limiar | piso da exceção | ambíguos | taxa |
+|---|---|---|---|---|
+| antes | 0,70 | nenhum | 18/30 | **60%** |
+| depois | 0,85 | 0,60 | 12/30 | **40%** |
+
+Alvo do brief: entre 25% e 40%. Alcançado, no limite superior.
+
+A linha "antes" mede o regime antigo de ambiguidade **com a mudança do §1 já
+aplicada** — é o que isola o efeito do §2. Contra o estado do início do ciclo,
+antes de qualquer alteração, a taxa era de 20/30 (67%): a nova escolha do
+contato principal já tinha baixado sozinha para 60%, porque um principal melhor
+concentra os votos.
+
+**O limiar não foi a alavanca.** De 0,85 para cima a taxa ficou parada em
+43%: os casos restantes vinham todos da *exceção de regência*, que ignora o
+limiar por construção. Medi 0,80 / 0,85 / 0,90 / 0,95 e só o piso da exceção
+mexeu o número. Com piso 0,70 chegava a 37%, mas isso **quebraria** a garantia
+do ciclo anterior — o caso que motivou a exceção tinha razão 0,67 e deixaria de
+disparar. Ficou 0,60: preserva esse caso e põe a taxa no topo da banda.
+
+## Os 6 que perderam a alternativa
+
+| evento | campo | alternativa perdida | razão | a perda está certa? |
+|---|---|---|---|---|
+| 2000-12 | 10 | 2 | 0.70 | sim — 70% da vencedora, abaixo dos 85% |
+| 2001-08 | 4 | 1 | 0.55 | sim — 55% da vencedora, abaixo dos 85% |
+| 2001-09 | 1 | 2 | 0.70 | sim — 70% da vencedora, abaixo dos 85% |
+| 2005-02 | 4 | 10 | 0.71 | sim — 71% da vencedora, abaixo dos 85% |
+| 2006-12 | 10 | 9 | 0.83 | sim — 83% da vencedora, abaixo dos 85% |
+| 2010-08 | 10 | 1 | 0.84 | sim — 84% da vencedora, abaixo dos 85% |
+
+Revisto um a um. Nenhuma das perdas retira uma leitura que estivesse a
+proteger contra erro: ou a segunda casa estava longe da primeira, ou só somava
+ocupações e votos do promissor — que é eco do mesmo contato, e não um segundo
+assunto.
+
+---
+
+# Texto simples depois do §4 — dez primeiros eventos
+
+Os moldes passam a variar a sintaxe, escolhidos por hash do id do evento (a
+mesma leitura sai igual em cada recarga). A frase genérica "com um dos ciclos
+longos do ano a apontar para o mesmo lado", que saía em 30 dos 40 primeiros
+eventos, desapareceu: o ciclo é nomeado.
+
+**2000-07**
+
+> Sinal de identidade e corpo, por volta de julho de 2000.
+
+**2000-12**
+
+> A situação dos responsáveis perante o mundo muda — novembro de 2000 – janeiro de 2001.
+> O período mexe com carreira; o período longo regido pela Lua aponta o mesmo assunto.
+> A figura em causa é a mãe. É a entrada do assunto.
+
+**2001-08**
+
+> Mudança de casa ou do núcleo familiar — julho–setembro de 2001.
+> Casa e família, porque o planeta que responde por isso — Marte — é o ponto atingido agora; o período longo regido pela Lua aponta o mesmo assunto.
+> Tende a envolver o pai. O assunto avança um degrau.
+
+**2001-09**
+
+> Mudança visível de fase na infância — agosto–outubro de 2001.
+> Setembro de 2001 concentra-se em identidade e corpo; o ano corre por Vênus, que também toca isto.
+> É a entrada do assunto.
+
+**2003-01**
+
+> Mudança de cidade, de fé ou de escola de referência — dezembro de 2002 – fevereiro de 2003.
+> Janeiro de 2003 é quando Júpiter, que administra estudos superiores e estrangeiro e bastidores e isolamento, recebe o contato; o mapa do aniversário deste ano é regido pelo Sol.
+> Mais provável: estudos superiores e estrangeiro; também possível: bastidores e isolamento. É a entrada do assunto.
+
+**2003-01**
+
+> Mudança de casa ou do núcleo familiar — dezembro de 2002 – março de 2003.
+> Casa e família é o terreno deste período; o período longo regido pela Lua aponta o mesmo assunto.
+> Pode envolver o pai — ou a mãe. Mais provável: casa e família; também possível: identidade e corpo. O assunto avança um degrau.
+
+**2004-01**
+
+> A partir de janeiro de 2004, mudança de casa ou do núcleo familiar — é uma mudança de fundo, que se instala aos poucos, e não um acontecimento com data.
+> É uma passagem de fase: o mapa muda de casa e o assunto entra devagar, sem data marcada; o ano corre pela Lua, que também toca isto.
+> Tende a envolver o pai. O assunto avança um degrau.
+
+**2004-02**
+
+> Mudança visível de fase na infância — agosto de 2003 – agosto de 2004.
+> Identidade e corpo, porque o planeta que responde por isso — Marte — é o ponto atingido agora; o mapa do aniversário deste ano é regido pelo Sol.
+> Mais provável: identidade e corpo; também possível: perdas e recursos de terceiros. É o ponto mais forte do processo.
+
+**2005-02**
+
+> Reconfiguração forçada do lar — janeiro–março de 2005.
+> O período mexe com casa e família; o período longo regido pela Lua aponta o mesmo assunto.
+> Pode envolver o pai — ou a mãe. É o momento de aperto dentro de um processo já em curso.
+
+**2005-11**
+
+> A situação dos responsáveis perante o mundo muda — outubro–dezembro de 2005.
+> A mãe entra nisto porque Saturno — que responde por carreira e por amigos e grupos — é o ponto tocado.
+> A figura em causa é a mãe. Mais provável: carreira; também possível: amigos e grupos. O assunto avança um degrau.
