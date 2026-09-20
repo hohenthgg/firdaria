@@ -142,8 +142,25 @@ function significadoresDe(figura){
     .sort((a,b)=>(b.primario?1:0)-(a.primario?1:0)
       ||(b.naturezaDaSeita?1:0)-(a.naturezaDaSeita?1:0)
       ||b.peso-a.peso||a.pl.localeCompare(b.pl));
+  /* ---------- inversão numérica, declarada ----------
+     A ordem põe a pretensão forte à frente, mas o PESO pode ficar
+     invertido: no mapa de teste, noturno, o Sol soma 3,5 (natureza da
+     seita contrária 1,5 + presença na 4ª 2) contra 3 de Saturno, que é
+     o pai por natureza justamente por ser mapa noturno.
+     Saturno fica à frente — a regra da seita manda —, mas o número
+     maior aparece em segundo, e um leitor atento repara. Em vez de
+     esconder, diz-se. */
+  const forte=lista.find(c=>c.primario)||null;
+  const pesado=lista.slice().sort((a,b)=>b.peso-a.peso)[0]||null;
+  const inversao=(forte&&pesado&&pesado.pl!==forte.pl&&pesado.peso>forte.peso)
+    ? {maisPesado:pesado.nome, peso:pesado.peso, porque:pesado.origens.join(' e '),
+       forte:forte.nome, pesoForte:forte.peso, porqueForte:forte.origens[0],
+       nota:pesado.nome+' pesa mais ('+pesado.peso+') porque '+pesado.origens.join(' e ')
+         +', mas '+forte.nome+' vem à frente por ser '+forte.origens[0]
+         +' — pretensão forte não é ultrapassada por soma de testemunhos.'}
+    : null;
   return {figura, rotulo:PESSOA_ROTULO[figura], casa, seita:NATAL.sect,
-    candidatos:lista, principal:lista[0]||null};
+    candidatos:lista, principal:lista[0]||null, inversao};
 }
 
 /* todas as figuras de uma vez */
@@ -245,7 +262,7 @@ function pessoaDaCasa(casa){
   if(!f)return null;
   const T=significadoresDe(f);
   return T?{figura:f, rotulo:PESSOA_ROTULO[f], curto:PESSOA_ROTULO_CURTO[f],
-    principal:T.principal, candidatos:T.candidatos}:null;
+    principal:T.principal, candidatos:T.candidatos, inversao:T.inversao}:null;
 }
 
 /* ------------------------------------------------------------

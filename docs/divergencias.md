@@ -162,3 +162,61 @@ quando `t` (versão tensa) e `s` (versão harmónica) nomeiem *assuntos*
 diferentes e não o mesmo assunto em condições diferentes. Isso torna o
 critério verificável, e a revisão passa a ser guiada por falhas em vez
 de por julgamento de estilo.
+
+---
+
+## 8 · Ordem de prioridade do contato principal (ciclo 2)
+
+**Implementada como pedida.** Registo onde ela vai além do que Lilly e
+Morin dizem por extenso.
+
+A ordem (a)–(f) do brief — lunação, ângulo, luminar/regente do Asc,
+regente da casa profectada, demais aspectos, ingressos — não está
+formulada assim em nenhuma das duas fontes. O que está na tradição, e
+que a ordem respeita:
+
+- **os ângulos e os luminares são os lugares sensíveis**: Lilly (*CA*
+  I.20 e III) trata as direções aos ângulos e aos luminares como as de
+  maior consequência;
+- **o regente do Ascendente é o significador do nativo**, e por isso
+  qualquer contato que o envolva é matéria própria;
+- **a profecção dá o senhor do ano** (Abu Ma'shar), e o seu regente tem
+  precedência sobre um aspecto qualquer.
+
+**Onde vou além:** pôr a lunação progredida em PRIMEIRO lugar, acima dos
+ângulos. Não é doutrina de Lilly nem de Morin — as progressões
+secundárias, na forma moderna, são posteriores a ambos. A justificação é
+interna: a lunação progredida é o único marco de um ciclo de ~29,5 anos
+que o motor calcula, e num aglomerado ela é quase sempre o facto
+estrutural. Se for preferível, a alternativa é empatá-la com os ângulos
+(prioridade 1 para as duas) e deixar o desempate ao nível de relevância
+— muda uma linha em `pvPrioridadeContato`.
+
+**Onde a ordem é claramente defensável:** pôr os ingressos em último. Um
+ingresso de signo ou de cúspide é um limiar que se atravessa ao longo de
+meses ou anos; um aspecto perfaz-se num ponto. Chamar acontecimento ao
+primeiro é o que produzia "muda o regime de trabalho, de junho de 2027 a
+julho de 2050".
+
+---
+
+## 9 · O piso da exceção de regência (ciclo 2)
+
+**Acrescentado por mim, e não pedido.**
+
+O ciclo anterior criou a exceção: a casa que o alvo REGE entra como
+alternativa mesmo abaixo do limiar, quando a vencedora é a que ele
+OCUPA. Ao medir a calibração pedida no §2 deste ciclo, verificou-se que
+essa exceção passara a ser a **principal fonte de ambiguidade** — 13 de
+30 eventos, e insensível ao limiar, que ela ignora por construção.
+
+Acrescentei um piso: a casa regida precisa de **60%** do peso da
+vencedora. Sem piso, bastava um voto simbólico.
+
+**Por que 60% e não 70%:** com 70% a taxa cairia a 37%, mais confortável
+dentro da banda pedida — mas o caso que originou a exceção (Lua
+progredida em quadratura ao Sol natal, 4ª a 4,5 contra 5ª a 3,0) tem
+razão 0,67 e deixaria de disparar. Seria trocar um alvo numérico por uma
+regressão de leitura. Ficou 0,60, que preserva o caso e põe a taxa em
+40% — no topo da banda, e não no meio dela. Dito aqui para que a escolha
+não pareça arbitrária.
