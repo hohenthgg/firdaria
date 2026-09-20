@@ -2,6 +2,21 @@
 
 ## Changelog
 
+**Ciclo 2 — calibração**
+- **Contato principal por natureza.** Um ingresso nunca é o principal de
+  um aglomerado havendo aspecto: lunação > ângulo > luminar/regente do
+  Asc > regente da casa profectada > aspectos > ingressos. Sem isto a
+  resposta certa saía por 0,13 ponto.
+- **Ambiguidade de 67% para 40%.** Limiar a 0,85 e a alternativa passa a
+  exigir voto de regência ou de eixo — ocupação e promissor sozinhos são
+  eco, não assunto. Calibração medida em `docs/antes-depois.md`.
+- **Janelas de ingresso**: o cruzamento ±3 meses, não a permanência
+  inteira na casa. A permanência fica no modo técnico. Máxima no mapa de
+  teste: 12 meses, contra 277.
+- **Moldes variados** no nível simples, por hash determinístico do id do
+  evento; o ciclo confirmador passa a ser nomeado.
+
+
 - **Campo do evento por votação ponderada.** O campo deixa de ser "a
   primeira casa encontrada" — que era sempre a casa OCUPADA — e passa a
   ser votado, com a regência a pesar mais do que a posição. Corrige o
