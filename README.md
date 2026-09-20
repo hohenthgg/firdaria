@@ -1,4 +1,29 @@
 # AstroGraph — motor interpretativo tradicional (genérico)
+
+## Changelog
+
+- **Campo do evento por votação ponderada.** O campo deixa de ser "a
+  primeira casa encontrada" — que era sempre a casa OCUPADA — e passa a
+  ser votado, com a regência a pesar mais do que a posição. Corrige o
+  caso em que um contato contra o regente da 5ª saía rotulado como
+  mudança de residência. Campos disputados são declarados **ambíguos**,
+  com as duas casas nomeadas por ordem.
+- **Significadores de pessoas** (`js/pessoas.js`): pai, mãe, irmãos,
+  filhos e cônjuge por casa, por natureza (com seita) e por presença,
+  cada candidato com a origem declarada. Um planeta pode ser duas
+  pessoas, e o texto diz as duas em vez de escolher em silêncio.
+- **Dois níveis de leitura** com um interruptor global *modo técnico*,
+  desligado por omissão. O nível simples diz o acontecimento, a janela e
+  o porquê em português comum; o técnico traz tudo o que já havia, mais
+  a votação de campo com as pontuações.
+- **Revolução Solar:** o regente do Ascendente passa a ser lido também
+  NA revolução, projetado sobre as casas natais — e não só na posição
+  natal. `rsGoto(ano|data)` fica exposto.
+- **Termos ptolomaicos** transcritos da imagem *Table of Essential
+  Dignities*, com a correção de Virgem (♄ 18–24, ♂ 24–30).
+- Ver `docs/antes-depois.md` (saída comparada no mapa de teste) e
+  `docs/divergencias.md` (onde o pedido e a tradição não coincidem).
+
 Sistema estático que interpreta **qualquer mapa natal e revoluções solares informadas pelo usuário** com técnicas da astrologia tradicional. Sem conteúdo pré-carregado: cole os dados na aba **Dados** e a estrutura interpretativa inteira é gerada.
 
 ## O que o sistema computa a partir dos dados colados
@@ -51,6 +76,133 @@ Suítes individuais: `npm run test:astrologia`, `test:tipologia`,
 Variáveis de ambiente aceitas: `BASE_URL`, `CHROME_PATH`, `VIEWPORT`,
 `MAPAS` / `MAPA_URL`. Se o Chromium não estiver no caminho padrão do
 ambiente, indique-o com `CHROME_PATH=/caminho/para/chrome`.
+
+### Sem Chromium
+
+Se não houver Chromium em `CHROME_PATH`, a suíte pode correr em jsdom.
+O caminho é: subir o servidor a partir do próprio script
+(`child_process.spawn('python3',['-m','http.server','8099'])`), carregar
+`index.html` com `runScripts:'dangerously'` e `resources:'usable'`,
+esperar o evento `load`, chamar `boot()` se ainda não tiver corrido,
+preencher `#imp-url` e disparar `#imp-run`, e aguardar até `#imp-status`
+conter "importado".
+
+Ressalva honesta: as asserções que medem **geometria de tela** —
+transbordo horizontal, filas da barra de abas, largura das barras dos
+gráficos — não valem em jsdom, que não faz layout. Essas ficam
+condicionadas ao Chromium; as de cálculo e de texto correm nos dois.
+
+## Campo do evento: votação ponderada
+
+Um contato não diz sozinho de que assunto trata. O planeta tocado
+*significa* as casas que **rege** e *age* a partir da casa que **ocupa**
+— é a distinção de **Morin**, *Astrologia Gallica* XXI e XXIII. O motor
+tomava sempre a casa ocupada, porque era a primeira da lista e existia
+sempre; as casas regidas eram calculadas e nunca decidiam nada.
+
+Num mapa com Ascendente em Áries, o Sol ocupa a 4ª e rege a 5ª. Uma
+lunação progredida contra o Sol natal saía lida como mudança de
+endereço, quando o assunto é a 5ª.
+
+Cada contato distribui votos:
+
+| quem | via | peso |
+|---|---|---|
+| alvo natal | casa que ocupa | 2 |
+| alvo natal | cada casa que rege por **domicílio** | 3 |
+| alvo natal | regente do **termo** do Asc ou do MC | 1,5 |
+| promissor | casa que ocupa | 1 |
+| promissor | cada casa que rege | 1,5 |
+| eixo tocado | casa do eixo (Asc/Dsc/MC/IC) | 3 |
+| Lote (Fortuna, Espírito) | casa que ocupa · regente do Lote | 2 · 1 |
+| bónus | alvo rege a casa profectada do ano | +2 |
+| bónus | alvo é senhor da firdária ou subfirdária | +1 |
+
+A **face não entra**: é dignidade fraca demais para mover o assunto de
+um evento (ver `docs/divergencias.md`).
+
+Três regras que o motor faz valer, e que a suíte tranca:
+
+1. **Cada facto conta uma vez.** "A Lua rege a 4ª" é um facto do mapa,
+   não um por contato. Os testemunhos são deduplicados por
+   (casa + justificação), com o maior peso — a mesma disciplina que o
+   motor de probabilidades já aplica por `originId`.
+2. **Ambiguidade declarada.** Quando a segunda casa alcança 70% da
+   primeira, o evento é ambíguo e o texto nomeia as duas, nessa ordem —
+   *"mais provável: filhos; também possível: casa"*.
+3. **Invariante da regência.** Se a casa vencedora é a que o alvo
+   **ocupa** e o mesmo alvo **rege** outra com apoio real, a casa regida
+   entra como alternativa mesmo abaixo dos 70%. O limiar compara casas
+   quaisquer; aqui o conflito é dentro do mesmo significador, e a
+   regência não desaparece diante da própria posição do planeta.
+
+A **lunação progredida sobre o Sol natal** (Lua ☌/☍ Sol) é evento-nível:
+decide o campo pelas casas do Sol, e a Lua não vota — numa lunação a Lua
+é o relógio do ciclo, não a matéria.
+
+No nível técnico a votação aparece aberta: barra por casa, a razão
+contra o limiar, e de onde veio cada ponto.
+
+## Significadores de pessoas
+
+O app dizia "4ª = casa, família de origem, pai" e "10ª = carreira". O pai
+vinha colado à 4ª como se a pessoa e o imóvel fossem a mesma coisa, e a
+mãe não aparecia em lado nenhum.
+
+`js/pessoas.js` atribui cada figura por três vias, que não se confundem:
+
+- **por casa** — o regente da casa da figura, e os planetas nela.
+  *Lilly, Christian Astrology I.20 (as casas) e III (juízos por casa).*
+- **por natureza** — o significador natural, que muda com a **seita**:
+  Sol de dia / Saturno de noite para o pai; Vênus de dia / Lua de noite
+  para a mãe; Mercúrio para os irmãos; Júpiter para os filhos. O da
+  seita contrária fica secundário — nunca desaparece.
+  *Ptolomeu, retomado por Lilly (CA I.20) e Morin (AG XXI).*
+- **por presença** — planetas efetivamente colocados na casa da figura.
+
+O regente da casa e o significador natural **da seita** são pretensões
+fortes; as outras vias são testemunhos, e nenhuma soma de testemunhos
+passa à frente de uma pretensão forte. (Sem esta regra, num mapa noturno
+o Sol liderava "pai" por estar na 4ª mais natureza secundária, à frente
+de Saturno — a seita ficava revogada por uma soma.)
+
+### Um planeta pode ser duas pessoas
+
+É o ponto que o módulo existe para tornar explícito. Num mapa noturno
+com Áries ascendendo, a **Lua** rege a 4ª (pai, por casa) e é a mãe por
+natureza; **Saturno** rege a 10ª (mãe) e é o pai por natureza. Quando um
+contato toca a Lua, o texto escreve:
+
+> Lua aqui pode ser o pai (regente da 4ª) ou a mãe (significador natural
+> em mapa noturno); nada no contato desempata, e as duas leituras ficam
+> de pé.
+
+O desempate, quando existe, vem das regras e é dito: (a) o contato toca
+também a casa, o regente ou o significador natural de uma das figuras;
+(b) o planeta está na casa da figura. Quando nada decide, **as duas
+ficam com igual peso** — nunca se escolhe em silêncio.
+
+O **cônjuge** depende do sexo do nativo, que o app não deduz do mapa.
+Sem esse dado, entram Vênus, Marte e Sol, com a falta escrita na própria
+origem do candidato.
+
+## Dois níveis de leitura
+
+Um interruptor global **modo técnico**, guardado no navegador e
+**desligado por omissão**.
+
+- **Simples** — três linhas: o acontecimento e a janela; o porquê em
+  linguagem comum; a pessoa envolvida e, se o campo for ambíguo, as
+  alternativas por ordem. Sem "progredida", "dirigido", "orbe",
+  "recepção", "combusto".
+- **Técnico** — tudo o que já existia: contatos, arcos, orbes,
+  dignidades, confirmações, a votação de campo com as pontuações e a
+  origem de cada significador. Nada foi removido.
+
+O nível técnico não é escondido por CSS: as funções de render perguntam
+`modoTecnico()` e **não emitem** o texto quando ele está desligado.
+Esconder com `display:none` deixaria o vocabulário de ofício no
+documento, legível por leitores de ecrã e presente em `textContent`.
 
 ## Sistema de termos
 

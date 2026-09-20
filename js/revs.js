@@ -171,7 +171,15 @@ function revolutionFor(kindId,date){
   REV_PL.forEach(k=>{ if(!ch.pts[k])return;
     alvos.forEach(al=>{ const sep=adiff(ch.pts[k].lon,al.lon);
       for(const [ang,gl,cls] of ASPECTS){ if(Math.abs(sep-ang)<=3){
-        contatos.push({rev:k,alvo:al.k,alvoNm:al.nm,ang,cls,gl,orb:Math.abs(sep-ang)});break;} }
+        contatos.push({rev:k,alvo:al.k,alvoNm:al.nm,ang,cls,gl,orb:Math.abs(sep-ang),
+          /* cada contato carrega a casa natal onde o planeta da revolução
+             cai, e as casas que o PONTO NATAL tocado administra — sem
+             isto o contato dizia com quem, e não sobre o quê */
+          revNatalHouse:houseInNatal(ch.pts[k].lon),
+          alvoNatalHouse:al.k==='asc'?1:al.k==='mc'?10:(NATAL.pts[al.k]?NATAL.pts[al.k].h:null),
+          alvoRege:(al.k==='asc'||al.k==='mc')?[]
+            :(typeof ruledHouses==='function'?ruledHouses(al.k):[]),
+          revRege:(typeof ruledHouses==='function'?ruledHouses(k):[])});break;} }
     });});
   contatos.sort((a,b)=>a.orb-b.orb);
 
@@ -181,7 +189,19 @@ function revolutionFor(kindId,date){
     ascLon, ascSign, ascSignNm:SIGNS[ascSign], ascRuler,
     ascNatalHouse:houseInNatal(ascLon),                 // área natal reativada
     ascRulerRevHouse:ch.pts[ascRuler]?houseInRev(ch.pts[ascRuler].lon):null,
+    /* ---------- regente do Asc da RS: DUAS posições, nunca uma ----------
+       `ascRulerNatalHouse` lê o planeta no NATAL — é contexto de vida
+       inteira, não do ano. O que o ano diz é onde esse regente está NA
+       REVOLUÇÃO, projetado sobre as casas natais.
+       Na RS de 2019 do mapa de teste, Marte natal está na 4ª, mas Marte
+       da revolução está a 15°03' de Leão, sobre a Vênus natal, dentro da
+       5ª natal pela regra dos 5°. O app anunciava "casa 4 natal" no ano
+       em que a nativa engravidou. */
     ascRulerNatalHouse:NATAL.pts[ascRuler]?NATAL.pts[ascRuler].h:null,
+    ascRulerRevLon:ch.pts[ascRuler]?ch.pts[ascRuler].lon:null,
+    ascRulerRevNatalHouse:ch.pts[ascRuler]?houseInNatal(ch.pts[ascRuler].lon):null,
+    ascRulerDivergente:!!(ch.pts[ascRuler]&&NATAL.pts[ascRuler]
+      &&houseInNatal(ch.pts[ascRuler].lon)!==NATAL.pts[ascRuler].h),
     planetRevHouse:ch.pts[K.key]?houseInRev(ch.pts[K.key].lon):null,
     planetNatalHouseNow:ch.pts[K.key]?houseInNatal(ch.pts[K.key].lon):null,
     overlay, repeats, contatos:contatos.slice(0,6), local, localProprio, startMs,

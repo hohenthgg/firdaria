@@ -494,6 +494,9 @@ function pvEstrutural(it){
   return {alvoVital, duro, motivos:r};
 }
 function pvRelevancia(it,prom,conf){
+  /* marco do ciclo progredido: relevante por si, sem depender de
+     coincidir com uma promessa natal */
+  if(pvLunacaoSobreSol(it))return 'alta';
   const st=pvEstrutural(it);
   const confPlaneta=conf.filter(c=>c.via==='planeta').length;
   const promForte=prom&&prom.porPlaneta&&prom.forte;
@@ -674,9 +677,15 @@ const PV_EVT={
  4:{s:'Mudança de residência ou da base familiar',t:'Tensão doméstica ou mudança de base',
     ds:'Casa nova, reforma ou reorganização concreta da vida doméstica e familiar.',
     dt:'A base doméstica tende a ser mexida — mudança, obra ou renegociação familiar.'},
- 5:{s:'Romance, filho ou criação ganhando corpo',t:'Prova nos afetos, filhos ou criações',
+ /* O TOM NÃO TROCA O ASSUNTO. A versão tensa dizia "Prova nos afetos",
+    que é outro acontecimento — e não o mesmo acontecimento em condições
+    difíceis. Um filho nascido aos 19 anos é 5ª casa tensa: é um filho,
+    em condições difíceis, e não uma prova amorosa. */
+ 5:{s:'Romance, filho ou criação ganhando corpo',
+    t:'Romance, filho ou criação — em condições difíceis',
     ds:'Início de romance, filhos ou uma criação importante saindo do papel.',
-    dt:'Romance, filhos ou uma criação importante tendem a passar por teste e ajuste.'},
+    dt:'Romance, filho ou criação importante chegando por caminho difícil, '
+      +'com custo, pressa ou fora do tempo planeado.'},
  6:{s:'Novo regime de trabalho e rotina',t:'Rotina e corpo exigindo ajuste',
     ds:'Mudança concreta no dia a dia de trabalho, na equipe ou nos hábitos de saúde.',
     dt:'Carga de trabalho e cuidado com o corpo tendem a impor limites novos.'},
@@ -705,9 +714,285 @@ function pvAvaliaContato(x,idade){
     _rank:(p?p.sc:0)+st.motivos.length+(st.alvoVital?2:0)+(st.duro?1:0),
     _dist:Math.abs(x.anos-idade)});
 }
+/* ============================================================
+   CAMPO DO EVENTO — VOTAÇÃO PONDERADA
+   ============================================================
+   Antes: `significador.casa || casasSig[0] || casas[0]`. Isto é, a casa
+   OCUPADA pelo alvo, que vem primeiro e existe sempre — as casas que o
+   alvo REGE nunca decidiam nada. Num mapa com Asc em Áries, o Sol ocupa
+   a 4ª e rege a 5ª: uma lunação progredida contra o Sol natal saía
+   rotulada como mudança de endereço, quando o assunto é a 5ª.
+
+   Morin (Astrologia Gallica XXI) é explícito: um planeta SIGNIFICA as
+   casas que rege e AGE a partir da casa que ocupa. Regência é o
+   assunto; posição é o lugar de onde o assunto se exerce. A votação
+   abaixo dá à regência peso maior do que à ocupação, e nenhuma das duas
+   anula a outra.
+
+   Pesos (do brief, e conformes a Lilly CA I.20 e III):
+     alvo natal  · casa ocupada .............................. 2
+                 · cada casa regida por DOMICÍLIO ............ 3
+                 · regente do TERMO do Asc/MC (nunca face) ... 1,5
+     promissor   · casa ocupada .............................. 1
+                 · cada casa regida ......................... 1,5
+     eixo tocado · casa do eixo (Asc/Dsc/MC/IC, natal ou prog) 3
+     Lotes       · casa que o lote ocupa ..................... 2
+                 · casa(s) do regente do lote ................ 1
+     bónus       · alvo rege a casa profectada do ano ........ +2
+                 · alvo é senhor da firdária/subfirdária ..... +1
+   ============================================================ */
+const PV_PESO={
+  alvoOcupa:2, alvoRegeDomicilio:3, alvoRegeTermo:1.5,
+  promOcupa:1, promRege:1.5,
+  eixo:3, loteOcupa:2, loteRegente:1,
+  bonusProfeccao:2, bonusFirdaria:1
+};
+/* ambiguidade: quando a segunda casa chega a esta fração da primeira,
+   o evento é declarado ambíguo e o texto nomeia as duas, nesta ordem */
+const PV_AMBIGUO=0.70;
+
+/* regente do termo do Asc e do MC — dignidade menor, por isso 1,5 e não
+   3. A face NÃO entra: é dignidade fraca demais para mover o assunto. */
+function pvTermoDosEixos(){
+  const out={};
+  if(typeof termLord!=='function'||typeof NATAL==='undefined'||!NATAL)return out;
+  try{
+    const a=termLord(NATAL.asc), m=termLord(NATAL.mc);
+    if(a)(out[a]=out[a]||[]).push(1);
+    if(m)(out[m]=out[m]||[]).push(10);
+  }catch(e){}
+  return out;
+}
+
+/* ---------- Lotes ----------
+   O lote só vota quando o contato CAI SOBRE ELE. Fazer o Lote votar em
+   todo contato — como cheguei a escrever — punha um viés constante em
+   cima de tudo: no mapa de teste a Fortuna e o seu regente empurravam
+   a 10ª para cima de qualquer evento, e a votação inteira colapsou
+   nessa casa. O Lote é um ponto do mapa, não um pano de fundo.
+   Nota honesta: este motor não toma os Lotes como significadores nem
+   como alvos (ver pvAlvos/pvSignificadores), portanto esta regra só
+   dispara quando o grau dirigido ou progredido passa sobre o Lote. */
+const PV_ORBE_LOTE=3;
+function pvVotosDeLote(add,chave,rotulo,graus){
+  if(typeof NATAL==='undefined'||!NATAL||!NATAL.pts[chave])return;
+  if(!graus||!graus.length)return;
+  const L=NATAL.pts[chave];
+  const toca=graus.some(g=>g!=null&&Math.abs(adiff(g,L.lon))<=PV_ORBE_LOTE);
+  if(!toca)return;
+  const casa=L.h||(typeof houseByRule==='function'?houseByRule(L.lon,NATAL.cusps):null);
+  if(casa)add(casa,PV_PESO.loteOcupa,'o contato cai sobre '+(rotulo==='Fortuna'?'a Fortuna':'o Espírito')
+    +', que ocupa a '+ordinal(casa));
+  const reg=SIGN_RULER[signOf(L.lon)];
+  if(reg&&typeof ruledHouses==='function')
+    ruledHouses(reg).forEach(h=>add(h,PV_PESO.loteRegente,
+      'regente d'+(rotulo==='Fortuna'?'a Fortuna':'o Espírito')+' ('+PT_NAME[reg]+') administra a '+ordinal(h)));
+}
+/* graus operativos de um contato, para saber se toca um Lote */
+function pvGrausDoContato(it){
+  const g=[];
+  if(it.tipo==='dir'){ if(it.sig&&it.sig.lon!=null)g.push(it.sig.lon); }
+  else{
+    const alvo=it.alvo?pvAlvos()[it.alvo]:null;
+    if(alvo&&alvo.lon!=null)g.push(alvo.lon);
+  }
+  return g;
+}
+
+/* ---------- lunação progredida sobre o Sol natal ----------
+   Lua progredida ☌ ou ☍ Sol natal é a Lua Nova / Lua Cheia progredida
+   caindo sobre o luminar do mapa: um marco do ciclo de ~29,5 anos, não
+   um contato de passagem. O motor tratava-a como satélite de qualquer
+   aglomerado vizinho — em outubro de 2019, no mapa de teste, ela entrou
+   como acompanhante de um ingresso de signo e o campo saiu da Lua (4ª)
+   em vez de sair do Sol (regente da 5ª).
+   Passa a contar com peso inteiro na votação e a ser relevante por si.
+   O ASSUNTO vem das casas do Sol natal — ocupada e regidas —, e a
+   polaridade decide só o tom. */
+function pvLunacaoSobreSol(it){
+  return !!(it&&it.tipo==='prog'&&it.mover==='moon'&&it.alvo==='sun'
+    &&it.classe==='aspecto'&&(it.A===0||it.A===180));
+}
+
+/* A votação de UM contato. Devolve {votos, linhas} — linhas são a
+   justificação, para o modo técnico poder mostrar de onde veio cada
+   ponto em vez de pedir confiança. */
+function pvVotosDoContato(it){
+  const votos={}, linhas=[];
+  const add=(h,peso,porque)=>{
+    if(!(h>=1&&h<=12)||!peso)return;
+    votos[h]=(votos[h]||0)+peso;
+    linhas.push({casa:h, peso, porque});
+  };
+  const P=it.env?it.env.papeis:pvPapeis(it);
+  const termos=pvTermoDosEixos();
+
+  /* --- o alvo (significador) --- */
+  const alvoPl=P.significador.pl;
+  if(P.significador.casa)
+    add(P.significador.casa,PV_PESO.alvoOcupa,
+      (alvoPl?PT_NAME[alvoPl]:P.significador.nome)+' ocupa a '+ordinal(P.significador.casa));
+  (P.significador.rege||[]).forEach(h=>
+    add(h,PV_PESO.alvoRegeDomicilio,
+      (alvoPl?PT_NAME[alvoPl]:P.significador.nome)+' rege a '+ordinal(h)+' por domicílio'));
+  if(alvoPl&&termos[alvoPl])termos[alvoPl].forEach(h=>
+    add(h,PV_PESO.alvoRegeTermo,PT_NAME[alvoPl]+' é regente do termo d'
+      +(h===1?'o Ascendente':'o Meio do Céu')+' (dignidade menor)'));
+
+  /* --- o promissor: o planeta que se move também traz o seu assunto ---
+     EXCETO na lunação progredida sobre o Sol: aí a Lua é o RELÓGIO do
+     ciclo, não a matéria. O brief é literal — "campo = casas do Sol
+     natal (ocupada e regida)". Deixar a Lua votar aqui devolvia o campo
+     à 4ª que ela rege, que é exatamente o erro que se está a corrigir:
+     a 4ª somava a ocupação do Sol (2) com a regência da Lua (1,5) e
+     passava à frente da 5ª que o Sol rege (3). */
+  const lunacao=pvLunacaoSobreSol(it);
+  const promPl=lunacao?null:P.promissor.pl;
+  if(!lunacao&&P.promissor.ocupa)
+    add(P.promissor.ocupa,PV_PESO.promOcupa,
+      (promPl?PT_NAME[promPl]:P.promissor.nome)+' ocupa a '+ordinal(P.promissor.ocupa));
+  if(!lunacao)(P.promissor.rege||[]).forEach(h=>
+    add(h,PV_PESO.promRege,
+      (promPl?PT_NAME[promPl]:P.promissor.nome)+' rege a '+ordinal(h)));
+  if(lunacao)linhas.push({casa:null,peso:0,
+    porque:'lunação progredida sobre o Sol natal: o assunto vem das casas do '
+      +'Sol (ocupa a '+ordinal(P.significador.casa||0)+', rege a '
+      +(P.significador.rege||[]).map(h=>ordinal(h)).join(' e a ')
+      +'); a Lua marca o tempo, não a matéria'});
+
+  /* --- eixo tocado ----------------------------------------------
+     Quando um ângulo PROGREDIDO toca um ângulo NATAL, há dois eixos em
+     jogo e ambos valem. A primeira versão que escrevi devolvia um só, e
+     devolvia o do ângulo que SE MOVE: em "MC progredido em quadratura
+     ao Ascendente natal" o peso do eixo ia para o MC e o campo saía 10,
+     quando o ponto tocado é o Ascendente. O alvo entra sempre; o
+     ângulo que se move entra também, mas o alvo ainda soma a sua
+     ocupação e por isso fica à frente, que é o que se quer. */
+  const eixos=[];
+  if(it.tipo==='dir'&&it.sig&&it.sig.ang)
+    eixos.push([it.eixo===PV_ANG[it.sig.ang].op?PV_ANG[it.sig.ang].opCasa
+      :PV_ANG[it.sig.ang].casa,'tocado']);
+  if(it.alvo&&PV_ANG[it.alvo])eixos.push([PV_ANG[it.alvo].casa,'tocado']);
+  if(it.mover&&PV_MOV_CASA[it.mover])eixos.push([PV_MOV_CASA[it.mover],'em movimento']);
+  const vistos=new Set();
+  eixos.forEach(([h,papel])=>{
+    if(!h||vistos.has(h))return; vistos.add(h);
+    add(h,PV_PESO.eixo,'o contato toca o eixo da '+ordinal(h)
+      +(papel==='em movimento'?' (o ângulo que se move)':''));
+  });
+
+  /* --- Lotes: só quando o contato cai sobre o ponto --- */
+  const graus=pvGrausDoContato(it);
+  pvVotosDeLote(add,'fort','Fortuna',graus);
+  pvVotosDeLote(add,'spirit','Espírito',graus);
+
+  /* --- bónus temporais: reaproveitam o que pvConfirmacoes já apurou --- */
+  let S=null; try{ S=tempoState(it.data); }catch(e){}
+  if(S){
+    const envolvidos=[alvoPl,promPl].filter(Boolean);
+    if(S.profHouse&&envolvidos.some(pl=>ruledHouses(pl).includes(S.profHouse)))
+      add(S.profHouse,PV_PESO.bonusProfeccao,
+        'o alvo rege a casa profectada do ano ('+ordinal(S.profHouse)+')');
+    [[S.mk,'firdária'],[S.sk,'subfirdária']].forEach(([sen,nm])=>{
+      if(!sen||!envolvidos.includes(sen))return;
+      ruledHouses(sen).forEach(h=>add(h,PV_PESO.bonusFirdaria,
+        PT_NAME[sen]+', senhor da '+nm+', administra a '+ordinal(h)));
+    });
+  }
+  return {votos,linhas};
+}
+
+/* A votação do AGLOMERADO: o contato principal pesa inteiro, os
+   acompanhantes a meio. Um aglomerado é um período, e o que o define é
+   a convergência — mas o contato mais forte não pode ser diluído pelos
+   satélites. */
+function pvVotacaoCampo(C){
+  const votos={}, linhas=[];
+  const juntar=(res,fator,origem)=>{
+    Object.entries(res.votos).forEach(([h,v])=>{votos[h]=(votos[h]||0)+v*fator;});
+    res.linhas.forEach(l=>linhas.push(Object.assign({},l,
+      {peso:+(l.peso*fator).toFixed(2), origem})));
+  };
+  /* Quando há lunação progredida sobre o Sol no aglomerado, é ela que
+     decide: os outros contatos passam a contexto. Sem isto, meia dúzia
+     de satélites lunares somava mais do que o marco do ciclo. */
+  const temLunacao=(C.grupo||[]).some(pvLunacaoSobreSol)||pvLunacaoSobreSol(C.principal);
+  const fatorSat=temLunacao?0.35:0.5;
+  if(!pvLunacaoSobreSol(C.principal))
+    juntar(pvVotosDoContato(C.principal),temLunacao?fatorSat:1,'contato principal');
+  else juntar(pvVotosDoContato(C.principal),1,'lunação progredida sobre o Sol');
+  (C.grupo||[]).forEach(g=>{ if(g===C.principal)return;
+    const lun=pvLunacaoSobreSol(g);
+    juntar(pvVotosDoContato(g),lun?1:fatorSat,
+      lun?'lunação progredida sobre o Sol':'acompanha'); });
+
+  /* ---------- deduplicação ----------
+     "A Lua rege a 4ª" é UM facto do mapa, não um por contato. Somar a
+     mesma justificação a cada item do aglomerado inflava a casa do
+     planeta que se move: no mapa de teste a Lua entrava como promissora
+     em três contatos seguidos e a 4ª somava a mesma regência três
+     vezes, mais três vezes o bónus de subfirdária — 4,63 contra 3 da
+     5ª que o Sol rege. É a mesma disciplina que o motor de
+     probabilidades já aplica por originId: cada facto conta uma vez,
+     com o seu maior peso. */
+  const porFacto={};
+  linhas.forEach(l=>{
+    if(l.casa==null||!l.peso)return;
+    const id=l.casa+'§'+l.porque;
+    if(!porFacto[id]||l.peso>porFacto[id].peso)porFacto[id]=l;
+  });
+  const votosU={};
+  Object.values(porFacto).forEach(l=>{votosU[l.casa]=(votosU[l.casa]||0)+l.peso;});
+  Object.keys(votos).forEach(h=>{ if(votosU[h]==null)votosU[h]=0; });
+
+  const ordem=Object.entries(votosU).map(([h,v])=>({casa:+h,peso:+v.toFixed(2)}))
+    .filter(o=>o.peso>0)
+    .sort((a,b)=>b.peso-a.peso||a.casa-b.casa);
+  const primeiro=ordem[0]||null, segundo=ordem[1]||null;
+  let ambiguo=!!(primeiro&&segundo&&primeiro.peso>0
+    &&segundo.peso>=PV_AMBIGUO*primeiro.peso);
+  let alternativa=ambiguo?segundo.casa:null;
+  let porRegencia=false;
+
+  /* ---------- invariante da regência ----------
+     Se a casa vencedora é a que o alvo OCUPA, e o mesmo alvo REGE outra
+     casa com apoio real, essa casa regida entra como alternativa mesmo
+     que fique abaixo do limiar dos 70%.
+     Não é um remendo para passar no teste: é o próprio ponto de Morin.
+     Ocupação e regência são coisas distintas, e deixar a ocupação
+     engolir em silêncio a regência do MESMO planeta é a confusão que
+     produzia "muda de residência" para um contato contra o regente da
+     5ª. O limiar dos 70% compara casas quaisquer; aqui o conflito é
+     dentro do mesmo significador, e aí a regência nunca desaparece.
+     Exemplo no mapa de teste: Lua progredida em QUADRATURA ao Sol natal
+     — que não é lunação, e por isso não cai na regra anterior — dava
+     4ª (o Sol ocupa) a 4,5 contra 3,0 da 5ª (o Sol rege), razão 0,67,
+     abaixo do limiar. A 5ª sumia. */
+  const Pp=C.principal&&C.principal.env?C.principal.env.papeis:null;
+  if(primeiro&&Pp&&Pp.significador){
+    const ocupa=Pp.significador.casa, rege=Pp.significador.rege||[];
+    if(ocupa&&primeiro.casa===ocupa&&rege.length){
+      const regidaComApoio=ordem.find(o=>rege.indexOf(o.casa)>=0&&o.peso>0
+        &&o.casa!==primeiro.casa);
+      if(regidaComApoio&&alternativa!==regidaComApoio.casa){
+        alternativa=regidaComApoio.casa; ambiguo=true; porRegencia=true;
+      }
+    }
+  }
+  return {
+    campo:primeiro?primeiro.casa:null,
+    alternativa,
+    ambiguo, porRegencia, ordem,
+    razao:(primeiro&&segundo&&primeiro.peso)?+(segundo.peso/primeiro.peso).toFixed(2):0,
+    linhas:Object.values(porFacto).sort((a,b)=>b.peso-a.peso),
+    linhasBrutas:linhas.length, factos:Object.keys(porFacto).length,
+    limiar:PV_AMBIGUO
+  };
+}
+/* assinatura antiga preservada: devolve só a casa vencedora */
 function pvCampoDe(C){
-  const p=C.principal;
-  return p.env.papeis.significador.casa||p.env.casasSig[0]||p.env.casas[0]||null;
+  const V=(C&&C._votacao)||pvVotacaoCampo(C);
+  return V.campo||null;
 }
 /* hierarquia de certeza: EVENTO PRINCIPAL · DESDOBRAMENTO PROVÁVEL · SINAL */
 function pvTierCluster(C){
@@ -749,7 +1034,11 @@ const PV_ASSIN=[
  {c:10, s:'Muda de função ou de direção profissional', t:'Virada profissional sob pressão',
   ds:'Troca de função, de área ou de direção de carreira.',
   dt:'Posição e reputação tendem a ser reestruturadas.'},
- {c:4, extra:C=>C.pls.includes('moon')||C.pls.includes(NATAL.rulers[4])||C.moverAng,
+ /* a Lua só vota em 4ª se REGE a 4ª ou está nela: o gatilho anterior
+    (`pls.includes('moon')`) disparava para qualquer contato lunar, e a
+    Lua toca quase tudo ao longo de uma vida */
+ {c:4, extra:C=>C.pls.includes(NATAL.rulers[4])
+    ||C.pls.some(p=>NATAL.pts[p]&&NATAL.pts[p].h===4)||C.moverAng,
   s:'Muda de residência', t:'Mudança de residência ou reconfiguração forçada do lar',
   ds:'Mudança de endereço ou alteração concreta do núcleo doméstico.',
   dt:'A base doméstica tende a ser mexida — mudança, obra ou renegociação familiar.'},
@@ -765,10 +1054,41 @@ const PV_ASSIN=[
  {c:3, s:'Inicia curso, publicação ou novo circuito de comunicação', t:'Prazos e papéis concentram o esforço',
   ds:'Estudo, escrita, contrato de comunicação ou rotina nova de trajetos.',
   dt:'Documentos, irmãos e deslocamentos tendem a exigir atenção contínua.'},
+ /* assinatura de 5ª pelo REGENTE, e não só por quem ocupa a casa: o
+    motor só tinha entradas por casa ocupada, e um contato contra o
+    regente da 5ª não encontrava vocabulário próprio */
+ {c:5, extra:C=>C.pls.indexOf(NATAL.rulers[5])>=0,
+  s:'Filho, gravidez ou criação ganhando corpo',
+  t:'Filho, gravidez ou criação — chegando por caminho difícil',
+  ds:'Nascimento, gravidez ou uma criação importante saindo do papel.',
+  dt:'Filho ou criação importante chegando com custo, pressa ou fora do tempo planeado — '
+    +'o assunto é o mesmo, muda a condição em que aparece.'},
  {c:5, pls:['venus','moon','jupiter','sun'],
-  s:'Romance, gravidez ou obra criativa saindo do papel', t:'Prova nos afetos, filhos ou criações',
+  s:'Romance, gravidez ou obra criativa saindo do papel',
+  t:'Romance, filho ou criação — em condições difíceis',
   ds:'Romance novo, filhos ou uma criação importante ganhando corpo.',
-  dt:'Romance, filhos ou criação tendem a passar por teste.'},
+  dt:'Romance, filho ou criação chegando por caminho difícil, com custo ou fora de hora.'},
+ /* assinaturas por REGENTE nas outras casas de pessoa — mesma lacuna */
+ {c:4, extra:C=>C.pls.indexOf(NATAL.rulers[4])>=0,
+  s:'A casa ou um dos pais entra em primeiro plano',
+  t:'A casa ou um dos pais entra em primeiro plano, sob tensão',
+  ds:'Mudança concreta na base doméstica, ou um dos pais tomando o centro do período.',
+  dt:'Base doméstica ou um dos pais concentrando a pressão do período.'},
+ {c:10, extra:C=>C.pls.indexOf(NATAL.rulers[10])>=0,
+  s:'A posição pública, ou a mãe, entra em primeiro plano',
+  t:'A posição pública, ou a mãe, entra em primeiro plano sob cobrança',
+  ds:'Movimento de carreira e reputação, ou a mãe tomando o centro do período.',
+  dt:'Carreira ou a mãe concentrando a cobrança do período.'},
+ {c:7, extra:C=>C.pls.indexOf(NATAL.rulers[7])>=0,
+  s:'O parceiro ou sócio entra em primeiro plano',
+  t:'O parceiro ou sócio entra em primeiro plano, em atrito',
+  ds:'Vínculo a dois ganhando forma nova, por iniciativa própria ou do outro.',
+  dt:'Vínculo a dois exigindo renegociação, por atrito declarado.'},
+ {c:3, extra:C=>C.pls.indexOf(NATAL.rulers[3])>=0,
+  s:'Irmãos, estudos ou a palavra entram em primeiro plano',
+  t:'Irmãos, estudos ou a palavra entram em primeiro plano, sob pressão',
+  ds:'Irmão, curso, escrita ou trajeto curto tomando o centro do período.',
+  dt:'Irmão, prazo ou documento concentrando a pressão do período.'},
  {c:1, s:'Redefine visivelmente a própria direção pessoal', t:'Redefinição pessoal sob pressão',
   ds:'Mudança visível de postura, de corpo ou de rumo pessoal.',
   dt:'O modo de conduzir a própria vida tende a ser revisto sob pressão.'},
@@ -911,7 +1231,11 @@ function pvEventos(){
   const todos=dirs.concat(progs).map(x=>pvAvaliaContato(x,0));
   const ev=pvClusters(todos,0.7).map((C,ix)=>{
     const tier=pvTierCluster(C);
-    const campo=pvCampoDe(C)||1, cls=C.principal.env.papeis.cls, tenso=cls==='tens';
+    /* a votação corre UMA vez por aglomerado e fica guardada: o modo
+       técnico mostra as pontuações, e pvCampoDe reaproveita em vez de
+       recalcular */
+    const V=pvVotacaoCampo(C); C._votacao=V;
+    const campo=V.campo||1, cls=C.principal.env.papeis.cls, tenso=cls==='tens';
     const temDir=C.grupo.some(g=>g.tipo==='dir'), temProg=C.grupo.some(g=>g.tipo==='prog');
     const marg=C.principal.tipo==='dir'?PV_MARG/12:1/12;
     let dIni=new Date(BIRTH+(C.principal.anos-marg)*365.2425*DAY);
@@ -933,6 +1257,7 @@ function pvEventos(){
     const A=Voc;
     const nEvid=C.grupo.length+C.principal.conf.length;
     return {id:'pvev-'+ix, C, tier, campo, cls, titulo, desc, temDir, temProg, faixa, nEvid,
+      votacao:V, campoAlt:V.alternativa, ambiguo:V.ambiguo,
       promId:C.principal.promessa?C.principal.promessa.pr.id:null,
       assinada:!!A,
       ini:C.ini, fim:C.fim, pico:C.principal.anos,
@@ -1108,8 +1433,146 @@ function pvFeedHTML(vis,idade,agora){
 function pvCordaHTML(vis,idade,agora){
   return pvReguaHTML(vis,idade)+pvFeedHTML(vis,idade,agora);
 }
+/* ============================================================
+   NÍVEL SIMPLES — o que aconteceu, quando, e por quê em português
+
+   Três linhas, no máximo. A primeira diz o acontecimento e a janela; a
+   segunda diz o motivo sem uma só palavra de ofício; a terceira nomeia
+   a pessoa e, quando o campo é ambíguo, as alternativas por ordem.
+
+   O motivo NÃO é construído a partir da mecânica do contato — é daí
+   que vinham "progredida" e "dirigido". Constrói-se do que o motor já
+   decidiu: quem foi tocado, o que esse planeta administra, e que
+   camadas do tempo concordam. Assim o vocabulário técnico não tem por
+   onde entrar.
+   ============================================================ */
+/* a fase entra como tempo do processo, não como adjetivo solto */
+const PV_FASE_SIMPLES={
+  abertura:'é a entrada do assunto',
+  'tensão':'é o momento de aperto dentro de um processo já em curso',
+  reabertura:'o assunto reabre em termos novos',
+  desenvolvimento:'o assunto avança um degrau',
+  'maturação':'é o ponto mais forte do processo',
+  'consolidação':'o que veio antes tende a firmar-se',
+  'ativação única':'é a única passagem forte deste assunto no período'
+};
+function pvPessoaDoCampo(ev){
+  if(typeof pessoaDaCasa!=='function')return null;
+  const P=pessoaDaCasa(ev.campo);
+  if(!P)return null;
+  /* quem, pelos planetas que o contato toca — com o desempate à vista */
+  const pls=ev.C.principal.env.pls||[];
+  const casas=(ev.votacao&&ev.votacao.ordem||[]).map(o=>o.casa);
+  const tocado=pls.map(pl=>typeof pessoaDoContato==='function'
+    ? pessoaDoContato(pl,{pls,casas}) : null).filter(Boolean)
+    .find(r=>r.principal&&r.principal.casa===ev.campo);
+  return {casa:P, tocado};
+}
+function pvLinhaAcontecimento(ev){
+  const quando=ev.faixa?(pvMesAno(ev.dIni)+' a '+pvMesAno(ev.dFim)):pvJanelaTxt(ev);
+  return cap1(ev.titulo)+' — '+quando+'.';
+}
+function pvLinhaPorque(ev){
+  const P=ev.C.principal.env.papeis;
+  const alvo=P.significador.pl;
+  const nomes=[];
+  if(alvo&&PT_NAME[alvo])nomes.push(PT_NAME[alvo]);
+  const rege=(P.significador.rege||[]);
+  let frase;
+  if(alvo&&rege.length){
+    frase='No seu mapa, '+PT_NAME[alvo]+' responde por '
+      +rege.map(h=>casaTag(h)).join(' e por ')
+      +', e é esse ponto que está em jogo agora';
+  }else if(ev.campo){
+    frase='O período mexe com '+casaTag(ev.campo);
+  }else{
+    frase='O período concentra-se num só assunto';
+  }
+  /* concordância das camadas lentas, sem as nomear tecnicamente */
+  const conf=(ev.C.principal.conf||[]).filter(c=>c.via==='planeta').length;
+  if(conf>=2)frase+=', e os ciclos longos do ano apontam para o mesmo lado';
+  else if(conf===1)frase+=', com um dos ciclos longos do ano a apontar para o mesmo lado';
+  return frase+'.';
+}
+/* "um filho", "o pai", "um irmão" — a forma com que a pessoa entra
+   numa frase. O plural das figuras ("os filhos", "os irmãos") serve
+   para a tábua, não para dizer quem aparece num período. */
+const PV_PESSOA_UM={pai:'o pai', mae:'a mãe', irmaos:'um irmão',
+  filhos:'um filho', conjuge:'o parceiro'};
+function pvPessoaFrase(f){ return PV_PESSOA_UM[f]||(f?PESSOA_ROTULO[f]:''); }
+
+function pvLinhaQuemEAlternativa(ev){
+  const bits=[];
+  const Q=pvPessoaDoCampo(ev);
+  if(Q&&Q.tocado){
+    const p=Q.tocado;
+    bits.push(p.empatado&&p.segunda
+      ? ('pode envolver '+pvPessoaFrase(p.principal.figura)
+         +' — ou '+pvPessoaFrase(p.segunda.figura))
+      : ('tende a envolver '+pvPessoaFrase(p.principal.figura)));
+  }else if(Q&&Q.casa){
+    bits.push('a figura em causa é '+pvPessoaFrase(Q.casa.figura));
+  }
+  if(ev.ambiguo&&ev.campoAlt){
+    bits.push('mais provável: '+casaTag(ev.campo)
+      +'; também possível: '+casaTag(ev.campoAlt));
+  }
+  if(ev.fase&&PV_FASE_SIMPLES[ev.fase])
+    bits.push(PV_FASE_SIMPLES[ev.fase]);
+  /* cada pedaço é uma frase: entra com maiúscula e acaba com ponto */
+  return bits.length?bits.map(x=>cap1(x)+'.').join(' '):'';
+}
+/* as três linhas, já prontas */
+function pvSimples(ev){
+  return {
+    acontecimento:pvLinhaAcontecimento(ev),
+    porque:pvLinhaPorque(ev),
+    quem:pvLinhaQuemEAlternativa(ev)
+  };
+}
+function pvSimplesHTML(ev){
+  const S=pvSimples(ev);
+  return '<p class="pvs-l1">'+S.acontecimento+'</p>'
+    +'<p class="pvs-l2">'+S.porque+'</p>'
+    +(S.quem?('<p class="pvs-l3">'+S.quem+'</p>'):'');
+}
+
+/* a votação de campo, aberta, no nível técnico: de onde veio cada
+   ponto, e por que a segunda casa ficou (ou não) como alternativa */
+function pvVotacaoHTML(ev){
+  const V=ev.votacao; if(!V||!V.ordem||!V.ordem.length)return '';
+  const barra=V.ordem.slice(0,5).map(o=>{
+    const pc=Math.round(100*o.peso/V.ordem[0].peso);
+    return '<div class="pvv-l'+(o.casa===V.campo?' on':'')
+      +(o.casa===V.alternativa?' alt':'')+'">'
+      +'<span>'+ordinal(o.casa)+'</span>'
+      +'<i><b style="width:'+pc+'%"></b></i>'
+      +'<u>'+o.peso.toFixed(2)+'</u></div>';
+  }).join('');
+  const linhas=V.linhas.slice(0,10).map(l=>'<li>'+ordinal(l.casa)+' +'+l.peso
+    +' — '+l.porque+(l.origem?(' <em>('+l.origem+')</em>'):'')+'</li>').join('');
+  return '<div class="pvv"><span class="pvv-k">votação do campo</span>'
+    +'<div class="pvv-b">'+barra+'</div>'
+    +'<p class="pvv-n">'+(V.ambiguo
+      ? (V.porRegencia
+        ? ('A casa vencedora é a que o alvo OCUPA, e o mesmo alvo REGE a '
+          +ordinal(V.alternativa)+': a casa regida entra como alternativa mesmo abaixo '
+          +'do limiar de '+Math.round(V.limiar*100)+'%. Ocupação e regência são coisas '
+          +'distintas, e a regência de um significador não desaparece diante da sua '
+          +'própria posição.')
+        : ('A segunda casa alcança '+Math.round(V.razao*100)+'% da primeira — acima do '
+          +'limiar de '+Math.round(V.limiar*100)+'%, por isso o evento é declarado AMBÍGUO '
+          +'e as duas são nomeadas, nesta ordem.'))
+      : ('A segunda casa fica em '+Math.round(V.razao*100)+'% da primeira, abaixo do '
+        +'limiar de '+Math.round(V.limiar*100)+'%: campo único.'))
+    +' '+V.factos+' factos distintos, de '+V.linhasBrutas+' testemunhos — '
+    +'o mesmo facto conta uma vez.</p>'
+    +'<ul class="pvv-u">'+linhas+'</ul></div>';
+}
+
 function pvEventoHTML(ev,agora,passado){
   const aberto=PV_OPEN===ev.id;
+  const tec=(typeof modoTecnico==='function')?modoTecnico():true;
   const P=ev.C.principal;
   const st=pvEstado({data:ev.dPico},agora);
   const tierLb={principal:'evento principal',desdobramento:'desdobramento provável',sinal:'sinal'}[ev.tier];
@@ -1120,21 +1583,26 @@ function pvEventoHTML(ev,agora,passado){
     +'<span class="pvb-m">'+pvMesCurto(ev.dPico)+'</span>'
     +'<span class="pvb-dot'+(ev.faixa?' fx':'')+'"></span>'
     +'<div class="pvb-c">'
-    +'<div class="pvb-t"><b>'+ev.titulo+'</b>'+valBadge+'<em>'+tierLb+'</em>'
-      +(ev.fase?('<u class="pvb-f">'+ev.fase+'</u>'):'')+'</div>'
+    +'<div class="pvb-t"><b>'+ev.titulo+'</b>'+valBadge
+      +(tec?('<em>'+tierLb+'</em>'):'')
+      +(tec&&ev.fase?('<u class="pvb-f">'+ev.fase+'</u>'):'')+'</div>'
     +'<div class="pvb-w">'+(ev.faixa
         ? (pvMesAno(ev.dIni)+' → '+pvMesAno(ev.dFim))
         : pvJanelaTxt(ev))+'</div>'
-    +'<div class="pvb-sub">'+pvSubtec(ev)+'</div>'
-    +'<button class="pv-exp" data-pvev="'+ev.id+'">'+ev.nEvid+' evidência'+(ev.nEvid>1?'s':'')
-      +' astrológica'+(ev.nEvid>1?'s':'')+(aberto?' ↑':' ↓')+'</button>';
+    +(tec?('<div class="pvb-sub">'+pvSubtec(ev)+'</div>'):'')
+    +(tec?'':'<div class="pvb-simp">'+pvSimplesHTML(ev)+'</div>')
+    +'<button class="pv-exp" data-pvev="'+ev.id+'">'
+      +(tec?(ev.nEvid+' evidência'+(ev.nEvid>1?'s':'')+' astrológica'+(ev.nEvid>1?'s':''))
+           :'por que este período')
+      +(aberto?' ↑':' ↓')+'</button>';
   if(aberto){
     h+='<div class="pvb-x">'
       +'<p class="pvb-d">'+ev.desc+'</p>'
-      +(ev.fase?('<p class="pvb-d fase"><b>Fase da promessa — '+ev.fase+'.</b> '
+      +(tec&&ev.fase?('<p class="pvb-d fase"><b>Fase da promessa — '+ev.fase+'.</b> '
         +(PV_FASE_TXT[ev.fase]||'')+'</p>'):'')
       +pvBarraJanela(ev)
-      +pvCadeiaHTML(ev);
+      +(tec?pvCadeiaHTML(ev):'')
+      +(tec?pvVotacaoHTML(ev):'');
     if(passado){
       const opt=(v,lb,cls)=>'<button class="pv-vb'+(val===v?' on':'')+' '+cls
         +'" data-pvval="'+vk+':'+v+'">'+lb+'</button>';
@@ -1143,7 +1611,7 @@ function pvEventoHTML(ev,agora,passado){
         +'</div>';
     }
     h+='<div class="pvc-b">'
-      +'<button class="pv-lnk" data-pvcalc="'+ev.id+'">Ver cálculo técnico</button>'
+      +(tec?('<button class="pv-lnk" data-pvcalc="'+ev.id+'">Ver cálculo técnico</button>'):'')
       +(P.promessa?('<button class="pv-lnk" data-pvprom="'+P.promessa.pr.id+'">Ver promessa e trajetória</button>'):'')
       +'</div>'
       +(PV_CALC===ev.id?pvCalcHTML(P):'')
@@ -1184,9 +1652,14 @@ function renderPreditivas(){
   const met=PV_MET[PV_METODO].curto+' · '+PV_KEYS[PV_KEY].lab
     +' · '+({ambas:'diretas e conversas',direta:'só diretas',conversa:'só conversas'}[PV_SENT])
     +' · progressões 1 dia = 1 ano · ±'+PV_MARG+' meses · lat '+(Math.round(F.phi*100)/100)+'°';
+  const tec=(typeof modoTecnico==='function')?modoTecnico():true;
   let h=(F.inferida?'<p class="pv-warn">Latitude do nascimento ausente: inferida do Asc/MC, com menor confiabilidade. Informe o local na aba Dados.</p>':'')
-    +'<p class="pv-met">'+met+'</p>'
-    +'<p class="pv-int">Reconstrução do nascimento ao horizonte, apenas pelas técnicas — nada vem de eventos cadastrados. Nos acontecimentos passados dá para marcar se aconteceram, para testar o modelo.</p>';
+    +'<div class="pv-niv">'+((typeof nivelToggleHTML==='function')?nivelToggleHTML():'')+'</div>'
+    +(tec?('<p class="pv-met">'+met+'</p>'):'')
+    +'<p class="pv-int">'+(tec
+      ? 'Reconstrução do nascimento ao horizonte, apenas pelas técnicas — nada vem de eventos cadastrados. Nos acontecimentos passados dá para marcar se aconteceram, para testar o modelo.'
+      : 'Reconstrução do nascimento até adiante, a partir do mapa. Cada período traz o acontecimento provável, a janela e o motivo. Ligue o modo técnico para ver os cálculos por trás.')
+    +'</p>';
   const prox=vis.filter(x=>x.pico>=idade-0.08&&x.pico<=idade+1.55);
   h+='<div class="pv-sin"><div class="pv-sin-k">próximos 18 meses</div>'
     +(prox.length?prox.map(x=>'<a class="pv-sin-i" href="#" data-pvgo="'+x.id+'">'
@@ -1200,7 +1673,8 @@ function renderPreditivas(){
       +' sina'+(sinais.length>1?'is':'l')+' secundário'+(sinais.length>1?'s':'')
       +' — ativações sem convergência para previsão literal</summary>'
       +sinais.map(x=>'<div class="pvb-si"><b>'+pvMesCurto(x.dPico)+' '+x.dPico.getUTCFullYear()+'</b>'
-        +'<span>'+pvTitulo(x.C.principal)+'</span><em>'+cap1(casaTag(x.campo))+'</em></div>').join('')
+        +'<span>'+(tec?pvTitulo(x.C.principal):cap1(casaTag(x.campo)))+'</span>'
+        +'<em>'+(tec?cap1(casaTag(x.campo)):'sinal fraco')+'</em></div>').join('')
       +'</details>';
   }
   el.innerHTML=h;
