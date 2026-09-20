@@ -479,6 +479,27 @@ function renderRS(){
     cap1(HOUSE_THEME[R.ascNatalHouse])+'.',
     'É o ambiente onde o período tende a se manifestar (Ascendente do retorno).',
     escopo+'esses assuntos convergem com '+temas([S&&S.profHouse,S&&S.occLord])+'.');
+  /* ---------- leitura simples da revolução ----------
+     Duas ou três frases em português comum, antes dos cartões: que
+     assunto o ano abre, por onde, e quem pode estar em causa. O que
+     manda é onde o regente do Ascendente da revolução cai NAS CASAS
+     NATAIS nesta revolução — não onde ele está no natal. */
+  const casaAno=R.ascRulerRevNatalHouse||R.ascRulerNatalHouse;
+  const quem=(typeof pessoaDaCasa==='function')?pessoaDaCasa(casaAno):null;
+  const quemAsc=(typeof pessoaDaCasa==='function')?pessoaDaCasa(R.ascNatalHouse):null;
+  const simples='<div class="rv-simp">'
+    +'<p><b>O ano abre por '+casaTag(R.ascNatalHouse)+'.</b> '
+      +cap1(HOUSE_THEME[R.ascNatalHouse])+'.</p>'
+    +'<p>Quem conduz o ano é '+PT_NAME[R.ascRuler]+', e nesta revolução ele cai em '
+      +casaTag(casaAno)+' — é para aí que o ano tende a puxar'
+      +(R.ascRulerDivergente?(' (no mapa de nascimento ele está em '
+         +casaTag(R.ascRulerNatalHouse)+', que aqui é só o pano de fundo)'):'')+'.</p>'
+    +((quem||quemAsc)?('<p>Pode envolver '
+      +[quem,quemAsc].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i)
+        .map(x=>x.rotulo).filter((x,i,a)=>a.indexOf(x)===i).join(' e ')
+      +'.</p>'):'')
+    +'</div>';
+  if($('rs-resumo'))$('rs-resumo').insertAdjacentHTML('afterbegin',simples);
   $('rs-cards').innerHTML=cards;
 
   /* 06 · perguntas para refletir */

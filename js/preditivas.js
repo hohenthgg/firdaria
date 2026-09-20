@@ -860,15 +860,26 @@ function pvVotosDoContato(it){
       +(P.significador.rege||[]).map(h=>ordinal(h)).join(' e a ')
       +'); a Lua marca o tempo, não a matéria'});
 
-  /* --- eixo tocado: o ângulo vale pela sua própria casa --- */
-  const eixoCasa=(()=>{
-    if(it.tipo==='dir'&&it.sig&&it.sig.ang)
-      return it.eixo===PV_ANG[it.sig.ang].op?PV_ANG[it.sig.ang].opCasa:PV_ANG[it.sig.ang].casa;
-    if(it.mover&&PV_MOV_CASA[it.mover])return PV_MOV_CASA[it.mover];
-    if(it.alvo&&PV_ANG[it.alvo])return PV_ANG[it.alvo].casa;
-    return null;
-  })();
-  if(eixoCasa)add(eixoCasa,PV_PESO.eixo,'o contato toca um eixo do mapa ('+ordinal(eixoCasa)+')');
+  /* --- eixo tocado ----------------------------------------------
+     Quando um ângulo PROGREDIDO toca um ângulo NATAL, há dois eixos em
+     jogo e ambos valem. A primeira versão que escrevi devolvia um só, e
+     devolvia o do ângulo que SE MOVE: em "MC progredido em quadratura
+     ao Ascendente natal" o peso do eixo ia para o MC e o campo saía 10,
+     quando o ponto tocado é o Ascendente. O alvo entra sempre; o
+     ângulo que se move entra também, mas o alvo ainda soma a sua
+     ocupação e por isso fica à frente, que é o que se quer. */
+  const eixos=[];
+  if(it.tipo==='dir'&&it.sig&&it.sig.ang)
+    eixos.push([it.eixo===PV_ANG[it.sig.ang].op?PV_ANG[it.sig.ang].opCasa
+      :PV_ANG[it.sig.ang].casa,'tocado']);
+  if(it.alvo&&PV_ANG[it.alvo])eixos.push([PV_ANG[it.alvo].casa,'tocado']);
+  if(it.mover&&PV_MOV_CASA[it.mover])eixos.push([PV_MOV_CASA[it.mover],'em movimento']);
+  const vistos=new Set();
+  eixos.forEach(([h,papel])=>{
+    if(!h||vistos.has(h))return; vistos.add(h);
+    add(h,PV_PESO.eixo,'o contato toca o eixo da '+ordinal(h)
+      +(papel==='em movimento'?' (o ângulo que se move)':''));
+  });
 
   /* --- Lotes: só quando o contato cai sobre o ponto --- */
   const graus=pvGrausDoContato(it);
@@ -938,12 +949,40 @@ function pvVotacaoCampo(C){
     .filter(o=>o.peso>0)
     .sort((a,b)=>b.peso-a.peso||a.casa-b.casa);
   const primeiro=ordem[0]||null, segundo=ordem[1]||null;
-  const ambiguo=!!(primeiro&&segundo&&primeiro.peso>0
+  let ambiguo=!!(primeiro&&segundo&&primeiro.peso>0
     &&segundo.peso>=PV_AMBIGUO*primeiro.peso);
+  let alternativa=ambiguo?segundo.casa:null;
+  let porRegencia=false;
+
+  /* ---------- invariante da regência ----------
+     Se a casa vencedora é a que o alvo OCUPA, e o mesmo alvo REGE outra
+     casa com apoio real, essa casa regida entra como alternativa mesmo
+     que fique abaixo do limiar dos 70%.
+     Não é um remendo para passar no teste: é o próprio ponto de Morin.
+     Ocupação e regência são coisas distintas, e deixar a ocupação
+     engolir em silêncio a regência do MESMO planeta é a confusão que
+     produzia "muda de residência" para um contato contra o regente da
+     5ª. O limiar dos 70% compara casas quaisquer; aqui o conflito é
+     dentro do mesmo significador, e aí a regência nunca desaparece.
+     Exemplo no mapa de teste: Lua progredida em QUADRATURA ao Sol natal
+     — que não é lunação, e por isso não cai na regra anterior — dava
+     4ª (o Sol ocupa) a 4,5 contra 3,0 da 5ª (o Sol rege), razão 0,67,
+     abaixo do limiar. A 5ª sumia. */
+  const Pp=C.principal&&C.principal.env?C.principal.env.papeis:null;
+  if(primeiro&&Pp&&Pp.significador){
+    const ocupa=Pp.significador.casa, rege=Pp.significador.rege||[];
+    if(ocupa&&primeiro.casa===ocupa&&rege.length){
+      const regidaComApoio=ordem.find(o=>rege.indexOf(o.casa)>=0&&o.peso>0
+        &&o.casa!==primeiro.casa);
+      if(regidaComApoio&&alternativa!==regidaComApoio.casa){
+        alternativa=regidaComApoio.casa; ambiguo=true; porRegencia=true;
+      }
+    }
+  }
   return {
     campo:primeiro?primeiro.casa:null,
-    alternativa:ambiguo?segundo.casa:null,
-    ambiguo, ordem,
+    alternativa,
+    ambiguo, porRegencia, ordem,
     razao:(primeiro&&segundo&&primeiro.peso)?+(segundo.peso/primeiro.peso).toFixed(2):0,
     linhas:Object.values(porFacto).sort((a,b)=>b.peso-a.peso),
     linhasBrutas:linhas.length, factos:Object.keys(porFacto).length,
@@ -1515,9 +1554,15 @@ function pvVotacaoHTML(ev){
   return '<div class="pvv"><span class="pvv-k">votação do campo</span>'
     +'<div class="pvv-b">'+barra+'</div>'
     +'<p class="pvv-n">'+(V.ambiguo
-      ? ('A segunda casa alcança '+Math.round(V.razao*100)+'% da primeira — acima do '
-        +'limiar de '+Math.round(V.limiar*100)+'%, por isso o evento é declarado AMBÍGUO '
-        +'e as duas são nomeadas, nesta ordem.')
+      ? (V.porRegencia
+        ? ('A casa vencedora é a que o alvo OCUPA, e o mesmo alvo REGE a '
+          +ordinal(V.alternativa)+': a casa regida entra como alternativa mesmo abaixo '
+          +'do limiar de '+Math.round(V.limiar*100)+'%. Ocupação e regência são coisas '
+          +'distintas, e a regência de um significador não desaparece diante da sua '
+          +'própria posição.')
+        : ('A segunda casa alcança '+Math.round(V.razao*100)+'% da primeira — acima do '
+          +'limiar de '+Math.round(V.limiar*100)+'%, por isso o evento é declarado AMBÍGUO '
+          +'e as duas são nomeadas, nesta ordem.'))
       : ('A segunda casa fica em '+Math.round(V.razao*100)+'% da primeira, abaixo do '
         +'limiar de '+Math.round(V.limiar*100)+'%: campo único.'))
     +' '+V.factos+' factos distintos, de '+V.linhasBrutas+' testemunhos — '

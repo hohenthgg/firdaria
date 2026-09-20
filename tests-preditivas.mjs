@@ -181,9 +181,164 @@ const R=await pg.evaluate(()=>{
  ok('a tela mostra poucos resultados', it2.lista.length<=16, it2.lista.length+' avaliados');
  return T;
 });
+/* ============================================================
+   SEGUNDA FASE — o mapa do caso relatado (§1 do brief)
+
+   Asc 15°50' Áries, noturno. Sol 2°26' Leão na 4ª, REGENTE DA 5ª;
+   Lua 10°16' Touro na 2ª, regente da 4ª; Marte 25°28' Câncer na 4ª,
+   regente da 1ª e 8ª; Vênus 14°27' Leão na 5ª; Mercúrio 13°03' Câncer
+   na 4ª.
+
+   Facto biográfico: dois filhos (gémeos) entre setembro de 2019 e
+   setembro de 2020. O motor rotulava outubro de 2019 como
+   "Muda de residência".
+   ============================================================ */
+const MAPA_CASO='https://www.aspectarian.com/chart?date=2000-07-24T23%3A00'
+  +'&lat=-22.2270778&long=-45.93937160000001&name=teste&t=America%2FSao_Paulo';
+await pg.goto(BASE,{waitUntil:'domcontentloaded'});
+await pg.waitForTimeout(800);
+await pg.evaluate(()=>{try{irPara('dados');}catch(e){}});
+await pg.fill('#imp-url',MAPA_CASO); await pg.click('#imp-run');
+await pg.waitForTimeout(15000);
+
+const R2=await pg.evaluate(async()=>{
+ const T=[], ok=(n,c,d)=>T.push({t:n,ok:!!c,d:d===undefined?'':String(d)});
+
+ /* o mapa é mesmo o do brief — sem isto os testes seguintes não provam nada */
+ ok('o mapa do caso carregou com Asc em Áries e seita noturna',
+   SIGNS[signOf(NATAL.asc)]==='Áries'&&NATAL.sect==='noturno',
+   SIGNS[signOf(NATAL.asc)]+' '+(n360(NATAL.asc)%30).toFixed(2)+'° · '+NATAL.sect);
+ ok('o Sol ocupa a 4ª e REGE a 5ª — a colocação que produzia o erro',
+   NATAL.pts.sun.h===4&&ruledHouses('sun').join()==='5',
+   'ocupa '+NATAL.pts.sun.h+' · rege '+ruledHouses('sun').join(','));
+
+ /* ---------- §6.1 outubro de 2019 ---------- */
+ const evs=pvEventos();
+ const alvo=evs.filter(e=>{
+   const d=new Date(e.dPico);
+   return d>=new Date(Date.UTC(2019,6,1))&&d<=new Date(Date.UTC(2020,0,31));
+ });
+ const cinco=alvo.find(e=>e.campo===5||(e.ambiguo&&e.campoAlt===5));
+ ok('outubro de 2019 (±3 meses) tem campo 5, ou ambíguo com a 5ª à frente',
+   !!cinco&&(cinco.campo===5||(cinco.ambiguo&&cinco.campo===5)),
+   alvo.map(e=>new Date(e.dPico).toISOString().slice(0,7)+':'+e.campo
+     +(e.ambiguo?('/'+e.campoAlt):'')).join(' '));
+ if(cinco){
+   const S=pvSimples(cinco);
+   const txt=S.acontecimento+' '+S.porque+' '+S.quem;
+   ok('o texto simples desse período fala em filho', /filho/i.test(txt), S.acontecimento);
+   ok('o texto simples traz a janela datada',
+     /\d{4}/.test(S.acontecimento)&&/janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro/i.test(S.acontecimento),
+     S.acontecimento);
+   ok('quando o campo é ambíguo, as duas casas são nomeadas por ordem',
+     !cinco.ambiguo||/mais prov/i.test(S.quem), S.quem);
+ }
+
+ /* ---------- §6.2 nenhum rótulo de 4ª engolindo o regente da 5ª ---------- */
+ const reg5=NATAL.rulers[5];
+ const infratores=evs.filter(e=>{
+   const pls=e.C.principal.env.pls||[];
+   if(pls.indexOf(reg5)<0)return false;          // não envolve o regente da 5ª
+   if(e.campo!==4)return false;                  // não foi rotulado de 4ª
+   return !(e.ambiguo&&e.campoAlt===5);          // e a 5ª não aparece como alternativa
+ });
+ ok('nenhum evento com o regente da 5ª vira 4ª sem a 5ª como alternativa',
+   infratores.length===0,
+   infratores.length?infratores.map(e=>new Date(e.dPico).toISOString().slice(0,7)).join(' ')
+     :('regente da 5ª = '+PT_NAME[reg5]));
+
+ /* ---------- §6.3 Revolução Solar de 2019 ---------- */
+ const rs=revolutionFor('solar',new Date(Date.UTC(2019,9,1)));
+ ok('RS 2019: o regente do Asc cai na 5ª natal NESTA revolução',
+   rs&&rs.ascRulerRevNatalHouse===5,
+   rs?('natal '+rs.ascRulerNatalHouse+' · revolução '+rs.ascRulerRevNatalHouse):'sem RS');
+ ok('RS 2019: a posição natal do regente é diferente, e fica declarada',
+   rs&&rs.ascRulerDivergente===true&&rs.ascRulerNatalHouse===4,
+   rs?('divergente: '+rs.ascRulerDivergente):'—');
+ ok('os contatos da RS carregam a casa natal onde caem',
+   rs&&(rs.contatos||[]).every(c=>typeof c.revNatalHouse==='number'),
+   rs?((rs.contatos||[]).length+' contatos'):'—');
+ irPara('rs');
+ const foi=(typeof rsGoto==='function')&&rsGoto(2019);
+ await new Promise(r=>setTimeout(r,500));
+ ok('rsGoto está exposto e move o cursor da aba', foi===true);
+ const simp=document.querySelector('#rs-resumo .rv-simp');
+ ok('a leitura simples da RS de 2019 nomeia os filhos',
+   !!simp&&/filho/i.test(simp.textContent),
+   simp?simp.textContent.replace(/\s+/g,' ').slice(0,120):'(sem leitura simples)');
+
+ /* ---------- §6.4 camada de pessoas, mapa noturno ---------- */
+ const P=significadoresDePessoas();
+ const nomes=f=>P[f].candidatos.map(c=>c.pl);
+ const origemDe=(f,pl)=>(P[f].candidatos.find(c=>c.pl===pl)||{}).origens||[];
+ ok('pai: Saturno pela natureza da seita, em mapa noturno',
+   nomes('pai')[0]==='saturn'
+   &&/noturno/.test(origemDe('pai','saturn').join(' ')),
+   origemDe('pai','saturn').join(' / '));
+ ok('pai: a Lua entra como regente da 4ª',
+   nomes('pai').indexOf('moon')>=0&&/regente da 4/.test(origemDe('pai','moon').join(' ')),
+   origemDe('pai','moon').join(' / '));
+ ok('pai: o Sol entra como secundário e por estar na 4ª',
+   nomes('pai').indexOf('sun')>=0&&/secund/.test(origemDe('pai','sun').join(' '))
+   &&/está na 4/.test(origemDe('pai','sun').join(' ')),
+   origemDe('pai','sun').join(' / '));
+ ok('pai: Marte e Mercúrio entram por estarem na 4ª',
+   ['mars','mercury'].every(k=>nomes('pai').indexOf(k)>=0
+     &&/está na 4/.test(origemDe('pai',k).join(' '))),
+   nomes('pai').join(','));
+ ok('mãe: a Lua pela natureza da seita, em mapa noturno',
+   nomes('mae')[0]==='moon'&&/noturno/.test(origemDe('mae','moon').join(' ')),
+   origemDe('mae','moon').join(' / '));
+ ok('mãe: Saturno entra como regente da 10ª',
+   nomes('mae').indexOf('saturn')>=0&&/regente da 10/.test(origemDe('mae','saturn').join(' ')),
+   origemDe('mae','saturn').join(' / '));
+ ok('mãe: Vênus entra como secundária',
+   nomes('mae').indexOf('venus')>=0&&/secund/.test(origemDe('mae','venus').join(' ')),
+   origemDe('mae','venus').join(' / '));
+ ok('todo candidato declara a sua origem',
+   Object.values(P).every(f=>f.candidatos.every(c=>c.origens&&c.origens.length)));
+ /* um planeta pode ser duas pessoas, e o texto não escolhe em silêncio */
+ const lua=pessoaDoContato('moon',{pls:['moon'],casas:[]});
+ ok('a Lua é declarada como pai OU mãe, sem escolha silenciosa',
+   lua&&lua.empatado&&/pai/.test(lua.frase)&&/mãe/.test(lua.frase),
+   lua?lua.frase:'—');
+ const sat=pessoaDoContato('saturn',{pls:['saturn'],casas:[]});
+ ok('Saturno também é declarado como as duas figuras',
+   sat&&/pai/.test(sat.frase)&&/mãe/.test(sat.frase), sat?sat.frase:'—');
+
+ /* ---------- §6.6 o toggle ---------- */
+ modoTecnicoDefinir(false);
+ ok('o modo técnico nasce desligado e pode ser desligado', modoTecnico()===false);
+ irPara('tempo'); renderPreditivas();
+ await new Promise(r=>setTimeout(r,400));
+ const ids=[...document.querySelectorAll('[data-pvev]')].map(x=>x.dataset.pvev);
+ let tudo=(document.getElementById('pv-body')||{}).textContent||'';
+ for(const id of ids.slice(0,8)){
+   PV_OPEN=id; renderPreditivas();
+   await new Promise(r=>setTimeout(r,40));
+   tudo+=(document.getElementById('pv-body')||{}).textContent||'';
+ }
+ const vazou=nivelContemTecnico(tudo);
+ ok('modo simples: nenhum evento traz progredid/dirigid/orbe/recepção',
+   vazou.length===0, vazou.length?vazou.join(', '):(ids.length+' eventos abertos'));
+ /* e o técnico devolve tudo */
+ modoTecnicoDefinir(true); PV_OPEN=ids[0]; renderPreditivas();
+ await new Promise(r=>setTimeout(r,300));
+ const tecTxt=(document.getElementById('pv-body')||{}).textContent||'';
+ ok('modo técnico: o vocabulário de ofício volta, e nada foi removido',
+   /progredid|dirigid/i.test(tecTxt)&&/votação do campo/i.test(tecTxt));
+ ok('modo técnico: a votação mostra as pontuações por casa',
+   /\d+ª/.test(tecTxt)&&/limiar/i.test(tecTxt));
+ modoTecnicoDefinir(false);
+ return T;
+});
+
 const pad=s=>s.length>62?s.slice(0,59)+'…':s.padEnd(62);
-let f=0; R.forEach(t=>{if(!t.ok)f++; console.log((t.ok?'  ok  ':'FALHA ')+pad(t.t)+(t.d?('  '+t.d):''));});
-console.log('\n'+R.length+' testes · '+f+' falhas');
+let f=0;
+R.forEach(t=>{if(!t.ok)f++; console.log((t.ok?'  ok  ':'FALHA ')+pad(t.t)+(t.d?('  '+t.d):''));});
+console.log('\n### o caso relatado — campo, revolução, pessoas e níveis');
+R2.forEach(t=>{if(!t.ok)f++; console.log((t.ok?'  ok  ':'FALHA ')+pad(t.t)+(t.d?('  '+t.d):''));});
+console.log('\n'+(R.length+R2.length)+' testes · '+f+' falhas');
 console.log('ERRORS:', errs.length?errs.join(' | '):'(none)');
 await b.close();
 process.exit(f||errs.length?1:0);

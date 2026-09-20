@@ -1,3 +1,6 @@
 node_modules/
 *.png
 scratchpad/
+
+# ficheiros de diagnóstico da sessão (scratch), nunca versionados
+_*.mjs
